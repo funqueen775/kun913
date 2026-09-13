@@ -1,0 +1,15 @@
+*.gd text eol=lf
+*.ts text eol=lf
+*.ets text eol=lf
+*.json text eol=lf
+*.json5 text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.otf binary
+*.pck binary
+*.wasm binary
+*.docx binary

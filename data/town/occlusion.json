@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "coordinateSpace": { "width": 1920, "height": 1080 },
+  "foregroundCandidates": [
+    { "id": "trees", "mode": "foreground", "source": "最终地图中树木和灌木" },
+    { "id": "building_fronts", "mode": "foreground", "source": "需要遮挡角色的建筑立面" },
+    { "id": "bridges", "mode": "foreground", "source": "桥面前缘和码头栏杆" }
+  ],
+  "policy": "底图先整体显示；只有角色需要被遮挡的前景元素才拆层"
+}

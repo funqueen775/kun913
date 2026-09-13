@@ -1,0 +1,14 @@
+{
+  "map": "res://assets/town/workplace_town_reference.png",
+  "coordinateSpace": { "width": 1920, "height": 1080, "sourceWidth": 1678, "sourceHeight": 937 },
+  "regions": [
+    { "id": "A", "name": "熊起东方总部", "purpose": "入职、晨会、任务发布、重大决策", "rect": { "x": 135, "y": 45, "w": 475, "h": 310 }, "entrance": { "x": 500, "y": 350 }, "npcSpawn": { "x": 350, "y": 210 }, "interaction": { "x": 390, "y": 235 } },
+    { "id": "B", "name": "云栖科技丘", "purpose": "技术协作、AI 产品、系统告警", "rect": { "x": 775, "y": 55, "w": 410, "h": 260 }, "entrance": { "x": 955, "y": 320 }, "npcSpawn": { "x": 965, "y": 185 }, "interaction": { "x": 970, "y": 210 } },
+    { "id": "C", "name": "创意水巷", "purpose": "市场调研、客户沟通、品牌活动", "rect": { "x": 1350, "y": 70, "w": 430, "h": 310 }, "entrance": { "x": 1485, "y": 350 }, "npcSpawn": { "x": 1580, "y": 210 }, "interaction": { "x": 1600, "y": 250 } },
+    { "id": "D", "name": "树影书院", "purpose": "培训、复盘、知识线、跨部门讨论", "rect": { "x": 1180, "y": 570, "w": 710, "h": 440 }, "entrance": { "x": 1270, "y": 750 }, "npcSpawn": { "x": 1235, "y": 710 }, "interaction": { "x": 1240, "y": 740 } },
+    { "id": "E", "name": "松风训练谷", "purpose": "团队协作、压力测试、户外任务", "rect": { "x": 745, "y": 825, "w": 420, "h": 235 }, "entrance": { "x": 945, "y": 810 }, "npcSpawn": { "x": 950, "y": 935 }, "interaction": { "x": 955, "y": 950 } },
+    { "id": "F", "name": "观澜会展码头", "purpose": "路演、发布会、客户接待、合作谈判", "rect": { "x": 105, "y": 695, "w": 615, "h": 335 }, "entrance": { "x": 680, "y": 800 }, "npcSpawn": { "x": 680, "y": 850 }, "interaction": { "x": 675, "y": 865 } },
+    { "id": "G", "name": "暖邻康护院", "purpose": "员工关怀、服务意识、突发协调", "rect": { "x": 145, "y": 500, "w": 470, "h": 260 }, "entrance": { "x": 575, "y": 650 }, "npcSpawn": { "x": 585, "y": 690 }, "interaction": { "x": 585, "y": 690 } },
+    { "id": "H", "name": "慢生活园·宿舍与桌游馆", "purpose": "休息、员工生活、桌游社交、夜间支线", "rect": { "x": 0, "y": 270, "w": 420, "h": 280 }, "entrance": { "x": 375, "y": 465 }, "npcSpawn": { "x": 380, "y": 410 }, "interaction": { "x": 380, "y": 430 } }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "nodeId": "M1-E01",
+  "nodeType": "main_story",
+  "regionId": "A",
+  "title": "入职晨会",
+  "body": "团队需要你在有限时间内确认第一项任务的推进方式。",
+  "choices": [
+    { "choiceId": "M1-E01-C01", "text": "先收集各方信息，再确定分工。" },
+    { "choiceId": "M1-E01-C02", "text": "先明确目标和截止时间，再推进执行。" }
+  ]
+}

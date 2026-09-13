@@ -1,0 +1,12 @@
+{
+  "eventId": "0b20c768-8fe9-4554-9e15-a0ee70e01d87",
+  "eventType": "main_choice",
+  "contentVersion": "v1",
+  "clientTime": "2026-09-13T10:00:00+08:00",
+  "durationSeconds": 42,
+  "payload": {
+    "regionId": "A",
+    "storyId": "M1-E01",
+    "choiceId": "M1-E01-C02"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "sessionId": "8ae1bf5c-4e86-4dc4-a502-438e03da5e64",
+  "contentVersion": "v1",
+  "state": {
+    "chapterId": "M1",
+    "currentNodeId": "M1-E01",
+    "completedStoryIds": [],
+    "completedActivityIds": [],
+    "unlockedRegionIds": ["A", "H"],
+    "energy": 100,
+    "npcAffinity": {},
+    "flags": {},
+    "scoreSummary": {},
+    "scoringVersion": "v1"
+  }
+}

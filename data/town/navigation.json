@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "cellSize": 24,
+  "coordinateSpace": { "width": 1920, "height": 1080 },
+  "walkableRegions": [
+    { "id": "north_road", "rect": [0, 340, 1920, 110] },
+    { "id": "south_road", "rect": [0, 635, 1920, 125] },
+    { "id": "west_connector", "rect": [360, 260, 115, 520] },
+    { "id": "east_connector", "rect": [1420, 260, 110, 470] },
+    { "id": "central_plaza", "rect": [700, 360, 280, 110] },
+    { "id": "a_forecourt", "rect": [80, 230, 315, 135] },
+    { "id": "b_forecourt", "rect": [760, 220, 320, 120] },
+    { "id": "c_forecourt", "rect": [1400, 220, 440, 150] },
+    { "id": "d_forecourt", "rect": [70, 500, 330, 150] },
+    { "id": "e_forecourt", "rect": [400, 700, 340, 150] },
+    { "id": "f_forecourt", "rect": [240, 780, 360, 180] },
+    { "id": "g_forecourt", "rect": [1270, 620, 420, 150] },
+    { "id": "h_forecourt", "rect": [740, 700, 430, 180] }
+  ],
+  "policy": "先用矩形区域验证路线连通性，最终美术锁定后替换为 Polygon2D/TileMap 导航多边形"
+}

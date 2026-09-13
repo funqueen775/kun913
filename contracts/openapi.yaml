@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: Workplace Town API
+  version: 1.0.0-draft
+  description: Shared contract for the Godot prototype, Harmony shell, and assessment backend.
+servers:
+  - url: https://api.example.com/api/v1
+paths:
+  /health:
+    get:
+      summary: Check service availability
+      responses:
+        '200':
+          description: Service is ready
+  /sessions:
+    post:
+      summary: Create or resume an assessment session
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resumeSessionId: { type: string }
+                contentVersion: { type: string, example: v1 }
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionResponse' }
+  /sessions/{sessionId}:
+    get:
+      summary: Read the authoritative session state
+      parameters: [ { $ref: '#/components/parameters/SessionId' } ]
+      responses:
+        '200':
+          description: Current session state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionResponse' }
+  /sessions/{sessionId}/next:
+    get:
+      summary: Get the next story node or free activity
+      parameters: [ { $ref: '#/components/parameters/SessionId' } ]
+      responses:
+        '200':
+          description: A playable node
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NextResponse' }
+  /sessions/{sessionId}/events:
+    post:
+      summary: Record one player event idempotently
+      parameters: [ { $ref: '#/components/parameters/SessionId' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlayerEvent' }
+      responses:
+        '200':
+          description: Event accepted or previous result returned for same eventId
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventResponse' }
+        '409': { description: Event conflicts with current story state }
+  /sessions/{sessionId}/report:
+    post:
+      summary: Generate the final report after required story nodes are complete
+      parameters: [ { $ref: '#/components/parameters/SessionId' } ]
+      responses:
+        '202': { description: Report generation requested }
+    get:
+      summary: Read a generated report
+      parameters: [ { $ref: '#/components/parameters/SessionId' } ]
+      responses:
+        '200':
+          description: Report ready
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Report' }
+components:
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    SessionState:
+      type: object
+      required: [chapterId, currentNodeId, unlockedRegionIds, energy, scoreSummary]
+      properties:
+        chapterId: { type: string, example: M1 }
+        currentNodeId: { type: string, example: M1-E01 }
+        completedStoryIds: { type: array, items: { type: string } }
+        completedActivityIds: { type: array, items: { type: string } }
+        unlockedRegionIds:
+          type: array
+          items: { type: string, enum: [A, B, C, D, E, F, G, H] }
+        energy: { type: integer, minimum: 0, maximum: 100 }
+        npcAffinity: { type: object, additionalProperties: { type: integer } }
+        flags: { type: object, additionalProperties: true }
+        scoreSummary: { type: object, additionalProperties: { type: number } }
+        scoringVersion: { type: string, example: v1 }
+    SessionResponse:
+      type: object
+      required: [sessionId, contentVersion, state]
+      properties:
+        sessionId: { type: string, format: uuid }
+        contentVersion: { type: string, example: v1 }
+        state: { $ref: '#/components/schemas/SessionState' }
+    PlayerEvent:
+      type: object
+      required: [eventId, eventType, contentVersion, clientTime, payload]
+      properties:
+        eventId: { type: string, format: uuid }
+        eventType:
+          type: string
+          enum: [region_entered, main_choice, free_activity, npc_dialogue_complete]
+        contentVersion: { type: string, example: v1 }
+        clientTime: { type: string, format: date-time }
+        durationSeconds: { type: integer, minimum: 0 }
+        payload:
+          type: object
+          required: [regionId]
+          properties:
+            regionId: { type: string, enum: [A, B, C, D, E, F, G, H] }
+            storyId: { type: string, example: M1-E01 }
+            activityId: { type: string, example: S1 }
+            choiceId: { type: string, example: M1-E01-C02 }
+    EventResponse:
+      type: object
+      required: [eventId, accepted, state]
+      properties:
+        eventId: { type: string, format: uuid }
+        accepted: { type: boolean }
+        duplicate: { type: boolean }
+        state: { $ref: '#/components/schemas/SessionState' }
+        nextNodeId: { type: string, nullable: true }
+    NextResponse:
+      type: object
+      required: [nodeId, nodeType, regionId, title]
+      properties:
+        nodeId: { type: string, example: M1-E01 }
+        nodeType: { type: string, enum: [main_story, free_activity, finished] }
+        regionId: { type: string, enum: [A, B, C, D, E, F, G, H] }
+        title: { type: string }
+        body: { type: string }
+        choices:
+          type: array
+          items:
+            type: object
+            required: [choiceId, text]
+            properties:
+              choiceId: { type: string }
+              text: { type: string }
+    Report:
+      type: object
+      required: [sessionId, scoringVersion, dimensions, generatedAt]
+      properties:
+        sessionId: { type: string, format: uuid }
+        scoringVersion: { type: string, example: v1 }
+        generatedAt: { type: string, format: date-time }
+        dimensions: { type: object, additionalProperties: { type: number } }
+        summary: { type: string }
+        evidence: { type: array, items: { type: object } }
