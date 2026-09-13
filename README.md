@@ -37,3 +37,7 @@ tools/                  可重复执行的资源处理工具
 区域对应：A 熊起东方总部、B 云栖科技丘、C 创意水巷、D 树影书院、E 松风训练谷、F 观澜会展码头、G 暖邻康护院、H 慢生活园。
 
 底图：`assets/town/workplace_town_reference.png`。
+
+## 自己绘制碰撞
+
+在 Godot 中打开 `tools/CollisionEditor.tscn`，按 F6 运行。左键逐点勾轮廓，右键撤销最后一个点；选中已有轮廓后可重画或删除。点击“保存到 collision.json”后，运行主场景并按 F3 即可检查红色轮廓。
