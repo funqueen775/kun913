@@ -130,3 +130,33 @@ TRACKING_EVENTS = (
 
 # 时间口径（算法册 §6）：所有统计用 seq，只有展示用 month
 TOTAL_MONTHS = 48
+
+# ---------------------------------------------------------------- M2 测量层（算法册 §4/§5/§3.4）
+# 大五行为分：对 0-10 量表中点等比缩放。
+#   行为分 = MID + DEV_MAX × mean(dir×coef) × loading_base[trait]
+#   「行为分对中点的偏离随该特质载荷等比变化」（算法册 §4 口径说明）：
+#   旧 C=1.00 时 3.5 → ×0.6 → 4.1，本公式同时复现两个数。
+BAYES_MID = 5.0
+BAYES_DEV_MAX = 5.0
+BAYES_K_DENOM = 5            # K = n / (n + 5)
+CONFLICT_THRESHOLD = 1.5     # 矛盾度超过 1.5 判定显著（算法册 §4）
+
+# 调节焦点分场景（算法册 §3.4 模型二）：整体比例会说谎，必须拆平时 vs 事故
+REGULATORY_DAILY = ("E04", "E06", "E23", "E24", "E30")     # 选型/架构/重构/技术栈/全自动
+REGULATORY_INCIDENT = ("E09", "E16")                        # 成本爆/凌晨热修复
+
+# 内在动机：work 型占比 × 自愿系数（自己想做=1.0，加班=0.6）
+OVERTIME_ACTIVITIES = ("S4",)   # S4 周末加班 = 卷公司的活，自愿系数 0.6
+VOLUNTEER_COEF = 1.0
+OVERTIME_COEF = 0.6
+
+# psych_drive 标记 → 报告文案（算法册 §6 表，命中即引用；预留标记无数据不下发）
+PSYCH_DRIVE_LINES = {
+    "avoid_conflict": "你怕的不是麻烦，是关系破裂。",
+    "transfer_pressure": "比起解决问题，你更想先解决「这是谁的问题」。",
+    "please_others": "你先想的是对方怎么想，然后才是你自己。",
+    "relieve_guilt": "你选它不是为了好处，是为了晚上睡得着。",
+}
+
+# 雷达样本最薄的柱（抗压韧性仅约 10 处机会），报告须说明由 H 行为记录补强
+RADAR_THIN_PILLAR = "抗压韧性"

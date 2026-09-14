@@ -13,8 +13,8 @@
 ```
 core      配置层   加载 5 份 JSON，构建期校验（唯一口径，不含任何标定数值副本）
 engine    引擎层   48 个月推进、结算、晋升三层、生存轨、危机对话
-measure   测量层   大五贝叶斯、六专题模型、雷达、投入结构          ← M2
-report    报告层   三层 × 13 模块 + 守界者双计数器                ← M3
+measure   测量层   大五贝叶斯、六专题模型、雷达、投入结构          ← M2（已实现）
+report    报告层   三层 × 13 模块 + 守界者双计数器                ← M3（已实现）
 api       接口层   REST + 持久化（7 张表）                        ← M4
 ```
 
@@ -24,21 +24,28 @@ api       接口层   REST + 持久化（7 张表）                        ← 
 backend/engine_core/          ← 本目录（2026-09-13 从旧工程 xiongxinzhuangzhi/server 迁入）
 ├── app/
 │   ├── core/
-│   │   ├── constants.py     六维/能力/大五/专题键与中文名、全局参数
+│   │   ├── constants.py     六维/能力/大五/专题键与中文名、全局参数、M2 测量参数
 │   │   ├── loader.py        5 份 JSON → ConfigRegistry（唯一入口）
 │   │   └── validators.py    算法册 §9 构建期校验清单的可执行实现
-│   └── engine/
-│       ├── state.py         GameState（公开账本 / 隐藏账本 / 进度 / 好感 / 生存轨）
-│       ├── settlement.py    归一化 + 统一结算链（六维/能力/大五/专题/flag/公开账本）
-│       ├── timeline.py      44 个节点排进 48 个月（默认排期，可配置）
-│       ├── monthly.py       月度精力分配（4 模板 × 4 选项）+ 休息点递减
-│       ├── free_time.py     自由周末（天气/收益递减/知心时刻/好感）
-│       ├── promotion.py     三层判定 + 7 考核窗 + 终局分级
-│       ├── survival.py      五级预警 + 新人保护 + 自我修复 + 最后谈话
-│       └── simulation.py    48 个月主循环 + 三种决策策略
+│   ├── engine/
+│   │   ├── state.py         GameState（公开账本 / 隐藏账本 / 进度 / 好感 / 生存轨）
+│   │   ├── settlement.py    归一化 + 统一结算链（六维/能力/大五/专题/flag/公开账本）
+│   │   ├── timeline.py      44 个节点排进 48 个月（默认排期，可配置）
+│   │   ├── monthly.py       月度精力分配（4 模板 × 4 选项）+ 休息点递减
+│   │   ├── free_time.py     自由周末（天气/收益递减/知心时刻/好感）
+│   │   ├── promotion.py     三层判定 + 7 考核窗 + 终局分级
+│   │   ├── survival.py      五级预警 + 新人保护 + 自我修复 + 最后谈话
+│   │   └── simulation.py    48 个月主循环 + 三种决策策略
+│   ├── measure/             ← M2 测量层
+│   │   ├── bayes.py         贝叶斯后验（K=n/(n+5)、矛盾度、跨情境一致性）
+│   │   ├── topics.py        六专题聚合（分场景拆解 + 门槛降级 + psych_drive 引用）
+│   │   ├── radar.py         雷达六柱归一化（满分按事件口径实算，与校验器同算法）
+│   │   └── investment.py    投入结构与内在动机（work 占比 × 自愿系数）
+│   └── report/              ← M3 报告层
+│       └── __init__.py      build() 唯一入口，输出 = contracts/openapi.yaml 的 Report 形状
 └── scripts/
     ├── validate_config.py   构建期校验
-    └── simulate.py          48 个月端到端跑批
+    └── simulate.py          48 个月端到端跑批（--report 直接产出报告 JSON）
 ```
 
 数据目录**不复制副本**，查找顺序（见 `app/core/loader.py`）：
@@ -79,15 +86,23 @@ python scripts/simulate.py --policy utility --json out.json
 
 | 项 | 在哪 | 说明 |
 | --- | --- | --- |
-| 大五贝叶斯后验 | M2 measure | 后验 = 自评 + K×(行为分−自评)，K=n/(n+5)；矛盾度、信度检查 |
-| 六专题模型聚合 | M2 | 各模型均值/净分/分场景拆解 + 证据不足降级规则 |
-| 雷达归一化 | M2 | 六柱 0–100；满分口径见下方待确认 ① |
-| 投入结构与内在动机 | M2 | work 型占比 × 自愿系数 |
-| 七个特色分析 | M2 | 犹豫地图、横跳指纹、冲刺检测、伪装指数等 |
-| 三层报告 + 13 模块 | M3 | 文案模板、证据引用、五档词呈现 |
-| REST API + 持久化 | M4 | 7 张表、17 个埋点上报接口 |
+| REST API + 持久化 | M4 | 7 张表、17 个埋点上报接口（契约已按 V2.3 扩齐：`contracts/openapi.yaml` + `fixtures/report-ready.json`） |
+| 岗位市场参考 | M4/后续 | 二层 JD 语料未接入，报告 market 层现为 stub（dataSource=stub） |
 | BFI-44 效标验证 | 内测 | 生私线：r≥0.4 才算方法可用 |
 | 机制层对接 | 队友 | 公开生命扣减规则、连续加班判定、事故处置扣血 |
+
+### M2/M3 已实现（2026-09-14）
+
+- **测量层**（`app/measure/`）：贝叶斯后验 `后验 = 自评 + K×(行为分−自评)，K=n/(n+5)`，
+  行为分按 `MID + DEV_MAX × mean(dir×coef) × loading_base` 对中点等比缩放（复现算法册 §4 的 3.5→4.1）；
+  矛盾度阈值判定；跨情境一致性（situational →「你的 X 是有条件的」）。
+  六专题聚合含分场景拆解（调节焦点日常 vs 事故）、单弦门槛（道德基础）、
+  归因双层（E19 命中即引用 + 危机对话对照）、psych_drive 命中即高光。
+  雷达满分与校验器同算法（实算 40/37/35/34/30/8）。投入结构 = work 占比 × 自愿系数。
+- **报告层**（`app/report/`）：三层 × 13 模块一次成形，输出即契约形状（camelCase），
+  呈现铁律落地：推断值给五档词不给点值、阈值不出现在文案、证据不足模块整体消失。
+- **验证**：index/utility/random 三策略端到端出报告；
+  `python scripts/simulate.py --policy random --seed 7 --report out.json --self C=7,A=6`。
 
 ## 六、待确认清单（后端已把问题挑出来，等拍板）
 

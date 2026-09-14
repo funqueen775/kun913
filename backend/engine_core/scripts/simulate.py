@@ -68,6 +68,10 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--user", default="sim")
     ap.add_argument("--json", dest="json_out", default=None)
+    ap.add_argument("--report", dest="report_out", default=None,
+                    help="生成三层报告（Report 契约形状）并写出 JSON；可再配 --self 传入自评")
+    ap.add_argument("--self", dest="self_ratings", default=None,
+                    help="建档自评，如 C=7,A=6,O=6,E=5,N=6（不传则只出行为条）")
     ap.add_argument("--trace", type=int, default=0, help="打印前 N 个月的逐月轨迹")
     args = ap.parse_args()
 
@@ -109,6 +113,26 @@ def main() -> int:
         Path(args.json_out).write_text(
             json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"\n已写出 {args.json_out}")
+
+    if args.report_out:
+        from app.report import build as build_report
+        ratings = None
+        if args.self_ratings:
+            ratings = {}
+            for part in args.self_ratings.split(","):
+                k, v = part.split("=")
+                ratings[k.strip().upper()] = float(v)
+        rep = build_report(result, reg, self_ratings=ratings, session_id=args.user)
+        Path(args.report_out).write_text(
+            json.dumps(rep, ensure_ascii=False, indent=1), encoding="utf-8")
+        shown = rep["layers"]["persona"]
+        print(f"\n报告已写出 {args.report_out}")
+        print(f"  人格速写：{shown['personaSketch'] or '（专题证据不足，无声速写）'}")
+        print(f"  大五对照："
+              + " | ".join(f"{r['traitCn']} {'档' if r['behaviorAvailable'] else '证据不足'}"
+                           for r in shown["bigfive"]))
+        print(f"  专题模块：{[t['key'] for t in shown['topics']]}")
+        print(f"  psych_drive 高光：{len(shown['psychDriveHighlights'])} 条")
     return 0
 
 
