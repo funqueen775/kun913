@@ -66,6 +66,87 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/EventResponse' }
         '409': { description: Event conflicts with current story state }
+  /sessions/{sessionId}/npcs/{npcId}/memories:
+    get:
+      summary: List what an NPC remembers about the player (memory wall / dialogue context)
+      description: >
+        Deterministic projection of the session event stream, grouped by memory layer
+        (fact / relation / state / social, see the game-mechanics doc §5.2).
+        Read-only: memories are derived from events, never stored or mutated separately.
+      parameters:
+        - { $ref: '#/components/parameters/SessionId' }
+        - { $ref: '#/components/parameters/NpcId' }
+        - name: layers
+          in: query
+          required: false
+          schema:
+            type: array
+            items: { type: string, enum: [fact, relation, state, social] }
+          style: form
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Memory items, newest seq first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NpcMemoriesResponse' }
+  /sessions/{sessionId}/npcs/{npcId}/chat:
+    post:
+      summary: Free casual chat with an NPC (companionship only, never assessment evidence)
+      description: >
+        Idempotent by eventId like every event. The backend assembles memory context,
+        then replies with a template (always available) or an LLM-polished variant.
+        Chat content is stored in the game-memory stream only and must never reach the
+        assessment evidence store (anti-pollution rule, mechanics doc §10).
+      parameters:
+        - { $ref: '#/components/parameters/SessionId' }
+        - { $ref: '#/components/parameters/NpcId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatRequest' }
+      responses:
+        '200':
+          description: Reply accepted or previous reply returned for the same eventId
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatResponse' }
+        '404': { description: Unknown npcId for this session }
+  /sessions/{sessionId}/messages:
+    get:
+      summary: List proactive NPC messages (inbox)
+      description: >
+        Produced by the trigger scheduler (state / relation / story / memory triggers,
+        mechanics doc §5.3) after settlement or event submission. Cooldowns and the
+        per-month priority cap are already applied server-side; the client only renders.
+      parameters:
+        - { $ref: '#/components/parameters/SessionId' }
+        - name: unreadOnly
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Messages, newest first
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NpcMessagesResponse' }
+  /sessions/{sessionId}/messages/{messageId}/read:
+    post:
+      summary: Mark one proactive message as read
+      parameters:
+        - { $ref: '#/components/parameters/SessionId' }
+        - name: messageId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Marked as read }
   /sessions/{sessionId}/report:
     post:
       summary: Generate the final report after required story nodes are complete
@@ -88,6 +169,12 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    NpcId:
+      name: npcId
+      in: path
+      required: true
+      schema: { type: string, example: wang_ge }
+      description: Stable NPC id from data/town/npcs.json (wang_ge / chen_gong / xiao_lin / lao_zhou / xiao_zhao)
   schemas:
     SessionState:
       type: object
@@ -102,6 +189,12 @@ components:
           items: { type: string, enum: [A, B, C, D, E, F, G, H] }
         energy: { type: integer, minimum: 0, maximum: 100 }
         npcAffinity: { type: object, additionalProperties: { type: integer } }
+        npcRelationStage:
+          type: object
+          description: Relation stage per NPC (mechanics doc §5.4); NPCs without a relation system are absent
+          additionalProperties:
+            type: string
+            enum: [Lv1, Lv2, Lv3, Lv4, Lv5]
         flags: { type: object, additionalProperties: true }
         scoreSummary: { type: object, additionalProperties: { type: number } }
         scoringVersion: { type: string, example: v1 }
@@ -167,3 +260,87 @@ components:
         dimensions: { type: object, additionalProperties: { type: number } }
         summary: { type: string }
         evidence: { type: array, items: { type: object } }
+    MemoryRef:
+      type: object
+      description: >
+        Reference to one event a memory was derived from, so any NPC line can be
+        replayed. `storyId` is an opaque string: the mapping between contract story
+        ids and engine event keys stays inside the backend.
+      required: [eventId, month, layer, fact]
+      properties:
+        eventId: { type: string, format: uuid }
+        seq: { type: integer, minimum: 0 }
+        month: { type: integer, minimum: 1, maximum: 48 }
+        storyId: { type: string, nullable: true }
+        layer: { type: string, enum: [fact, relation, state, social] }
+        tag: { type: string, nullable: true }
+        fact: { type: string }
+    NpcMemory:
+      type: object
+      required: [npcId, layer, kind, month, fact, eventRef]
+      properties:
+        npcId: { type: string }
+        layer: { type: string, enum: [fact, relation, state, social] }
+        kind: { type: string, example: promise }
+        month: { type: integer, minimum: 1, maximum: 48 }
+        fact: { type: string }
+        eventRef: { type: string, format: uuid }
+        seq: { type: integer, minimum: 0 }
+    NpcMemoriesResponse:
+      type: object
+      required: [npcId, relationStage, items]
+      properties:
+        npcId: { type: string }
+        relationStage: { type: string, enum: [Lv1, Lv2, Lv3, Lv4, Lv5] }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/NpcMemory' }
+    ChatRequest:
+      type: object
+      required: [eventId, contentVersion, clientTime, text]
+      properties:
+        eventId: { type: string, format: uuid }
+        contentVersion: { type: string, example: v1 }
+        clientTime: { type: string, format: date-time }
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+    ChatResponse:
+      type: object
+      required: [eventId, reply, generatedBy, memoryRefs, relationStage]
+      properties:
+        eventId: { type: string, format: uuid }
+        reply: { type: string }
+        generatedBy:
+          type: string
+          enum: [template, llm]
+          description: template = deterministic fallback; llm = polished wording, facts unchanged
+        memoryRefs:
+          type: array
+          items: { $ref: '#/components/schemas/MemoryRef' }
+        relationStage: { type: string, enum: [Lv1, Lv2, Lv3, Lv4, Lv5] }
+    NpcMessage:
+      type: object
+      required: [messageId, npcId, kind, title, body, month, memoryRefs, priority, read]
+      properties:
+        messageId: { type: string }
+        npcId: { type: string }
+        kind:
+          type: string
+          enum: [state, relation, story, memory]
+        title: { type: string }
+        body: { type: string }
+        month: { type: integer, minimum: 1, maximum: 48 }
+        memoryRefs:
+          type: array
+          items: { $ref: '#/components/schemas/MemoryRef' }
+        priority: { type: integer, minimum: 0 }
+        read: { type: boolean }
+    NpcMessagesResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/NpcMessage' }
