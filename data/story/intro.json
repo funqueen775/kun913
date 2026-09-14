@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 2,
+  "_source": "移植自「熊心壮职」React 前端：townIntro.ts + roster.ts + TitleScreen.tsx + tokens.css；v2 起人物头像改用 kun913 自带的纸娃娃图集。",
+  "_portNote": "kun913 是 Godot 2D 项目，React 的 JSX/CSS 无法复用；这里只搬【数据与设计参数】，视图由 scripts/ui/IntroSequence.gd 用 Godot Control 节点重建。 人物资料不再存在本文件，统一读 res://data/town/npcs.json（单一来源）。",
+  "_conflict": [
+    "【已定 2026-09-13】① 角色形象：保留【熊】设定，美术出熊的纸娃娃图集；出图前沿用人类 loadout 占位，见 data/town/npcs.json 的 _artNote。",
+    "【已定 2026-09-13】② 人物数量与名字：只用 5 只熊（王哥/陈工/小林/老周/小赵），原 8 个区域 NPC 作废；演员表单一来源 = data/town/npcs.json。",
+    "【已澄清】③ 区域名：以 data/town/regions.json 为准。WorkplaceTown.gd 里硬编码的 ZONES 只是读不到 JSON 时的兜底，运行时会被覆盖，无需处理。"
+  ],
+  "_portraitNote": "人物头像不再等美术：直接裁 kun913 的纸娃娃图集（256x320，单帧 64x80，第 1 行=朝下，第 1 列=站立帧）。loadout 可从 elder_man / skirt_woman / suit_man / neutral_hoodie / energetic_ponytail / street_creator 里挑。",
+  "canvas": {
+    "designWidth": 1600,
+    "designHeight": 900,
+    "viewportWidth": 1920,
+    "viewportHeight": 1080,
+    "scale": 1.2,
+    "_note": "React 版按 1600x900 出稿，Godot 侧 project.godot 是 1920x1080。坐标乘 1.2 换算。"
+  },
+  "font": "res://assets/fonts/NotoSansCJKsc-Regular.otf",
+  "palette": {
+    "cream": "#F3E3C2",
+    "creamLight": "#FAF0D9",
+    "parchmentDeep": "#EBD8B2",
+    "ink": "#5B3A26",
+    "brownText": "#7A5533",
+    "woodDark": "#452716",
+    "wood": "#7A4A32",
+    "woodLight": "#9C6644",
+    "leaf": "#6BA24A",
+    "brick": "#B94A32",
+    "brickDark": "#9C3A25",
+    "orange": "#E08A3C",
+    "orangeDark": "#C96A2E",
+    "green": "#2F7A33",
+    "grass": "#7CBF4A",
+    "titleOnWood": "#FBEBC8"
+  },
+  "metrics": {
+    "radiusXs": 4,
+    "radiusSm": 6,
+    "radiusMd": 10,
+    "radiusLg": 16,
+    "stroke": 2,
+    "strokeLg": 3,
+    "bevelHeight": 3,
+    "safetyMargin": 55,
+    "portraitZoom": 3.0,
+    "_note": "portraitZoom：纸娃娃单帧只有 64x80，放大 3 倍当头像，必须用 nearest 过滤否则糊。"
+  },
+  "titleScreen": {
+    "title": "熊心壮职",
+    "background": "res://assets/ui/intro/title_bg.png",
+    "topbar": [
+      {
+        "icon": "report",
+        "label": "我的报告"
+      },
+      {
+        "icon": "settings",
+        "label": "游戏设置"
+      },
+      {
+        "icon": "help",
+        "label": "帮助"
+      }
+    ],
+    "menu": [
+      {
+        "id": "continue",
+        "label": "继续游戏",
+        "variant": "primary"
+      },
+      {
+        "id": "new",
+        "label": "开始新游戏",
+        "variant": "primary"
+      },
+      {
+        "id": "load",
+        "label": "加载游戏",
+        "variant": "primary"
+      },
+      {
+        "id": "report",
+        "label": "我的报告",
+        "variant": "secondary"
+      },
+      {
+        "id": "settings",
+        "label": "游戏设置",
+        "variant": "secondary"
+      },
+      {
+        "id": "exit",
+        "label": "退出游戏",
+        "variant": "exit"
+      }
+    ]
+  },
+  "introScreen": {
+    "footerHint": "先认识小镇，再开始上班",
+    "doneLabel": "进入小镇",
+    "castNote": "这五位是固定的，不增不减。他们各有各的立场，也各有各的事要忙——不是围着你转的。",
+    "pages": [
+      {
+        "id": "town",
+        "tab": "小镇介绍",
+        "kicker": "欢迎来到这里",
+        "title": "熊有熊的活法",
+        "body": [
+          "镇上的熊，都在忙自己的事。产品熊催你交活，技术熊泼你冷水，实习熊偷偷学你的招——他们各有各的活法，不是围着你转的。",
+          "你也是一只刚入职的熊，落脚在熊起东方总部。往后 48 个月，你会住进这座一湖、两环、八组团的小镇。"
+        ],
+        "art": {
+          "image": "res://assets/ui/intro/town_1.png"
+        },
+        "ripples": true
+      },
+      {
+        "id": "people",
+        "tab": "人物名单",
+        "kicker": "你会遇到的熊",
+        "title": "五位同事，五种立场",
+        "body": [],
+        "cast": true
+      },
+      {
+        "id": "life",
+        "tab": "开始生活",
+        "kicker": "怎么过这四十八个月",
+        "title": "不用急，时间很长",
+        "body": [
+          "每 3 个月，你会多出一个自由周末，一共 16 次。19 件事可以做：一个人待着，约人喝杯咖啡，或者跟一群人上山。",
+          "跟谁走得近，谁就会来叫你。所谓好感度不是分数，是「他会不会在下班后想起你」。",
+          "你在这里做的每个选择，小镇都记着。镇中心有一面记忆墙，和一只上锁的抽屉。"
+        ],
+        "art": {
+          "image": "res://assets/ui/intro/town_3.png"
+        }
+      }
+    ]
+  },
+  "paperDoll": {
+    "atlasPattern": "res://assets/characters/paper_doll_64/compiled/{loadout}_walk_64.png",
+    "frame": [
+      64,
+      80
+    ],
+    "sheet": [
+      256,
+      320
+    ],
+    "directionRows": {
+      "down": 0,
+      "right": 1,
+      "up": 2,
+      "left": 3
+    },
+    "columnSequence": [
+      "neutral",
+      "step_right",
+      "neutral",
+      "step_left"
+    ],
+    "portraitRegion": [
+      0,
+      0,
+      64,
+      80
+    ],
+    "_note": "portraitRegion = 第 1 行（朝下）第 1 列（站立帧）。头像就用这一帧裁出来放大。"
+  },
+  "artSlots": [
+    "assets/ui/intro/title_bg.png   标题底图（1920x1080，无 UI）—— 唯一的必需大图",
+    "assets/ui/intro/town_1.png      「小镇介绍」页插图（可选，缺省留空羊皮纸块）",
+    "assets/ui/intro/town_3.png      「开始生活」页插图（可选）"
+  ],
+  "nextScreen": {
+    "id": "game",
+    "note": "开场结束后 change_scene_to_file(res://Main.tscn) 进地图。"
+  },
+  "castSource": "res://data/town/npcs.json"
+}
