@@ -150,11 +150,23 @@ paths:
   /sessions/{sessionId}/report:
     post:
       summary: Generate the final report after required story nodes are complete
+      description: >
+        Asynchronous. The algorithm pipeline (scoring accumulation → Bayesian
+        posterior → topic aggregation → three-layer report, algorithm doc V2.3 §9)
+        runs server-side; the client only polls the status endpoint and renders.
+        Idempotent: requesting generation twice returns the same handle.
       parameters: [ { $ref: '#/components/parameters/SessionId' } ]
       responses:
-        '202': { description: Report generation requested }
+        '202':
+          description: Report generation requested
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportStatus' }
     get:
       summary: Read a generated report
+      description: >
+        200 only when ready; poll the status endpoint otherwise.
+        Never exposes scoring thresholds or the scoring card (anti-leak rule).
       parameters: [ { $ref: '#/components/parameters/SessionId' } ]
       responses:
         '200':
@@ -162,6 +174,17 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Report' }
+        '404': { description: Report not generated yet }
+  /sessions/{sessionId}/report/status:
+    get:
+      summary: Poll report generation status
+      parameters: [ { $ref: '#/components/parameters/SessionId' } ]
+      responses:
+        '200':
+          description: Current generation status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportStatus' }
 components:
   parameters:
     SessionId:
@@ -208,11 +231,36 @@ components:
     PlayerEvent:
       type: object
       required: [eventId, eventType, contentVersion, clientTime, payload]
+      description: >
+        One raw tracking event. eventType uses the 17-tap system from the
+        algorithm doc V2.3 §2 ( TRACKING_EVENTS ); the server maps taps onto
+        DecisionLog. The client never computes scores.
       properties:
         eventId: { type: string, format: uuid }
         eventType:
           type: string
-          enum: [region_entered, main_choice, free_activity, npc_dialogue_complete]
+          enum:
+            # ---- 测评埋点（算法册 V2.3 §2，17 个）
+            - profile_start          # 建档开始
+            - profile_answer         # 建档答题：题号/选项/耗时 → 自评先验 + 敷衍检测
+            - manual_read            # 第 1 月读手册：章节/时长/是否跳过 → 动机信号
+            - event_trigger          # 事件触发：事件 ID/命中原因/权重快照 → 可解释
+            - node_enter             # 进入决策点：时间戳 → 犹豫主数据源起点
+            - option_hover           # 选项悬停：横跳计数 → 摇摆指纹
+            - option_click           # 选项确认：选前状态快照 → 犹豫与摇摆（主数据源）
+            - allocation_click       # 月度精力分配：分配向量 → 价值排序
+            - explore_click          # 自由周末：组团/活动/类型/同伴/天气 → 投入结构
+            - survival_state_change  # 生存轨状态迁移：从/到/原因事件编号 → 处境轨迹
+            - crisis_talk_choice     # 危机对话：归因选项/犹豫 → 归因指纹
+            - monthly_action_variant # 月度轻节点：变体类型 → 日常负荷
+            - achievement_view       # 成就节点 C1/C2/C3：停留时长/是否跳过 → 参与度
+            - zone_dwell             # 进出组团：组团/进出时间 → 空间偏好（彩蛋）
+            - ai_reaction_view       # 反馈查看：时长 → 沉浸度
+            - task_complete          # 结束：汇总 → 沉浸度
+            - report_view            # 报告浏览：顺序/时长 → 报告优化
+            # ---- 叙事流补充（非测评，服务端只落日志）
+            - region_entered
+            - npc_dialogue_complete
         contentVersion: { type: string, example: v1 }
         clientTime: { type: string, format: date-time }
         durationSeconds: { type: integer, minimum: 0 }
@@ -221,9 +269,19 @@ components:
           required: [regionId]
           properties:
             regionId: { type: string, enum: [A, B, C, D, E, F, G, H] }
-            storyId: { type: string, example: M1-E01 }
-            activityId: { type: string, example: S1 }
-            choiceId: { type: string, example: M1-E01-C02 }
+            storyId: { type: string, example: E27 }
+            activityId: { type: string, example: W1 }
+            choiceId: { type: string, example: E27-A }
+            templateId: { type: string, example: work_late }
+            npcId: { type: string }
+            questionId: { type: string, example: profile_q3 }
+            hesitationMs: { type: integer, minimum: 0, description: 进入决策点到确认的毫秒数，前端原样上报、服务端不加工 }
+            switchCount: { type: integer, minimum: 0, description: 选项间横跳次数 }
+            snapshot:
+              type: object
+              additionalProperties: true
+              description: 选前状态快照（精力/金钱/职级等公开账本），校准与对账用
+            skip: { type: boolean }
     EventResponse:
       type: object
       required: [eventId, accepted, state]
@@ -250,16 +308,254 @@ components:
             properties:
               choiceId: { type: string }
               text: { type: string }
-    Report:
+    ReportStatus:
       type: object
-      required: [sessionId, scoringVersion, dimensions, generatedAt]
+      required: [sessionId, status]
       properties:
         sessionId: { type: string, format: uuid }
-        scoringVersion: { type: string, example: v1 }
+        status:
+          type: string
+          enum: [pending, generating, ready, failed]
+        reason: { type: string, description: failed 时的原因摘要，不给内部堆栈 }
+    Report:
+      type: object
+      required: [sessionId, scoringVersion, generatedAt, layers]
+      description: >
+        三层报告（算法册 V2.3 §6）：一层职场人格画像（48 个月行为，可信度高）、
+        二层岗位市场参考（真实 JD，市场数据非测评）、三层交叉提示（前两层叠加，
+        提示非结论）。呈现铁律：可观测事实给死数字；推断值给档位不给点值；
+        阈值永不出现；证据不足的模块整体不出现（displayable=false 时客户端不渲染）。
+      properties:
+        sessionId: { type: string, format: uuid }
+        scoringVersion: { type: string, example: v2.9 }
         generatedAt: { type: string, format: date-time }
-        dimensions: { type: object, additionalProperties: { type: number } }
+        decisionCount: { type: integer, description: 核心决策点数（seq 口径，约 103） }
+        layers:
+          type: object
+          required: [persona, market, crossHints]
+          properties:
+            persona:
+              $ref: '#/components/schemas/PersonaLayer'
+            market:
+              $ref: '#/components/schemas/MarketLayer'
+            crossHints:
+              $ref: '#/components/schemas/CrossHintsLayer'
+        evidenceReplay:
+          type: array
+          description: 行为证据回放（犹豫离群点、横跳离群点等），按 seq 升序
+          items: { $ref: '#/components/schemas/EvidenceRef' }
+    EvidenceRef:
+      type: object
+      description: >
+        证据引用。seq 是统计口径（跨玩家对齐），month 是该玩家自己的游戏内月份
+        （只用于本人报告的剧情时间卡片）。犹豫/横跳为 null 表示该来源不采集。
+      required: [seq, month, nodeId]
+      properties:
+        seq: { type: integer, minimum: 1 }
+        month: { type: integer, minimum: 1, maximum: 48 }
+        restMonth: { type: boolean, description: 是否发生在强制休息月 }
+        nodeId: { type: string, example: E07 }
+        optionId: { type: string, example: C }
+        hesitationMs: { type: integer, nullable: true }
+        switchCount: { type: integer, nullable: true }
+        snippet: { type: string, description: 选项文本或行为一句话 }
+    BigFiveTrait:
+      type: object
+      required: [trait, traitCn]
+      description: >
+        行为证据 n<5（BIGFIVE_MIN_EVIDENCE）时 behavior/posterior 为 null，
+        behaviorAvailable=false，客户端只渲染自评条并附「行为证据不足，仅供参考」。
+      properties:
+        trait: { type: string, enum: [O, C, E, A, N] }
+        traitCn: { type: string, example: 尽责性 }
+        self: { type: number, nullable: true, description: 建档自评，0-10；未建档为 null }
+        behavior: { type: number, nullable: true, description: 行为分，0-10，按 loading_base 对中点等比缩放 }
+        behaviorStd: { type: number, nullable: true }
+        posterior: { type: number, nullable: true, description: 贝叶斯后验 = 自评 + K×(行为分−自评)，K=n/(n+5) }
+        conflict: { type: number, nullable: true, description: 矛盾度 = |自评 − 后验| }
+        conflictSignificant: { type: boolean }
+        evidenceCount: { type: integer }
+        behaviorAvailable: { type: boolean }
+        consistency:
+          type: string
+          nullable: true
+          enum: [consistent, situational, null]
+          description: 跨情境一致性；situational 时报告写「你的 X 是有条件的」
+        note: { type: string }
+    RadarPillar:
+      type: object
+      required: [pillar, score, cap]
+      properties:
+        pillar: { type: string, example: 原则底线 }
+        score: { type: integer, minimum: 0, maximum: 100, description: 归一化 0-100 }
+        cap: { type: integer, description: 该柱标定满分（按事件口径实算），供客户端标注样本厚度 }
+        evidenceCount: { type: integer }
+        note: { type: string, description: 例：抗压韧性仅 10 处机会，文案须说明由 H 行为记录补强 }
+    TopicModule:
+      type: object
+      required: [key, title, displayable, n]
+      description: >
+        六个补充模型的专题模块（SDT/调节焦点/道德基础/归因/CFC/NFC）。
+        证据不足门槛即 displayable=false；红线：专题不进大五、不给综合分。
+      properties:
+        key:
+          type: string
+          enum: [sdt, regulatory_focus, moral_foundation, attribution, cfc, nfc]
+        title: { type: string, example: 内在动机与适配信号 }
+        displayable: { type: boolean }
+        n: { type: integer, description: 相关选择数 }
+        threshold: { type: integer, description: 展示门槛（仅供内测对账，客户端可不渲染） }
         summary: { type: string }
-        evidence: { type: array, items: { type: object } }
+        bullets:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string, example: 促进 vs 预防（日常） }
+              value: { type: string, example: 4 / 3 }
+        evidence:
+          type: array
+          items: { $ref: '#/components/schemas/EvidenceRef' }
+    PersonaLayer:
+      type: object
+      required: [bigfive]
+      description: 一层·职场人格画像。模块缺数据时缺省该字段（客户端按空渲染跳过）。
+      properties:
+        personaSketch: { type: string, description: 人格速写，含调节焦点/价值观段 }
+        bigfive:
+          type: array
+          items: { $ref: '#/components/schemas/BigFiveTrait' }
+        selfVsBehaviorConflicts:
+          type: array
+          description: 自评 vs 行为显著矛盾点（矛盾度超标的特质），措辞用行为语言
+          items:
+            type: object
+            properties:
+              traitCn: { type: string }
+              line: { type: string, example: 你说你靠谱，但八次抄了六次近路 }
+              evidence: { type: array, items: { $ref: '#/components/schemas/EvidenceRef' } }
+        radar:
+          type: array
+          items: { $ref: '#/components/schemas/RadarPillar' }
+        topics:
+          type: array
+          items: { $ref: '#/components/schemas/TopicModule' }
+        investment:
+          type: object
+          description: 投入结构（16 个自由周末）+ 内在动机指数。红线：只作适配提示，不说「适合/不适合」
+          properties:
+            weekendCounts:
+              type: object
+              additionalProperties: { type: integer }
+              description: 按 work/social/solo 聚合的次数
+            innerMotivation: { type: number, nullable: true, description: work 占比 × 自愿系数，0-1 }
+            line: { type: string, example: 16 个周末，9 次给了技术。没人要求的时候你也在学 }
+            evidence: { type: array, items: { $ref: '#/components/schemas/EvidenceRef' } }
+        energyLedger:
+          type: object
+          description: >
+            精力管理（H 增减轨迹）。铁律：不给 H 数值、不标危险线阈值，只用行为语言与证据编号
+          properties:
+            dangerZoneCount: { type: integer, description: 进入危险区的决策次数（不给阈值本身） }
+            pushedThroughCount: { type: integer, description: 危险区里选择硬扛的次数 }
+            recoveryWays:
+              type: object
+              additionalProperties: { type: integer }
+              description: 恢复方式计数（选择型休息/花精力主动休息/被迫停下）
+            line: { type: string, example: 39 个事件里，你有 6 次把自己用到危险区，其中 4 次选了硬扛 }
+            evidence: { type: array, items: { $ref: '#/components/schemas/EvidenceRef' } }
+        situationTrack:
+          type: object
+          description: 处境轨迹（生存轨）。只给状态迁移史与事实，不给系统内部阈值
+          properties:
+            states:
+              type: array
+              items:
+                type: object
+                properties:
+                  month: { type: integer }
+                  state: { type: string, example: observation }
+                  reason: { type: string }
+            burnoutCount: { type: integer, description: 倦怠事件次数（H 归零） }
+        promotionTrack:
+          type: object
+          description: 晋升轨迹与终局（7 个考核窗，口径自剧情册 V5.27）
+          properties:
+            windows:
+              type: array
+              items:
+                type: object
+                properties:
+                  seq: { type: integer, description: 第 N 个考核窗（统计口径，随强制休息顺延） }
+                  month: { type: integer }
+                  passed: { type: boolean }
+                  levelAfter: { type: integer }
+            finalGrade:
+              type: object
+              properties:
+                grade: { type: string, enum: [传承者, 中坚者, 守界者] }
+                level: { type: integer }
+                line: { type: string, example: 你在 8 次可以甩锅的场合守住了 6 次 }
+        sprintAndDisguise:
+          type: object
+          description: 冲刺检测 + 伪装指数。措辞红线：伪装输出有伤人风险，只描述行为模式
+          properties:
+            sprint:
+              type: array
+              items:
+                type: object
+                properties:
+                  windowSeq: { type: integer }
+                  line: { type: string, example: 11 个月没找过王哥，考核月找了 3 次 }
+            disguise:
+              type: object
+              properties:
+                level: { type: string, enum: [low, medium, high] }
+                line: { type: string }
+        psychDriveHighlights:
+          type: array
+          description: >
+            纯亏选项（psych_drive）命中即高光引用；一处都没选到则该字段为空数组、
+            不做补偿性推断。同一行为不双重定性：雷达已扣分，此处只做心理驱动解读。
+          items:
+            type: object
+            properties:
+              tag: { type: string, enum: [avoid_conflict, transfer_pressure, please_others, relieve_guilt] }
+              line: { type: string, example: 你怕的不是麻烦，是关系破裂 }
+              evidence: { $ref: '#/components/schemas/EvidenceRef' }
+    MarketLayer:
+      type: object
+      required: [dataSource]
+      description: >
+        二层·岗位市场参考：来源是真实 JD 语料（市场数据，非测评）。语料未接入时
+        dataSource=stub，客户端渲染占位说明。
+      properties:
+        dataSource:
+          type: string
+          enum: [jd_corpus, stub]
+        corpusSize: { type: integer }
+        jobs:
+          type: array
+          items:
+            type: object
+            properties:
+              title: { type: string, example: Agent 后端工程师 }
+              requirementTop: { type: string, example: 沟通能力要求占比 63% }
+              salaryMedian: { type: string, example: 月薪中位 18K }
+    CrossHintsLayer:
+      type: object
+      required: [hints]
+      description: 三层·交叉提示：画像 vs 岗位要求。全部是提示非结论，禁止「只能做 X」断言
+      properties:
+        hints:
+          type: array
+          items:
+            type: object
+            properties:
+              line: { type: string, example: 这个岗位最看重的「责任心」，你的行为落在偏低档——差距不在能力，在没人监督时的那几次 }
+              basis:
+                type: array
+                items: { $ref: '#/components/schemas/EvidenceRef' }
     MemoryRef:
       type: object
       description: >
