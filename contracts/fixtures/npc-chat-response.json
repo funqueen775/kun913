@@ -1,0 +1,17 @@
+{
+  "eventId": "6d4f0a9e-83c2-4b17-9e55-1f7a2b8c6d04",
+  "reply": "王哥看了你一眼：「总算想明白了。第 3 个月你说要补评测报告，我等你这句话等了小半年——没有那批用例，这次压测我们连哪里先崩都说不清。」",
+  "generatedBy": "template",
+  "memoryRefs": [
+    {
+      "eventId": "0b20c768-8fe9-4554-9e15-a0ee70e01d87",
+      "seq": 4,
+      "month": 3,
+      "storyId": "M1-E02",
+      "layer": "fact",
+      "tag": "promise",
+      "fact": "你在技术选型时答应王哥，两周内补一份自研编排层的评测报告。"
+    }
+  ],
+  "relationStage": "Lv2"
+}

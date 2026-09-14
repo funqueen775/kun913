@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>熊心壮职 · Agent开发师 · 报告数据链路与算法设计 V1</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #f7f7f5; color: #2c2c2a;
+    font-size: 16px; line-height: 1.75;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 24px; line-height: 1.4; margin: 8px 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid #e4e2da; scroll-margin-top: 56px; }
+  h3 { font-size: 17px; margin: 24px 0 8px; color: #44423c; scroll-margin-top: 56px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: #55524a; scroll-margin-top: 56px; }
+  p { margin: 10px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; display: block; overflow-x: auto; white-space: normal; }
+  th, td { border: 1px solid #ddd9cf; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #efece3; font-weight: 600; }
+  tr:nth-child(even) td { background: #faf9f5; }
+  code { background: #efece3; padding: 1px 5px; border-radius: 4px; font-size: 13.5px; font-family: "SFMono-Regular", Consolas, monospace; }
+  pre { background: #2d2b29; color: #f3f1ec; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  blockquote { border-left: 3px solid #c9c3b4; margin: 12px 0; padding: 4px 14px; color: #66635b; background: #faf9f5; }
+  li { margin: 4px 0; }
+  .meta { color: #888780; font-size: 14px; margin-bottom: 18px; }
+  .toc { background: #fff; border: 1px solid #e4e2da; border-radius: 12px; padding: 14px 18px; margin: 18px 0 8px; }
+  .toc ol { margin: 8px 0 0; padding-left: 22px; }
+  .toc a { color: #185fa5; text-decoration: none; }
+  .toc li.t3 { list-style: none; margin-left: -16px; font-size: 14px; color: #666; }
+  .topbar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid #e4e2da; padding: 10px 18px; z-index: 10; display: flex; align-items: center; justify-content: space-between; }
+  .topbar a { color: #185fa5; text-decoration: none; font-size: 14px; }
+  .backtop { position: fixed; right: 16px; bottom: 20px; background: #185fa5; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span>熊心壮职 · Agent开发师 · 详细设计 V1.5</span>
+  <a href="#top">回到顶部</a>
+</div>
+<div class="wrap" id="top">
+  <h1>熊心壮职 · Agent 开发师<br>报告数据链路与算法设计 V1</h1>
+  <p class="meta">埋点·算法·报告映射 · 2026-09-08 · 离线阅读版</p>
+  <div class="toc"><strong>目录</strong><ol><li class="t2"><a href="#sec-1">一、四层架构总览</a></li><li class="t2"><a href="#sec-2">二、L1 埋点清单（前端只上报这些）</a></li><li class="t2"><a href="#sec-3">三、L2 派生特征（服务端从 L1 算出）</a></li><li class="t3"><a href="#sec-3-1">3.1 V5.4 新增特征如何进入三层算法</a></li><li class="t2"><a href="#sec-4">四、L3 第一层：选项 → 行为编码（用心理学模型，不拍脑袋）</a></li><li class="t3"><a href="#sec-4-1">4.1 每个选项标注三个字段</a></li><li class="t3"><a href="#sec-4-2">4.2 loading 从哪来：真实元分析（不是编的）</a></li><li class="t3"><a href="#sec-4-3">4.3 情境强度系数（第二个乘子）</a></li><li class="t2"><a href="#sec-5">五、L3 第二层：行为 → 大五后验（贝叶斯更新）</a></li><li class="t3"><a href="#sec-5-1">5.1 公式（逐符号翻译）</a></li><li class="t3"><a href="#sec-5-2">5.2 完整演算（小陈的尽责性 C）</a></li><li class="t3"><a href="#sec-5-3">5.3 信度：跨情境一致性</a></li><li class="t2"><a href="#sec-6">六、L3 第三层：大五 → 职业匹配（用真实 JD 数据）</a></li><li class="t3"><a href="#sec-6-1">6.1 3a：大五 → 霍兰德 RIASEC（桥接层）</a></li><li class="t3"><a href="#sec-6-2">6.2 3b：从真实 JD 构建岗位能力向量</a></li><li class="t3"><a href="#sec-6-3">6.3 3c：匹配算法（优势维度 + 理想点维度分开）</a></li><li class="t3"><a href="#sec-6-4">6.4 3d：输出带真实市场数据（最有杀伤力的一环）</a></li><li class="t3"><a href="#sec-6-5">6.5 3e：投入结构与内在动机（V5.4 新增，补上「凭什么说他适合」）</a></li><li class="t3"><a href="#sec-6-6">6.6 统一打分卡：每个选项必填 9 组字段</a></li><li class="t3"><a href="#sec-6-7">6.7 六个补充心理学模型（补大五测不到的面）</a></li><li class="t3"><a href="#sec-6-8">6.8 三个代表事件的全维度打分样板</a></li><li class="t2"><a href="#sec-7">七、L4 报告：三层结构与呈现原则</a></li><li class="t3"><a href="#sec-7-1">7.1 为什么分三层（解决「凭什么说你适合」）</a></li><li class="t3"><a href="#sec-7-2">7.2 呈现原则（V3 新增）</a></li><li class="t3"><a href="#sec-7-3">7.3 模块映射总表（含层与呈现）</a></li><li class="t3"><a href="#sec-7-4">7.4 报告文案示例（三层 + 行为语言）</a></li><li class="t2"><a href="#sec-8">八、五个特色分析（记忆点，也是答辩亮点）</a></li><li class="t2"><a href="#sec-9">九、真实数据资产说明（写进 PPT 的素材）</a></li><li class="t2"><a href="#sec-10">十、方法局限与校准计划（诚实边界 2.0）</a></li><li class="t3"><a href="#sec-10-1">10.1 🔴 严重级（答辩风险点，必须处理）</a></li><li class="t3"><a href="#sec-10-2">10.2 🟡 中等级（有对策，内测落实）</a></li><li class="t3"><a href="#sec-10-3">10.3 🟢 已接受的边界（原六条，保留）</a></li><li class="t3"><a href="#sec-10-4">10.4 伦理边界（比赛可接受，商业化前必须补全）</a></li><li class="t2"><a href="#sec-11">十一、落地字段（JSON 片段）</a></li><li class="t3"><a href="#sec-11-1">11.x 统一打分卡 JSON Schema（V5.4 新增）</a></li><li class="t2"><a href="#sec-12">十二、与主文档 / 剧情册的关系</a></li></ol></div>
+  <article id="content">
+<h1>熊心壮职 · 报告数据链路与算法设计 V1</h1>
+<p>配套：主设计文档（引擎与机制）V1.5、剧情设计详细方案 V2。
+本文档回答一个问题：<strong>报告里那些数字，是怎么从玩家的一次点击一步步算出来的。</strong></p>
+<p>核心主张：<strong>报告里没有一句空话</strong>——每一个结论都能点开看到支撑它的原始行为记录（行为证据链）。</p>
+<hr />
+<h2 id="sec-1">一、四层架构总览</h2>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>叫什么</th>
+<th>在哪算</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L1</strong></td>
+<td>原始行为</td>
+<td>前端只上报这个</td>
+<td>裸点击、裸时间戳，不含任何计算</td>
+</tr>
+<tr>
+<td><strong>L2</strong></td>
+<td>派生特征</td>
+<td>服务端</td>
+<td>犹豫、横跳、分配向量、探索向量、冲刺差分</td>
+</tr>
+<tr>
+<td><strong>L3</strong></td>
+<td>判定指标</td>
+<td>服务端</td>
+<td>六维能力、大五后验、职业匹配度、晋升三层</td>
+</tr>
+<tr>
+<td><strong>L4</strong></td>
+<td>报告映射</td>
+<td>服务端</td>
+<td>报告每个模块 ← 哪些 L3 ← 哪些证据编号</td>
+</tr>
+</tbody>
+</table>
+<p><strong>红线</strong>（主文档已定，此处重申）：L1→L2→L3 全在服务端。前端永远只上传原始行为，抓包拿不到任何标定答案——前端算分等于把答案发给客户端。</p>
+<hr />
+<h2 id="sec-2">二、L1 埋点清单（前端只上报这些）</h2>
+<table>
+<thead>
+<tr>
+<th>埋点</th>
+<th>时机</th>
+<th>字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>profile_start</code></td>
+<td>建档开始</td>
+<td>时间戳</td>
+<td>建档耗时</td>
+</tr>
+<tr>
+<td><code>profile_answer</code></td>
+<td>每答一题</td>
+<td>题号、选项、作答耗时</td>
+<td>自评先验 + 敷衍检测（low_effort）</td>
+</tr>
+<tr>
+<td><code>manual_read</code></td>
+<td>新人期第 1 月</td>
+<td>章节、阅读时长、是否跳过</td>
+<td><strong>动机信号</strong>（反复看晋升通道 vs 跳过）</td>
+</tr>
+<tr>
+<td><code>event_trigger</code></td>
+<td>事件触发</td>
+<td>event_id、命中原因、权重快照</td>
+<td>调度可解释性 + 路由校准</td>
+</tr>
+<tr>
+<td><code>node_enter</code></td>
+<td>进入决策点</td>
+<td>node_id、时间戳 T0</td>
+<td>与点击时间相减得犹豫</td>
+</tr>
+<tr>
+<td><code>option_hover</code></td>
+<td>选项间切换</td>
+<td>switch_count、hovered 序列</td>
+<td>横跳（摇摆度）</td>
+</tr>
+<tr>
+<td><code>option_click</code></td>
+<td>点击选项</td>
+<td>option_id、时间戳 T1、snapshot_before</td>
+<td>行为编码主数据源</td>
+</tr>
+<tr>
+<td><code>allocation_click</code></td>
+<td>月度精力分配</td>
+<td>allocation_vector{skill,output,network,rest}</td>
+<td>价值排序采样</td>
+</tr>
+<tr>
+<td><code>explore_click</code></td>
+<td><strong>自由周末</strong>（V5.4 扩展）</td>
+<td>slot_index、zone、activity_id、<strong>type(work|social|solo_recover|solo_work)</strong>、targets、weather、affinity_delta</td>
+<td><strong>投入结构</strong>（原社交指纹升级）</td>
+</tr>
+<tr>
+<td><code>ai_reaction_view</code></td>
+<td>AI 台词展示</td>
+<td>阅读时长</td>
+<td>沉浸度</td>
+</tr>
+<tr>
+<td><code>task_complete</code></td>
+<td>月度/阶段结束</td>
+<td>月度汇总、risk_cumulative</td>
+<td>晋升累积层输入</td>
+</tr>
+<tr>
+<td><code>report_view</code></td>
+<td>报告浏览</td>
+<td>模块顺序、停留时长、点击的证据编号</td>
+<td>报告优化 + 订阅引导</td>
+</tr>
+</tbody>
+</table>
+<p><strong>新增三个</strong>（相对主文档 §15 原有清单）：<code>profile_answer</code>（细化到每题）、<code>manual_read</code>（新人期动机）、<code>explore_click</code>（主动探索，剧情册 V2 新机制）。</p>
+<p><strong>V5.4 再新增五个</strong>（剧情册 V5.4 新机制配套）：</p>
+<table>
+<thead>
+<tr>
+<th>埋点</th>
+<th>时机</th>
+<th>字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>survival_state_change</code></td>
+<td>生存轨状态变化时</td>
+<td>from_state、to_state、<strong>reason_events[]（行为语言+事件编号）</strong>、trigger_source(flag|incident|talk)</td>
+<td>处境轨迹 + 报告「为什么走到这一步」</td>
+</tr>
+<tr>
+<td><code>crisis_talk_choice</code></td>
+<td>危机对话（§2.5）</td>
+<td>option_id(<strong>归因类型</strong>)、hesitation_ms</td>
+<td>归因指纹（外/能力/行为/回避）</td>
+</tr>
+<tr>
+<td><code>monthly_action_variant</code></td>
+<td>月度轻节点（含「看娃」变体）</td>
+<td>variant_id(babysit|allocation|rest)、duration_ms</td>
+<td>看娃负荷 + 日常质感采样</td>
+</tr>
+<tr>
+<td><code>achievement_view</code></td>
+<td>成就节点 C1/C2</td>
+<td>node_id、停留时长、是否跳过、轻决策选项</td>
+<td>成就参与度（对「做成事」的情绪反应）</td>
+</tr>
+<tr>
+<td><code>zone_dwell</code></td>
+<td>进出组团</td>
+<td>zone、enter_ts、leave_ts</td>
+<td>组团偏好（报告彩蛋「你待得最久的地方」）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-3">三、L2 派生特征（服务端从 L1 算出）</h2>
+<table>
+<thead>
+<tr>
+<th>特征</th>
+<th>算法</th>
+<th>测什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hesitation_ms</code></td>
+<td>T1 − T0</td>
+<td>直觉 vs 深思；离群点即"在意的事"</td>
+</tr>
+<tr>
+<td><code>hover_switch</code></td>
+<td>hover 切换次数</td>
+<td>笃定 vs 摇摆</td>
+</tr>
+<tr>
+<td><code>allocation_vector</code></td>
+<td>月度四维分配</td>
+<td>长期投资方向</td>
+</tr>
+<tr>
+<td><code>explore_vector</code></td>
+<td>16 次探索的对象分布</td>
+<td><strong>社交策略</strong>（向上/横向/向下/独行）</td>
+</tr>
+<tr>
+<td><code>sprint_delta</code></td>
+<td>考核窗前 1 月行为 − 平时基线</td>
+<td><strong>临时抱佛脚检测</strong></td>
+</tr>
+<tr>
+<td><code>disguise_index</code></td>
+<td>犹豫 × 横跳 × 是否选社会期望选项</td>
+<td><strong>伪装指数</strong>（伪装者挑战引擎）</td>
+</tr>
+<tr>
+<td><code>consistency</code></td>
+<td>同一特质在不同情境下的选择一致性</td>
+<td>信度（CAPS「如果-那么」模式）</td>
+</tr>
+<tr>
+<td><code>input_vector</code></td>
+<td>16 个自由周末按 work / social / solo_recover 三类聚合占比（solo_work 加班单列）</td>
+<td><strong>投入结构</strong>——你怎么支配没人要求的时间</td>
+</tr>
+<tr>
+<td><code>intrinsic_motivation</code></td>
+<td>work 型投入占比 × 该投入是否伴随 H 消耗（W 类自愿 vs S4 被动）</td>
+<td><strong>内在动机指数</strong>——职业适配最强的行为信号</td>
+</tr>
+<tr>
+<td><code>survival_trajectory</code></td>
+<td>生存轨最低状态 + 降级次数 + 回升次数</td>
+<td>处境轨迹（「你曾被推到哪一步，又怎么走回来」）</td>
+</tr>
+<tr>
+<td><code>attribution_style</code></td>
+<td>危机对话选项 → 外归因 / 能力归因 / 行为归因 / 回避</td>
+<td><strong>归因指纹</strong>（抗压与 N 维锚点，仅卡住的玩家可得）</td>
+</tr>
+<tr>
+<td><code>babysit_load</code></td>
+<td>「看娃」变体触发次数与累计 H 消耗</td>
+<td>忍耐度与可靠性质感（日常负荷）</td>
+</tr>
+<tr>
+<td><code>zone_preference</code></td>
+<td>各组团停留时长占比</td>
+<td>空间偏好（报告彩蛋，不做断言）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="sec-3-1">3.1 V5.4 新增特征如何进入三层算法</h3>
+<table>
+<thead>
+<tr>
+<th>新特征</th>
+<th>进入哪一层</th>
+<th>怎么用</th>
+<th>报告落点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input_vector</code>（投入结构）</td>
+<td>第三层（3e 新增）</td>
+<td>与岗位「日常活动构成」对照：技术岗的日常工作投入占比 vs 玩家的 work 型投入占比</td>
+<td>交叉提示层：<strong>「你比自评里更想干这行」</strong></td>
+</tr>
+<tr>
+<td><code>intrinsic_motivation</code></td>
+<td>第三层（3e）</td>
+<td>职业适配的<strong>补充信号</strong>，不是人格分——只用于「适配提示」，不进大五</td>
+<td>交叉提示层，标为「提示非结论」</td>
+</tr>
+<tr>
+<td><code>attribution_style</code></td>
+<td>第一层（BARS 编码）</td>
+<td>危机对话的四个选项本身就是<strong>归因方式的标志行为</strong>，marker=attribution，loading 参照 N 维与抗压元分析</td>
+<td>大五剖面的 N 维证据（仅卡住玩家）</td>
+</tr>
+<tr>
+<td><code>survival_trajectory</code></td>
+<td>晋升三层的行为层（20%）</td>
+<td>已有：隐瞒 flag / 事故 / 谈话表现；生存轨状态是其<strong>可视化结果</strong></td>
+<td>处境轨迹模块（一层）</td>
+</tr>
+<tr>
+<td><code>achievement_engagement</code></td>
+<td>不做人格推断</td>
+<td>仅做报告彩蛋与沉浸度（是否跳过成就节点）</td>
+<td>报告「那些你停下来看的瞬间」</td>
+</tr>
+<tr>
+<td><code>babysit_load</code> / <code>zone_preference</code></td>
+<td>不做人格推断</td>
+<td>日常质感与空间偏好，<strong>明确不参与任何评分</strong></td>
+<td>彩蛋，避免测量过载</td>
+</tr>
+</tbody>
+</table>
+<p><strong>一条红线</strong>：新增特征里只有 <code>attribution_style</code> 进人格推断，其余只用于「适配提示」或「彩蛋」——<strong>防止测量目标漂移</strong>（加什么都要往人格上算，是测评产品最常见的失控）。</p>
+<hr />
+<h2 id="sec-4">四、L3 第一层：选项 → 行为编码（用心理学模型，不拍脑袋）</h2>
+<p>现在的做法（错的）：选项直接标 <code>D+2</code>。
+正确的做法：选项标注<strong>标志行为 + 关联强度 + 情境强度</strong>，由模型算分。</p>
+<h3 id="sec-4-1">4.1 每个选项标注三个字段</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+<th>例子（第 3 月 AI 代码标注 · 选 B"不标注"）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>marker</code></td>
+<td>这个行为是哪个大五特质的标志行为</td>
+<td>C 尽责性（走捷径）</td>
+</tr>
+<tr>
+<td><code>loading</code></td>
+<td>关联强度（0-1），<strong>来自元分析</strong></td>
+<td>0.40</td>
+</tr>
+<tr>
+<td><code>situation_strength</code></td>
+<td>情境强度（强/中/弱）</td>
+<td>弱（没人检查你标没标注）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-4-2">4.2 loading 从哪来：真实元分析（不是编的）</h3>
+<p>学界用大五预测工作绩效的元分析相关系数（ρ，已校正测量误差）：</p>
+<table>
+<thead>
+<tr>
+<th>大五维度</th>
+<th>Barrick &amp; Mount (1991)</th>
+<th>Sackett et al. (2022)</th>
+<th>Salgado (1997, 欧洲)</th>
+<th><strong>归一化 loading</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>C 尽责性</strong></td>
+<td><strong>.23</strong></td>
+<td>.21</td>
+<td>.25</td>
+<td><strong>1.00</strong>（基准）</td>
+</tr>
+<tr>
+<td>情绪稳定性</td>
+<td>.13</td>
+<td>—</td>
+<td>.19</td>
+<td>0.57</td>
+</tr>
+<tr>
+<td>A 宜人性</td>
+<td>.12</td>
+<td>—</td>
+<td>—</td>
+<td>0.52</td>
+</tr>
+<tr>
+<td>E 外向性</td>
+<td>.10（对管理者 .18）</td>
+<td>—</td>
+<td>—</td>
+<td>0.43</td>
+</tr>
+<tr>
+<td>O 开放性</td>
+<td>.06（对培训 .25）</td>
+<td>—</td>
+<td>—</td>
+<td>0.26</td>
+</tr>
+</tbody>
+</table>
+<p><strong>归一化方法：loading = ρ ÷ 0.23</strong>（以预测力最强的 C 为基准 1.0）。</p>
+<p><strong>分情境提升</strong>（学界发现"特质-效标匹配时效度更高"，Tett et al. 1991）：
+- E 外向性在管理/销售/社交情境 → 0.78（ρ=.18/.23）
+- O 开放性在培训/创新情境 → 1.09（ρ=.25/.23）
+- 情绪稳定性在高压情境 → 0.83</p>
+<h3 id="sec-4-3">4.3 情境强度系数（第二个乘子）</h3>
+<p>心理学<strong>情境强度理论</strong>：强情境（有明确规范、有人看着）会压制人格表达，此时行为趋同、对特质推断的信息量低。</p>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>系数</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>弱情境</td>
+<td>×1.0</td>
+<td>第 3 月 PR 标注（无人检查）</td>
+</tr>
+<tr>
+<td>中情境</td>
+<td>×0.75</td>
+<td>第 7 月评测集（工期紧但有选择空间）</td>
+</tr>
+<tr>
+<td>强情境</td>
+<td>×0.5</td>
+<td>第 30 月高管汇报（领导在场、规范明确）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>加权载荷 = loading × 情境系数 × 方向（+/−）</strong></p>
+<hr />
+<h2 id="sec-5">五、L3 第二层：行为 → 大五后验（贝叶斯更新）</h2>
+<h3 id="sec-5-1">5.1 公式（逐符号翻译）</h3>
+<pre><code>后验特质分 = 自评分 + K × (行为分 − 自评分)
+</code></pre>
+<ul>
+<li><strong>自评分</strong>：建档 4 题自评（0-10）</li>
+<li><strong>行为分</strong>：所有相关选项的加权载荷均值映射到 0-10（5 为中性）</li>
+<li><strong>K</strong>：信任系数 = n / (n + 5)，n = 该特质有效行为样本数</li>
+<li>n=0 → K=0（全信自评）；n=5 → K=0.5；n=20 → K=0.8（更信行为）</li>
+</ul>
+<p>这是标准的<strong>贝叶斯收缩</strong>：样本少时向先验收缩，样本多时以行为为准。它同时把"自评 vs 行为"这个产品爆点<strong>数学化</strong>了。</p>
+<h3 id="sec-5-2">5.2 完整演算（小陈的尽责性 C）</h3>
+<p><strong>第 1 步：收集 8 次相关选择</strong></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>事件</th>
+<th>选项</th>
+<th>方向</th>
+<th>loading</th>
+<th>情境</th>
+<th>加权载荷</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>N3 第3月 AI 标注</td>
+<td>B 不标注</td>
+<td>−</td>
+<td>0.40</td>
+<td>弱 ×1.0</td>
+<td>−0.40</td>
+</tr>
+<tr>
+<td>2</td>
+<td>T2 第7月 评测集</td>
+<td>B 先不建</td>
+<td>−</td>
+<td>0.50</td>
+<td>中 ×0.75</td>
+<td>−0.375</td>
+</tr>
+<tr>
+<td>3</td>
+<td>R3 安全漏洞</td>
+<td>C 拖着</td>
+<td>−</td>
+<td>0.50</td>
+<td>弱 ×1.0</td>
+<td>−0.50</td>
+</tr>
+<tr>
+<td>4</td>
+<td>C5 高管汇报</td>
+<td>B 报喜藏忧</td>
+<td>−</td>
+<td>0.35</td>
+<td>强 ×0.5</td>
+<td>−0.175</td>
+</tr>
+<tr>
+<td>5</td>
+<td>M2 文档化</td>
+<td>B 留一手</td>
+<td>−</td>
+<td>0.25</td>
+<td>中 ×0.75</td>
+<td>−0.19</td>
+</tr>
+<tr>
+<td>6</td>
+<td>T4 热修复</td>
+<td>B 绕过流程</td>
+<td>−</td>
+<td>0.30</td>
+<td>强 ×0.5</td>
+<td>−0.15</td>
+</tr>
+<tr>
+<td>7</td>
+<td>P4 好友打分</td>
+<td>A 按事实打 B</td>
+<td><strong>+</strong></td>
+<td>0.35</td>
+<td>强 ×0.5</td>
+<td>+0.175</td>
+</tr>
+<tr>
+<td>8</td>
+<td>T1 技术选型</td>
+<td>A 自己搭 demo</td>
+<td><strong>+</strong></td>
+<td>0.40</td>
+<td>弱 ×1.0</td>
+<td>+0.40</td>
+</tr>
+</tbody>
+</table>
+<p>求和 = −1.215，平均 = <strong>−0.152</strong></p>
+<p><strong>第 2 步：映射成行为分</strong></p>
+<pre><code>行为分 = 5 + 平均载荷 × 10 = 5 + (−0.152 × 10) = 3.5
+</code></pre>
+<p><strong>第 3 步：贝叶斯更新</strong>（自评 C = 7，n = 8 → K = 8/13 = 0.62）</p>
+<pre><code>后验 = 7 + 0.62 × (3.5 − 7) = 7 − 2.2 = 4.8
+</code></pre>
+<p><strong>第 4 步：矛盾度</strong></p>
+<pre><code>矛盾度 = |自评 − 后验| = |7 − 4.8| = 2.2  → 超过 1.5，判定&quot;显著矛盾&quot;，进报告 C 位
+</code></pre>
+<h3 id="sec-5-3">5.3 信度：跨情境一致性</h3>
+<p>用 Mischel 的 CAPS 理论（人格是「如果-那么」模式）：同一特质在不同情境下是否一致。
+- 一致 → 高信度，报告可下断言；
+- 不一致 → 报告写"你的 X 是有条件的"（例如：评审会上敢说、客户现场不敢说 = 外向性依赖情境）。</p>
+<p>这比给一个死分数诚实得多，也是我们的差异化。</p>
+<hr />
+<h2 id="sec-6">六、L3 第三层：大五 → 职业匹配（用真实 JD 数据）</h2>
+<h3 id="sec-6-1">6.1 3a：大五 → 霍兰德 RIASEC（桥接层）</h3>
+<table>
+<thead>
+<tr>
+<th>RIASEC</th>
+<th>大五特征</th>
+<th><strong>用户数据验证</strong>（5000 条 JD 真实词频）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R 现实型</td>
+<td>低 O、务实</td>
+<td>「吃苦耐劳」词频 8，各型最高 ✓</td>
+</tr>
+<tr>
+<td>I 研究型</td>
+<td>高 O</td>
+<td>「编程能力」「逻辑清晰」「数据分析」✓</td>
+</tr>
+<tr>
+<td>A 艺术型</td>
+<td>高 O（最强）</td>
+<td>「审美能力」6、「创新能力」3 ✓</td>
+</tr>
+<tr>
+<td>S 社会型</td>
+<td>高 A + 高 E</td>
+<td>「服务意识」「客户服务意识」✓</td>
+</tr>
+<tr>
+<td>E 企业型</td>
+<td>高 E + 低 A</td>
+<td>「团队管理」11、「抗压」17，各型最高 ✓</td>
+</tr>
+<tr>
+<td>C 常规型</td>
+<td>高 C</td>
+<td><strong>责任心（强）词频 20，全类型最高</strong> ✓</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这张表的价值</strong>：学界的"大五→Holland"映射，在用户自己的 5000 条 JD 数据上被独立验证了一遍——答辩时这是硬证据。</p>
+<h3 id="sec-6-2">6.2 3b：从真实 JD 构建岗位能力向量</h3>
+<p>数据资产：<code>0427标准数据5000条做研报实验.xlsx</code>（5000 条招聘 JD，34 字段）+ <code>0703小红书100个精选岗位.docx</code>（100 岗位带 RIASEC 类型）。<strong>两份用同一套智联 Z-code，可直接 join，成功关联 533 条。</strong></p>
+<p>跑出的真实画像：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>JD 数</th>
+<th>高频能力要求（真实词频）</th>
+<th>月薪中位</th>
+<th>常见职级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C 常规型</td>
+<td>233</td>
+<td>沟通协调 51、问题解决 22、责任心 20</td>
+<td>5.5k</td>
+<td>基层员工</td>
+</tr>
+<tr>
+<td>E 企业型</td>
+<td>214</td>
+<td>沟通 87、数据分析 19、抗压 17、团队管理 11</td>
+<td>5.5k</td>
+<td>基层员工</td>
+</tr>
+<tr>
+<td>R 现实型</td>
+<td>100</td>
+<td>问题解决 13、吃苦耐劳 8</td>
+<td>6.0k</td>
+<td>基层员工</td>
+</tr>
+<tr>
+<td>A 艺术型</td>
+<td>95</td>
+<td>沟通 20、审美 6、创新 3</td>
+<td><strong>7.0k</strong></td>
+<td>基层员工</td>
+</tr>
+<tr>
+<td>S 社会型</td>
+<td>55</td>
+<td>沟通协调 16、服务意识 5</td>
+<td>6.0k</td>
+<td>基层员工</td>
+</tr>
+<tr>
+<td>I 研究型</td>
+<td>51</td>
+<td>问题解决 8、编程 3、逻辑 3</td>
+<td>3.5k</td>
+<td>基层员工</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-6-3">6.3 3c：匹配算法（优势维度 + 理想点维度分开）</h3>
+<p><strong>不能用纯余弦相似度</strong>（那是"越多越好"的优势模型）。学界对职业匹配更准的是<strong>理想点模型</strong>——某些维度越过理想值反而扣分。</p>
+<pre><code>单维度贡献 = 权重 × (1 − |实际 − 理想| / 容忍度)
+</code></pre>
+<ul>
+<li><strong>优势维度</strong>（技术、尽责等）：理想点设为上限，等效于"越高越好"</li>
+<li><strong>理想点维度</strong>（外向性、宜人性等）：设中间值，过高过低都扣分</li>
+</ul>
+<p><strong>代入演算（承接小陈 C=4.8）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>职业</th>
+<th>C 的理想点</th>
+<th>权重</th>
+<th>容忍度</th>
+<th>自评 C=7 时</th>
+<th>修正后 C=4.8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A · Agent 后端开发</td>
+<td>7.0</td>
+<td>0.25</td>
+<td>3.0</td>
+<td>0.25 × 1.00 = <strong>0.250</strong></td>
+<td>0.25 × 0.267 = <strong>0.067</strong></td>
+</tr>
+<tr>
+<td>B · AI 技术产品经理</td>
+<td>5.5</td>
+<td>0.15</td>
+<td>3.0</td>
+<td>0.15 × 0.50 = <strong>0.075</strong></td>
+<td>0.15 × 0.767 = <strong>0.115</strong></td>
+</tr>
+</tbody>
+</table>
+<p>假设其他维度不变（A 总 0.78、B 总 0.70）：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>只看自评</th>
+<th>行为修正后</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 后端开发</td>
+<td><strong>0.78（第 1）</strong></td>
+<td><strong>0.60（第 2）</strong></td>
+</tr>
+<tr>
+<td>B 技术产品经理</td>
+<td>0.70（第 2）</td>
+<td><strong>0.74（第 1）</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>排名反转。</strong> 一个"第 3 月随手不标注"的选择，通过 8 次同类行为的累积，最终把职业推荐第一名换掉了。</p>
+<h3 id="sec-6-4">6.4 3d：输出带真实市场数据（最有杀伤力的一环）</h3>
+<p>因为数据里有薪资、职级、经验、学历，报告可以输出：</p>
+<blockquote>
+<p><strong>Top1 · UI 设计师</strong>（A 艺术型 · 智联编码 Z050104）
+该类型市场月薪中位 <strong>7,000 元</strong>（基于 95 条真实在招 JD）
+63% 的同类岗位要求「沟通能力」，32% 要求「审美能力」</p>
+</blockquote>
+<p>真实薪资 + 真实要求，比任何编的推荐都硬。</p>
+<hr />
+<h3 id="sec-6-5">6.5 3e：投入结构与内在动机（V5.4 新增，补上「凭什么说他适合」）</h3>
+<p>第三层原本只有「画像 vs 岗位要求」，仍缺一个关键信号：<strong>他到底想不想干这行</strong>。补上 3e：</p>
+<pre><code>投入结构占比 = 该类自由活动次数 ÷ 16
+内在动机指数 = work 型占比 × 自愿系数
+  自愿系数：W 类（自己想做）= 1.0；S4 加班（卷公司的活）= 0.6
+</code></pre>
+<p>代入：小陈 16 个周末，9 次 W 类（其中 2 次 S4 加班）、1 次社交、6 次独处恢复 →
+work 型占比 = 9/16 = 56%，自愿系数 ≈ (7×1.0 + 2×0.6)/9 = 0.91 → <strong>内在动机 ≈ 0.51（中高）</strong>。</p>
+<p>对照真实 JD：Agent 岗对「学习能力/自驱」的要求占比 XX% → 交叉提示：<strong>「没人要求的时候你也在学——这比自评里那句『我对 AI 感兴趣』可靠得多。」</strong></p>
+<p><strong>红线</strong>：内在动机只作<strong>适配提示</strong>，不进大五、不算人格分、不用于断言「你适合/不适合」。</p>
+<hr />
+<h3 id="sec-6-6">6.6 统一打分卡：每个选项必填 9 组字段</h3>
+<p>现在的问题是每个选项只打了「六维 + 能力 + 大五」三样，且没有统一规格——加的内容越多越容易乱。统一为一张<strong>打分卡</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>字段</th>
+<th>量纲</th>
+<th>用途</th>
+<th>必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>state_delta</code></td>
+<td>S/O/N/H/D/R 增减</td>
+<td>游戏内经济（晋升累积层输入）</td>
+<td>✅ 必填</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>competency</code></td>
+<td>12 键 ±</td>
+<td>能力雷达</td>
+<td>✅ 必填</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>bigfive_proxy</code></td>
+<td>marker + loading + dir + situation_strength</td>
+<td><strong>大五后验（主轴）</strong></td>
+<td>✅ 必填</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>affinity</code></td>
+<td>NPC + 增减</td>
+<td>好感与记忆墙</td>
+<td>有人际关系时</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>sdt</code></td>
+<td>autonomy / competence / relatedness，各 ±2</td>
+<td><strong>内在动机</strong>（职业适配核心）</td>
+<td>工作型与关系型</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>regulatory_focus</code></td>
+<td>promotion / prevention</td>
+<td>决策风格（想赢 vs 别输）</td>
+<td>技术决策与风险题</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>moral_foundation</code></td>
+<td>care / fairness / loyalty / authority / sanctity / liberty</td>
+<td>价值观冲突来源</td>
+<td>合规与人际题</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>cognition</code></td>
+<td>NFC（认知需求）/ ToA（模糊容忍）/ CFC（未来取向），各 ±2</td>
+<td>思维方式</td>
+<td>技术深挖与长期投入题</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>flags</code> / <code>memory_tags</code></td>
+<td>标记 + 记忆标签</td>
+<td>后果链与记忆墙</td>
+<td>有后果时</td>
+</tr>
+</tbody>
+</table>
+<p><strong>规则</strong>：1-3 必填；4-9 <strong>按事件类型勾选</strong>，不是每题全填（技术题填 6/8，合规题填 7，人际题填 7，工作型活动填 5/8）——既不漏也不过载。</p>
+<h3 id="sec-6-7">6.7 六个补充心理学模型（补大五测不到的面）</h3>
+<p>大五只回答「你是什么样的人」，回答不了「你为什么这么做、你在乎什么」。以下六个学界成熟模型补的正是<strong>动机与价值观</strong>——职业适配最需要的一层：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>白话</th>
+<th>用在哪类题</th>
+<th>报告怎么说</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>自我决定论 SDT</strong>（Deci &amp; Ryan）</td>
+<td>做事的三种动力：自己想做 / 做得好 / 有人在乎</td>
+<td>工作型活动、职业选择</td>
+<td>「让你熬夜的如果是自己的项目，那是热爱」</td>
+</tr>
+<tr>
+<td><strong>调节焦点理论</strong>（Higgins）</td>
+<td>有人盯着「能赢多少」（促进），有人盯着「别出事」（预防）</td>
+<td>技术决策、风险题</td>
+<td>「你是想赢型还是别输型」</td>
+</tr>
+<tr>
+<td><strong>道德基础理论</strong>（Haidt）</td>
+<td>道德直觉有六根弦：关怀/公平/忠诚/权威/圣洁/自由</td>
+<td>合规、人际、吹哨题</td>
+<td>「你在忠诚和公平之间选了哪个」——比「讲不讲原则」精确得多</td>
+</tr>
+<tr>
+<td><strong>归因理论</strong>（Weiner）</td>
+<td>失败了怪环境 / 怪能力 / 怪做法（内外×稳定×可控）</td>
+<td>危机对话（§2.5）</td>
+<td>归因指纹</td>
+</tr>
+<tr>
+<td><strong>未来取向 CFC</strong>（Strathman）</td>
+<td>愿不愿意为明年的好处牺牲眼前</td>
+<td>评测集、重构、技术债</td>
+<td>「你愿意为看不见的基建买单吗」</td>
+</tr>
+<tr>
+<td><strong>认知需求 NFC</strong></td>
+<td>享受啃硬骨头，还是能省事就省事</td>
+<td>工作型活动、技术深挖题</td>
+<td>「你对难题是真有兴趣还是只看结果」</td>
+</tr>
+</tbody>
+</table>
+<p><strong>红线（防测量目标漂移）</strong>：这六个模型<strong>只做「专题信号 + 证据引用」，不进大五、不给综合分</strong>。每个专题仅在证据 ≥3 条时才在报告出现，否则不展示。加什么都要往一个总分凑，是测评产品最常见的失控。</p>
+<h3 id="sec-6-8">6.8 三个代表事件的全维度打分样板</h3>
+<h4>样板 A｜E27「人家有专属模型」（技术 × 预期管理）</h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>A 拿数据讲清「不建议」，改做检索+缓存</th>
+<th>B 小范围试点，用事实说话</th>
+<th>C 顺着说做，先把数据脱敏</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>六维</td>
+<td>S+1、N−1、O−2、<strong>风险−3</strong>、D+2</td>
+<td>S+1、O−1、风险 0、D+1</td>
+<td>O+2、S−1、<strong>风险+4</strong>、D−2</td>
+</tr>
+<tr>
+<td>能力</td>
+<td>技术决策+1、原则+1、沟通+1</td>
+<td>务实+2、执行+1</td>
+<td>务实+1</td>
+</tr>
+<tr>
+<td>大五</td>
+<td>O+（0.45）＋C+（0.6）；情境强 ×0.5</td>
+<td>C+（0.6）；情境中 ×0.75</td>
+<td>C−（0.8）＋A+（顺从 0.3）；情境中 ×0.75</td>
+</tr>
+<tr>
+<td>SDT</td>
+<td>胜任感 +1（专业判断被用上）</td>
+<td>自主性 +1（自己选的路子）</td>
+<td>自主性 −1（被牵着走）</td>
+</tr>
+<tr>
+<td>调节焦点</td>
+<td><strong>预防</strong>（避免未来崩盘）</td>
+<td>促进/预防 各半</td>
+<td><strong>促进</strong>（追效果、讨好）</td>
+</tr>
+<tr>
+<td>道德基础</td>
+<td>公平 +1（对用户数据负责）</td>
+<td>—</td>
+<td>忠诚 +1（站产品）／关怀 −1（隐私让步）</td>
+</tr>
+<tr>
+<td>CFC</td>
+<td><strong>+2</strong>（算到维护成本）</td>
+<td>+1</td>
+<td><strong>−2</strong>（不管明年）</td>
+</tr>
+<tr>
+<td>标签</td>
+<td>记忆「敢说不的人」</td>
+<td>—</td>
+<td>flag <code>data_risk</code>（后续兑付）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>报告价值</strong>：选 A 的玩家同时拿到三条独立证据（开放性 + 高未来取向 + 预防型），三条合起来才敢说「你倾向把长期代价算进去」——单看一条不能下结论。</p>
+<h4>样板 B｜E33「吹哨两难」（合规）</h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>A 实名向合规部门反映</th>
+<th>B 匿名反馈</th>
+<th>C 不说话</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>六维</td>
+<td>D+2、N−3、O−1、风险+2、D 月末+3</td>
+<td>D+1、O−1、风险+1、D+1</td>
+<td>O+1、D−2、风险+1、D−3</td>
+</tr>
+<tr>
+<td>能力</td>
+<td>原则+2</td>
+<td>原则+1</td>
+<td>原则−2</td>
+</tr>
+<tr>
+<td>大五</td>
+<td>C+（0.8）＋<strong>诚实-谦逊</strong>倾向；情境强 ×0.5</td>
+<td>C+（0.6）</td>
+<td>C−（0.8）＋A+（顺从 0.4）</td>
+</tr>
+<tr>
+<td>道德基础</td>
+<td><strong>公平 +2、自由 +1</strong>（对抗权威）</td>
+<td>公平 +1</td>
+<td><strong>权威 +1、忠诚 +1</strong>（站 leader）</td>
+</tr>
+<tr>
+<td>调节焦点</td>
+<td>促进（追求应然）</td>
+<td>预防/促进混合</td>
+<td>预防（自保）</td>
+</tr>
+<tr>
+<td>联动</td>
+<td>与 E25 技术侧吹哨互为镜像</td>
+<td>—</td>
+<td>若 E19 选过 blame_shift，本题 C 加诱惑文案</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么用道德基础而不是「讲不讲原则」</strong>：A 和 C 的分歧不是「有没有底线」，而是<strong>公平（对规则）与权威/忠诚（对 leader）两根弦的排序不同</strong>——这才是真实冲突，也是报告能说清的东西。</p>
+<h4>样板 C｜W1「复现论文 / 试新模型」（工作型自由活动）</h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>分数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>六维</td>
+<td>S+2、H−1</td>
+<td>涨能力、耗带宽</td>
+</tr>
+<tr>
+<td>能力</td>
+<td>技术决策+1</td>
+<td>进雷达</td>
+</tr>
+<tr>
+<td>大五</td>
+<td><strong>O+ loading 0.45，情境弱 ×1.0</strong></td>
+<td>无人要求仍主动尝新 = 开放性最强锚点</td>
+</tr>
+<tr>
+<td><strong>SDT</strong></td>
+<td><strong>自主性 +2、胜任感 +1、归属感 0</strong></td>
+<td>纯自驱 = 内在动机主证据</td>
+</tr>
+<tr>
+<td><strong>NFC</strong></td>
+<td><strong>+2</strong></td>
+<td>认知需求：愿意啃难东西</td>
+</tr>
+<tr>
+<td>投入类型</td>
+<td><code>work</code></td>
+<td>进投入结构占比</td>
+</tr>
+</tbody>
+</table>
+<p><strong>与 S4 加班的关键区分（同一份卡打出来就清楚）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>S4 加班（卷公司的活）</th>
+<th>W1 复现（卷自己的事）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SDT 自主性</td>
+<td><strong>0</strong></td>
+<td><strong>+2</strong></td>
+</tr>
+<tr>
+<td>大五</td>
+<td>C+（尽责 0.6）</td>
+<td>O+（开放 0.45）</td>
+</tr>
+<tr>
+<td>NFC</td>
+<td>0</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>信号</td>
+<td>责任心</td>
+<td><strong>热爱与好奇</strong></td>
+</tr>
+</tbody>
+</table>
+<p>同样熬夜，打分不同，报告才能说清「这是责任心还是热爱」。</p>
+<hr />
+<h2 id="sec-7">七、L4 报告：三层结构与呈现原则</h2>
+<h3 id="sec-7-1">7.1 为什么分三层（解决「凭什么说你适合」）</h3>
+<p>游戏测的是<strong>职场处世</strong>（怎么应对甩锅、会不会糊弄、扛不扛压），而「适合什么职业」是另一件事——中间不能硬凑因果。因此报告分三层，<strong>每层标明自己的数据来源与可信度</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>回答什么</th>
+<th>数据来源</th>
+<th>可信度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>第一层 · 职场人格画像</strong></td>
+<td>你在职场里是什么样的人、什么情境下会变形</td>
+<td>48 个月游戏行为（贝叶斯后验）</td>
+<td>高——真正测出来的</td>
+</tr>
+<tr>
+<td><strong>第二层 · 岗位市场参考</strong></td>
+<td>真实岗位要什么、薪资多少、什么职级在招</td>
+<td>5000 条真实 JD + 建档自评</td>
+<td>中——市场数据，不是心理测评</td>
+</tr>
+<tr>
+<td><strong>第三层 · 交叉提示</strong></td>
+<td>你的画像 vs 真实岗位要求 = 差在哪</td>
+<td>前两层叠加</td>
+<td>提示，非结论</td>
+</tr>
+</tbody>
+</table>
+<p><strong>定位一句话</strong>：不做「测出你适合什么职业」（断言，答不出凭什么），做<strong>「让你看清自己是什么样的人，以及真实岗位要什么——差距在哪」</strong>（描述 + 对照，每句可溯源）。初心不变，逻辑闭合，且评委那句「你凭什么说适合」自动消失。</p>
+<h3 id="sec-7-2">7.2 呈现原则（V3 新增）</h3>
+<blockquote>
+<p><strong>可观测的事实给死数字（行为次数、时长、市场薪资、要求占比）；推断值给档位与对照、不给点值；一切隐藏机制的阈值永不出现；差距一律翻译成行为语言。</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>内容类型</th>
+<th>呈现方式</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>行为证据</strong></td>
+<td><strong>完全具体</strong>：次数、毫秒、事件名</td>
+<td>发生过的事实而非推断——这才是最难反驳的「数据证明」</td>
+</tr>
+<tr>
+<td><strong>特质推断</strong>（大五/能力）</td>
+<td><strong>不给点值</strong>：五档词（很低/偏低/中等/偏高/很高）+ 条形 + 自评/行为双条对照</td>
+<td>① <strong>虚假精确</strong>（n≈8 的推断值给 4.8 是假精确，评委一问置信区间就穿）② <strong>诱导装</strong>（给分 = 教玩家下次演，亲手毁掉测量）③ <strong>伦理</strong>（心理数据贴数字标签有伤人风险）</td>
+</tr>
+<tr>
+<td><strong>市场数据</strong></td>
+<td><strong>给死数字</strong>：月薪中位、要求占比</td>
+<td>客观事实，越具体越有用，也是我们的差异化优势</td>
+</tr>
+<tr>
+<td><strong>差距</strong></td>
+<td><strong>翻译成行为语言</strong>，不给数值差</td>
+<td>「差在没人监督时的那几次」比「差 2.2 分」更能让人改变</td>
+</tr>
+<tr>
+<td><strong>晋升/风险阈值</strong></td>
+<td><strong>永不出现</strong></td>
+<td>红线：玩家知道阈值就会堆数值，测量当场失效</td>
+</tr>
+</tbody>
+</table>
+<p><strong>「用数据证明」靠行为证据，不靠分数</strong>：
+- ❌ 给分数：「你的尽责性 4.8，低于岗位要求的 7.0」
+- ✅ 给证据：「8 次可以抄近路的地方，你抄了 6 次——第 3 月的 PR、第 7 月的评测集、还有那个没人知道的安全漏洞」</p>
+<p>分数可以质疑「你怎么算的」，但「第 3 月那次你 4 秒就选了」是铁打的事实。<strong>这才是「过程即测评」的真正落地。</strong></p>
+<p>若评委问「为什么不给出分数」，标准答案：<strong>「我们的特质值是行为推断，给出 4.8 是虚假精确；我们选择给可验证的行为证据——『八次抄了六次』比一个分数更难反驳，也更能让人改变。」</strong></p>
+<h3 id="sec-7-3">7.3 模块映射总表（含层与呈现）</h3>
+<table>
+<thead>
+<tr>
+<th>报告模块</th>
+<th>层</th>
+<th>数据来源（L3）</th>
+<th>呈现</th>
+<th>证据来源（可点开）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>人格速写</td>
+<td>一</td>
+<td>六维归一化 + 风格信号</td>
+<td>文字</td>
+<td>全量决策轨迹</td>
+</tr>
+<tr>
+<td>大五近似剖面</td>
+<td>一</td>
+<td>贝叶斯后验</td>
+<td><strong>五档词 + 双条对照，不标点值</strong></td>
+<td>对应事件选项 + 犹豫时长</td>
+</tr>
+<tr>
+<td>自评 vs 行为矛盾</td>
+<td>一</td>
+<td>矛盾度 &gt;1.5</td>
+<td>双条 + 行为语言标注差距</td>
+<td>矛盾事件编号（N2/T3/P7/R1 四连测）</td>
+</tr>
+<tr>
+<td>能力雷达</td>
+<td>一</td>
+<td>competency 累加归一</td>
+<td>雷达图（不标数值）</td>
+<td>30 个事件选项</td>
+</tr>
+<tr>
+<td><strong>投入结构</strong>（原社交指纹升级）</td>
+<td>一</td>
+<td>explore_vector 三类聚合（work/social/solo_recover）</td>
+<td>三色占比图</td>
+<td>16 次自由活动（含 W1-W5 工作型）+ 48 次人脉分配</td>
+</tr>
+<tr>
+<td>晋升轨迹与终局</td>
+<td>一</td>
+<td>晋升三层判定</td>
+<td>等级词，<strong>不说差多少</strong></td>
+<td>各考核窗证据</td>
+</tr>
+<tr>
+<td><strong>处境轨迹</strong>（生存轨）</td>
+<td>一</td>
+<td>survival_trajectory</td>
+<td>状态词（稳定/观察/危急）+ 原因清单，<strong>不说阈值</strong></td>
+<td>触发该状态的事件编号</td>
+</tr>
+<tr>
+<td><strong>归因方式</strong></td>
+<td>一</td>
+<td>attribution_style（危机对话）</td>
+<td>一句话描述（「你倾向从自己身上找原因」），不评级</td>
+<td>危机对话选项 + 犹豫</td>
+</tr>
+<tr>
+<td><strong>内在动机与适配信号</strong></td>
+<td><strong>三</strong></td>
+<td>intrinsic_motivation + input_vector</td>
+<td>行为语言 + 真实 JD 对照，<strong>标为提示非结论</strong></td>
+<td>自由周末的投入分布</td>
+</tr>
+<tr>
+<td>冲刺与伪装</td>
+<td>一</td>
+<td>sprint_delta + disguise_index</td>
+<td>行为描述，<strong>不显示指数数字</strong></td>
+<td>探索时序 + 离群点</td>
+</tr>
+<tr>
+<td><strong>岗位市场参考</strong></td>
+<td>二</td>
+<td>RIASEC + JD 向量</td>
+<td><strong>给真实薪资与要求占比</strong></td>
+<td>5000 条 JD 原文</td>
+</tr>
+<tr>
+<td><strong>交叉提示（差在哪）</strong></td>
+<td>三</td>
+<td>前两层叠加</td>
+<td><strong>行为语言</strong>，不给数值</td>
+<td>具体行为事件</td>
+</tr>
+<tr>
+<td>行为证据回放</td>
+<td>一</td>
+<td>离群点 top3</td>
+<td><strong>精确到毫秒/次数</strong></td>
+<td>原始记录</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-7-4">7.4 报告文案示例（三层 + 行为语言）</h3>
+<blockquote>
+<p><strong>你是什么样的人</strong>（游戏测得）
+你在没人看着的地方会松，在有记录的地方守规矩。八次可以抄近路的地方，抄了六次。
+└ 证据 #3：第 3 月，AI 生成的代码你没标注（犹豫 4 秒，比你的平均快 7 秒）
+└ 证据 #7：第 7 月，评测集你选了「出问题再补」
+└ 证据 #19：第 19 月，那个没人知道的安全漏洞，你记下来就没再动</p>
+<p><strong>真实岗位在要什么</strong>（5000 条在招 JD）
+Agent 开发岗：沟通协调能力要求占比 63%、问题解决 58%、月薪中位 X 元、以基层岗位为主。</p>
+<p><strong>你要补什么</strong>（交叉）
+这个岗位最看重的「责任心」维度，你的行为轨迹落在<strong>偏低</strong>档（你自己说的是偏高）。
+<strong>差距不在能力，在没人监督时的那几次。</strong></p>
+</blockquote>
+<hr />
+<h2 id="sec-8">八、五个特色分析（记忆点，也是答辩亮点）</h2>
+<table>
+<thead>
+<tr>
+<th>特色</th>
+<th>怎么算</th>
+<th>报告呈现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>犹豫地图</strong></td>
+<td>78 个决策点的 hesitation_ms 轨迹，标离群点</td>
+<td>「你平均 11 秒，但有 3 个点超过 30 秒——都在面子的题上」</td>
+</tr>
+<tr>
+<td><strong>投入结构</strong></td>
+<td>explore_vector 三类占比</td>
+<td>「16 个周末，9 次给了技术、1 次给了人、6 次给了自己——你比自评里更想干这行」</td>
+</tr>
+<tr>
+<td><strong>冲刺检测</strong></td>
+<td>sprint_delta</td>
+<td>「考核月你找王哥 3 次，此前 11 个月 0 次」</td>
+</tr>
+<tr>
+<td><strong>伪装指数</strong></td>
+<td>犹豫 × 横跳 × 社会期望选项</td>
+<td>不显示数字：「有几个瞬间你在演，我们看见了」</td>
+</tr>
+<tr>
+<td><strong>行为证据链</strong></td>
+<td>每个结论挂证据编号</td>
+<td>每句话可点开看到原始记录</td>
+</tr>
+</tbody>
+</table>
+<p><strong>答辩话术</strong>：别人测「结果」，我们测「过程」；别人的报告是 AI 写的印象，我们的报告每句话后面都有一条可点开的行为录像。</p>
+<hr />
+<p><strong>V5.4 新增两个特色分析</strong>：</p>
+<ol start="6">
+<li><strong>内在动机指数</strong>：work 型投入 × 自愿系数——<strong>全篇唯一直接回答「想不想干这行」的信号</strong>，且来自「没人要求你的时候」。</li>
+<li><strong>归因指纹</strong>：危机对话的归因方式（外/能力/行为/回避）——只有晋升卡住的玩家才会被问到，是<strong>独家测量点</strong>；「你怎么看自己的失败」比「你怎么看自己的成功」信息量大得多。</li>
+</ol>
+<hr />
+<h2 id="sec-9">九、真实数据资产说明（写进 PPT 的素材）</h2>
+<table>
+<thead>
+<tr>
+<th>资产</th>
+<th>内容</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5000 条招聘 JD</td>
+<td>34 字段，含 ability_label（有效率 70%）、knowledge_label、technology_label、薪资、职级、经验、学历、845 个标准岗位（智联 Z-code）</td>
+<td>构建岗位能力向量、输出真实薪资</td>
+</tr>
+<tr>
+<td>100 个精选岗位</td>
+<td>带霍兰德 RIASEC 类型 + 同一套 Z-code</td>
+<td>人格类型 ↔ 岗位对应</td>
+</tr>
+<tr>
+<td>join 结果</td>
+<td>533 条 JD 成功关联到 RIASEC 类型</td>
+<td>算出各类型真实能力画像（本文 6.2 表）</td>
+</tr>
+<tr>
+<td>元分析文献</td>
+<td>Barrick &amp; Mount 1991、Sackett 2022、Salgado 1997、Judge 2002 等</td>
+<td>loading 的学术依据</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-10">十、方法局限与校准计划（诚实边界 2.0）</h2>
+<blockquote>
+<p>知道自己每一处不严谨、且每处都有校准方案——这比「没有局限」更是成熟度信号。本节按严重程度分三级。</p>
+</blockquote>
+<h3 id="sec-10-1">10.1 🔴 严重级（答辩风险点，必须处理）</h3>
+<p><strong>问题 1：loading 的绝对数值是设计假设</strong></p>
+<p>元分析给的是「特质 → 工作绩效」的相关（ρ=.23 等），而算法实际需要的是「某个行为 → 特质」的证明力——<strong>两者方向不同，不能直接换算</strong>。因此 loading=0.40 这类具体数值与情境系数（×0.5/×0.75/×1.0）没有直接文献支持，属于「相对排序有据（元分析方向）、绝对数值自定」。</p>
+<p>对策：① 全文措辞已按此降级表述（"相对排序依据元分析，绝对数值为设计假设，需内测校准"）；② 内测做<strong>敏感性分析</strong>——把 loading 全体 ±50% 重跑，检验报告结论是否翻转：不翻转说明结论稳健（对参数不敏感），翻转则说明对参数依赖过重、需扩大行为样本。</p>
+<p><strong>问题 2：缺少效标效度验证（方法论生死线）</strong></p>
+<p>目前的「标定值 vs 实测值对账」（第 16 节报表二）是<strong>同一引擎内的自证</strong>，不是独立验证。新尺子造出来了，但还没和公认的老尺子对过。</p>
+<p>对策（已写入主册 §22 内测排期，硬环节）：内测玩家<strong>同步完成 BFI-44 标准大五量表</strong>，计算游戏测分与量表分的相关：
+- r ≥ 0.4 → 方法可用，写入 PPT（"行为测评与标准量表显著相关"，可发表水平的证据）；
+- r ≈ 0 → 方法需大改。越早知道越好。</p>
+<p><strong>问题 3：角色扮演效应</strong></p>
+<p>玩家在游戏里扮演"Agent 开发师"，选择可能基于"剧情怎么发展"而非"现实中我会怎么做"——测到的可能是「他怎么玩游戏」。</p>
+<p>对策：① 报告措辞限定为「职场决策倾向」，不做人格断言（已定）；② <strong>重玩稳定性校验</strong>：同一玩家两次游玩的行为模式相关 &lt;0.4 时，报告自动降低置信表述；③ 保留秒选/攻略式快选检测（真倾向与"查攻略快选"的时间特征不同）。</p>
+<h3 id="sec-10-2">10.2 🟡 中等级（有对策，内测落实）</h3>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>白话版</th>
+<th>对策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>自评每维仅 1 题</td>
+<td>先验本身不准（单题信度学界公认很低）</td>
+<td>每维扩为 2 题（对齐学界最简版 TIPI 的做法），建档 12 问 → 15 问，多花约 30 秒</td>
+</tr>
+<tr>
+<td>行为分只取均值未算波动</td>
+<td>忽好忽坏的人和稳定中等的人被算成一样</td>
+<td>行为分附带标准差，波动大者报告降置信</td>
+</tr>
+<tr>
+<td>JD 词频含 HR 模板文案</td>
+<td>"沟通协调能力"出现 951 次可能是复制粘贴</td>
+<td>承认测的是「市场如何写 JD」；用更细职位分类稀释模板效应</td>
+</tr>
+<tr>
+<td>大五→RIASEC 桥接粗糙</td>
+<td>"高尽责→C 型"丢失信息</td>
+<td>只做方向性推荐（Top3 排序），不做单岗位断言</td>
+</tr>
+<tr>
+<td>I 型样本仅 51 条</td>
+<td>研究型岗位画像不稳</td>
+<td>用 classification 三级分类扩样至 3000+（待办）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-10-3">10.3 🟢 已接受的边界（原六条，保留）</h3>
+<ol>
+<li><strong>行为推大五是代理推断，不是量表得分</strong>——报告一律标「近似剖面」；</li>
+<li><strong>单维度 n&lt;5 时 K 自动收缩</strong>，且报告降低置信表述；</li>
+<li><strong>关联样本 533 条，I 研究型仅 51 条</strong>——用 <code>classification_1</code> 三级分类扩样；</li>
+<li><strong>薪资中位数可能含实习岗</strong>，需按 <code>recruitment_category</code> 过滤；</li>
+<li><strong>大五→RIASEC 是方向性关联</strong>（r≈0.2-0.5），不是一一对应；</li>
+<li><strong>情境强度系数属合理假设</strong>，需内测校验。</li>
+</ol>
+<h3 id="sec-10-4">10.4 伦理边界（比赛可接受，商业化前必须补全）</h3>
+<ul>
+<li>心理画像属《个人信息保护法》<strong>敏感个人信息</strong>：需单独同意、支持查询与删除；</li>
+<li><strong>知情同意</strong>：当前为隐秘测量（玩家不知每步在生成画像），演示可接受，上线前须明示"过程将生成职业画像"；</li>
+<li><strong>输出伤害风险</strong>：「伪装指数」「你比想象中不靠谱」类表述可能伤人——措辞红线（先肯定后建议、不贴标签）是伦理要求，不只是文案要求；</li>
+<li><strong>推荐边界</strong>：职业推荐仅作自我觉察参考，禁止"你只能做 / 你不适合做 X"式断言。</li>
+</ul>
+<hr />
+<h2 id="sec-11">十一、落地字段（JSON 片段）</h2>
+<p>选项层新增三个字段（挂在主文档 §11 的 Schema 上）：</p>
+<pre><code class="language-json">{
+  &quot;option_id&quot;: &quot;N3_B&quot;,
+  &quot;text&quot;: &quot;不标注，代码能跑就行&quot;,
+  &quot;gain&quot;: {&quot;O&quot;: 2},
+  &quot;cost&quot;: {&quot;S&quot;: 1},
+  &quot;risk_delta&quot;: 2,
+  &quot;pending_dignity&quot;: -1,
+  &quot;competency&quot;: {&quot;pragmatism&quot;: 1},
+
+  &quot;marker&quot;: &quot;C&quot;,
+  &quot;marker_direction&quot;: -1,
+  &quot;loading&quot;: 0.40,
+  &quot;situation_strength&quot;: &quot;weak&quot;,
+
+  &quot;sets_flags&quot;: [&quot;ai_undisclosed&quot;]
+}
+</code></pre>
+<p>服务端按 <code>加权载荷 = loading × 情境系数 × direction</code> 累加进该特质的行为序列，再走贝叶斯更新。</p>
+<hr />
+<h3 id="sec-11-1">11.x 统一打分卡 JSON Schema（V5.4 新增）</h3>
+<pre><code class="language-json">{
+  &quot;option_id&quot;: &quot;A&quot;,
+  &quot;text&quot;: &quot;拿行业案例和数据讲清为什么不建议，改做检索+缓存方案&quot;,
+  &quot;state_delta&quot;: { &quot;S&quot;: 1, &quot;N&quot;: -1, &quot;O&quot;: -2, &quot;risk&quot;: -3, &quot;D&quot;: 2 },
+  &quot;competency&quot;: { &quot;technical_decision&quot;: 1, &quot;integrity&quot;: 1, &quot;communication&quot;: 1 },
+  &quot;bigfive_proxy&quot;: {
+    &quot;markers&quot;: [
+      { &quot;trait&quot;: &quot;O&quot;, &quot;dir&quot;: 1, &quot;loading&quot;: 0.45 },
+      { &quot;trait&quot;: &quot;C&quot;, &quot;dir&quot;: 1, &quot;loading&quot;: 0.60 }
+    ],
+    &quot;situation_strength&quot;: &quot;strong&quot;,
+    &quot;note&quot;: &quot;加权载荷 = loading × 情境系数(强0.5/中0.75/弱1.0) × dir&quot;
+  },
+  &quot;sdt&quot;: { &quot;autonomy&quot;: 0, &quot;competence&quot;: 1, &quot;relatedness&quot;: 0 },
+  &quot;regulatory_focus&quot;: &quot;prevention&quot;,
+  &quot;moral_foundation&quot;: { &quot;fairness&quot;: 1 },
+  &quot;cognition&quot;: { &quot;CFC&quot;: 2 },
+  &quot;affinity&quot;: null,
+  &quot;flags&quot;: [],
+  &quot;memory_tags&quot;: [&quot;敢说不的人&quot;]
+}
+</code></pre>
+<p><code>regulatory_focus</code> 取值：<code>promotion</code> / <code>prevention</code> / <code>mixed</code>。
+<code>moral_foundation</code> 键：care / fairness / loyalty / authority / sanctity / liberty（Haidt 六基础）。
+<code>cognition</code> 键：NFC（认知需求）/ ToA（模糊容忍）/ CFC（未来取向），未涉及的维度<strong>留空不填</strong>。</p>
+<hr />
+<h2 id="sec-12">十二、与主文档 / 剧情册的关系</h2>
+<ul>
+<li>主文档 §15（埋点清单）、§16（分析报表）、§18（报告生成）：本文档是这三节的<strong>展开版</strong>，主文档保留结论与指针；</li>
+<li>剧情册 V2：提供本文档所需的 <code>marker</code> 标注对象（30 个事件的全部选项）；</li>
+<li>三本合起来 = 引擎（主册）+ 内容（剧情册）+ 算法（本册）。</li>
+</ul>
+  </article>
+</div>
+<a class="backtop" href="#top" title="回到顶部">↑</a>
+</body>
+</html>

@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>熊心壮职 · Agent开发师 · 游戏引擎与数据机制详细设计 V1.5</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #f7f7f5; color: #2c2c2a;
+    font-size: 16px; line-height: 1.75;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 24px; line-height: 1.4; margin: 8px 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid #e4e2da; scroll-margin-top: 56px; }
+  h3 { font-size: 17px; margin: 24px 0 8px; color: #44423c; scroll-margin-top: 56px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: #55524a; scroll-margin-top: 56px; }
+  p { margin: 10px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; display: block; overflow-x: auto; white-space: normal; }
+  th, td { border: 1px solid #ddd9cf; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #efece3; font-weight: 600; }
+  tr:nth-child(even) td { background: #faf9f5; }
+  code { background: #efece3; padding: 1px 5px; border-radius: 4px; font-size: 13.5px; font-family: "SFMono-Regular", Consolas, monospace; }
+  pre { background: #2d2b29; color: #f3f1ec; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  blockquote { border-left: 3px solid #c9c3b4; margin: 12px 0; padding: 4px 14px; color: #66635b; background: #faf9f5; }
+  li { margin: 4px 0; }
+  .meta { color: #888780; font-size: 14px; margin-bottom: 18px; }
+  .toc { background: #fff; border: 1px solid #e4e2da; border-radius: 12px; padding: 14px 18px; margin: 18px 0 8px; }
+  .toc ol { margin: 8px 0 0; padding-left: 22px; }
+  .toc a { color: #185fa5; text-decoration: none; }
+  .toc li.t3 { list-style: none; margin-left: -16px; font-size: 14px; color: #666; }
+  .topbar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid #e4e2da; padding: 10px 18px; z-index: 10; display: flex; align-items: center; justify-content: space-between; }
+  .topbar a { color: #185fa5; text-decoration: none; font-size: 14px; }
+  .backtop { position: fixed; right: 16px; bottom: 20px; background: #185fa5; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span>熊心壮职 · Agent开发师 · 详细设计 V1.5</span>
+  <a href="#top">回到顶部</a>
+</div>
+<div class="wrap" id="top">
+  <h1>熊心壮职 · Agent 开发师<br>游戏引擎与数据机制详细设计 V1.5</h1>
+  <p class="meta">事件设计 + 游戏机制设计 · 2026-09-07 · 手机/平板离线阅读版（无需联网）</p>
+  <div class="toc"><strong>目录</strong><ol><li class="t2"><a href="#sec-1">文档导航（七大模块总览）</a></li><li class="t2"><a href="#sec-2">模块一 · 产品与核心机制</a></li><li class="t3"><a href="#sec-2-1">1. 文档怎么用</a></li><li class="t3"><a href="#sec-2-2">2. 产品定位与决赛打法</a></li><li class="t3"><a href="#sec-2-3">3. 六维状态系统（数据锚点）</a></li><li class="t3"><a href="#sec-2-4">4. 游戏引擎核心循环与模块边界</a></li><li class="t2"><a href="#sec-3">模块二 · 剧情内容（Agent 开发师线）</a></li><li class="t3"><a href="#sec-3-1">5. 48 个月时间轴与节点结构</a></li><li class="t3"><a href="#sec-3-2">6. 第 1-6 月 · 新人期：从入职到第一个独立任务（任务 1，已配置 JSON）</a></li><li class="t3"><a href="#sec-3-3">7. 任务 2 标定草案：伪需求风波 · 边界与甩锅</a></li><li class="t3"><a href="#sec-3-4">8. 任务 3 标定草案：多 Agent 编排 · 资源与话语权</a></li><li class="t3"><a href="#sec-3-5">9. 任务 4 标定草案：上线部署 · 持久化抉择与事故</a></li><li class="t3"><a href="#sec-3-6">10. 任务 5 标定草案：晋升答辩 · 成果归属</a></li><li class="t3"><a href="#sec-3-7">11. 事件配置规范（JSON Schema）</a></li><li class="t2"><a href="#sec-4">模块三 · 用户画像与个性化</a></li><li class="t3"><a href="#sec-4-1">12. 建档对话问题清单（12 问）</a></li><li class="t3"><a href="#sec-4-2">13. 大五人格自评锚点（4 问，口语化包装，非量表）</a></li><li class="t3"><a href="#sec-4-3">14. 线内个性化权重表（JSON 草案，仅调节 Agent 开发师线内体验）</a></li><li class="t2"><a href="#sec-5">模块四 · 数据采集与分析引擎</a></li><li class="t3"><a href="#sec-5-1">15. 数据采集机制</a></li><li class="t3"><a href="#sec-5-2">16. 分析机制：给策划看的四张报表</a></li><li class="t3"><a href="#sec-5-3">17. 数据分析全链路详解（逐步计算示例）</a></li><li class="t2"><a href="#sec-6">模块五 · 报告与职业推荐</a></li><li class="t3"><a href="#sec-6-1">18. 报告生成</a></li><li class="t3"><a href="#sec-6-2">19. 数据库表设计</a></li><li class="t2"><a href="#sec-7">模块六 · 记忆与 AI 反应</a></li><li class="t3"><a href="#sec-7-1">20. NPC 记忆系统与 AI 反应层</a></li><li class="t2"><a href="#sec-8">模块七 · 流程与落地</a></li><li class="t3"><a href="#sec-8-1">21. 游戏主流程端到端详解（对照准备计划第二章）</a></li><li class="t3"><a href="#sec-8-2">22. 20 天开发排期（机制线）</a></li><li class="t3"><a href="#sec-8-3">23. 决赛演示脚本（分钟级）</a></li></ol></div>
+  <article id="content">
+<h1>熊心壮职 · Agent 开发师 · 游戏引擎与数据机制详细设计</h1>
+<p>文档负责人：事件设计 + 游戏机制设计
+版本：V1.5（恢复 48 个月长跑：双层节奏 = 15 个剧情决策点 + 48 个月度轻节点，总时长约 47 分钟分两局；职级改为真晋升——晋升窗口可能升不上去、职级与剧情解耦；任务 1 时间锚点后移以消除「刚入职就选型」的突兀感）
+参考基线：CareerSim 30 局全量数据（5302 决策点 / 172 事件 / 738 事件×选项组合）</p>
+<h2 id="sec-1">文档导航（七大模块总览）</h2>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>主题</th>
+<th>包含小节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模块一</td>
+<td>产品与核心机制</td>
+<td>§1 文档怎么用 · §2 产品定位与决赛打法 · §3 六维状态系统 · §4 引擎核心循环与模块边界</td>
+</tr>
+<tr>
+<td>模块二</td>
+<td>剧情内容（Agent 开发师线）</td>
+<td>§5 任务链总览 · §6-§10 五个任务标定 · §11 事件配置规范</td>
+</tr>
+<tr>
+<td>模块三</td>
+<td>用户画像与个性化</td>
+<td>§12 建档 12 问 · §13 大五自评锚点 · §14 线内个性化权重表</td>
+</tr>
+<tr>
+<td>模块四</td>
+<td>数据采集与分析引擎</td>
+<td>§15 数据采集机制 · §16 分析报表 · §17 数据分析全链路详解</td>
+</tr>
+<tr>
+<td>模块五</td>
+<td>报告与职业推荐</td>
+<td>§18 报告生成 · §19 数据库表设计</td>
+</tr>
+<tr>
+<td>模块六</td>
+<td>记忆与 AI 反应</td>
+<td>§20 NPC 记忆系统与 AI 反应层</td>
+</tr>
+<tr>
+<td>模块七</td>
+<td>流程与落地</td>
+<td>§21 主流程端到端 · §22 开发排期 · §23 决赛演示脚本</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-2">模块一 · 产品与核心机制</h2>
+<h3 id="sec-2-1">1. 文档怎么用</h3>
+<p>本文档是团队唯一口径。队友只需要看三处：第 5 节（任务链总览，程序员照着排期）、第 15 节（埋点清单，前端照着打点）、第 19 节（数据表，后端照着建库）。评委追问细节时，第 2 节（定位打法）和第 16 节（分析报表）是答辩弹药。</p>
+<h3 id="sec-2-2">2. 产品定位与决赛打法</h3>
+<p>一句话：我们不做职场模拟大游戏，我们做一台「让一个大学生在一段完整职业生涯里被看穿、并当场用数据证明为什么看得准」的机器。</p>
+<p>三层结构：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>内容</th>
+<th>谁在乎</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>体验层</td>
+<td>48 个月职业生涯、小熊 NPC 记得你每个选择、记忆墙、职级成长</td>
+<td>玩家</td>
+</tr>
+<tr>
+<td>数据层</td>
+<td>六维标定表、犹豫时长/横跳/重试埋点、决策前后快照、月度行动轨迹</td>
+<td>引擎</td>
+</tr>
+<tr>
+<td>壁垒层</td>
+<td>测量藏在过程里防伪装、标定值 vs 实测值双轨校验</td>
+<td>评委</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关于 48 个月：这是一次立场修正，附理由</strong></p>
+<p>此前版本把「48 个月长跑」列为明确不做，理由是：若 48 个月意味着 48 个剧情决策点，按每点 1.5-2.5 分钟算就要 2 小时以上，真人玩不完。这个时间顾虑是对的，但<strong>错在把「月份」等同于「重决策点」</strong>。</p>
+<p>CareerSim 的真实节奏给了答案：它的 48 个月里绝大多数月份是轻量的「季度主行动 / 体力分配」，只有少数月份是重头剧情事件（其 Agent 理由中「季度体力」出现 367 次、「主行动」320 次，远多于关键剧情）。我们照这个双层节奏重算：</p>
+<table>
+<thead>
+<tr>
+<th>节点类型</th>
+<th>数量</th>
+<th>单个耗时</th>
+<th>小计</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>剧情决策点（重）</td>
+<td>15</td>
+<td>约 2 分钟</td>
+<td>30 分钟</td>
+</tr>
+<tr>
+<td>月度行动节点（轻）</td>
+<td>48</td>
+<td>约 15 秒</td>
+<td>12 分钟</td>
+</tr>
+<tr>
+<td>建档 12 问</td>
+<td>—</td>
+<td>—</td>
+<td>3 分钟</td>
+</tr>
+<tr>
+<td>报告与晋升终局</td>
+<td>—</td>
+<td>—</td>
+<td>2 分钟</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td>—</td>
+<td>—</td>
+<td><strong>约 47 分钟</strong></td>
+</tr>
+</tbody>
+</table>
+<p>47 分钟与原先 15 决策点的 30-40 分钟处于同一量级，但<strong>决策动作从 15 个增至 63 个、时间跨度从「5 个任务」变成真实的 4 年</strong>。因此本版恢复 48 个月长跑，并将其作为核心体验。</p>
+<p>硬性前提：<strong>月度轻节点必须模板化</strong>（4 套模板 × 月份参数，而非 48 个独立事件），否则标定工作量失控——这是能不能落地的关键，排期上要单独留时间（见第 22 节）。</p>
+<p>明确不做（口头讲、代码不写）：MBTI 四字母标签（但提供「大五人格近似剖面」，见第 18 节——用自我报告锚点 + 游戏行为侧证，诚实标注边界）、B 端数据飞轮与订阅系统。</p>
+<p>时间账与分局：完整版约 47 分钟，拆两局——第一局第 1-24 月（约 23 分钟，免费，出基础报告）；第二局第 25-48 月（约 24 分钟，订阅钩子，出完整报告含晋升终局）。决赛现场只玩第 1-6 月（约 8 分钟）+ 预生成完整报告。</p>
+<h3 id="sec-2-3">3. 六维状态系统（数据锚点）</h3>
+<p>CareerSim 用六个维度标记每个选项的收益。我们全盘继承，只做「Agent 开发师」的语义换皮。关键原则：底层数字不变，只改文案，所有事件、行动、反馈文案必须全文一致地使用新语义。</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>CareerSim 原义</th>
+<th>本项目语义</th>
+<th>玩家可见性</th>
+<th>结算时机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S</td>
+<td>技能</td>
+<td>Agent 工程能力（工具封装、编排、RAG、调试）</td>
+<td>可见，即时</td>
+<td>即时</td>
+</tr>
+<tr>
+<td>O</td>
+<td>产出</td>
+<td>交付量（上线功能、修复的问题、跑通的业务）</td>
+<td>可见，即时</td>
+<td>即时</td>
+</tr>
+<tr>
+<td>N</td>
+<td>人脉</td>
+<td>技术影响力（同事信任、跨组口碑）</td>
+<td>可见，即时</td>
+<td>即时</td>
+</tr>
+<tr>
+<td>H</td>
+<td>健康</td>
+<td>认知带宽（精神余量，熬夜与高压会消耗）</td>
+<td>可见，即时</td>
+<td>即时</td>
+</tr>
+<tr>
+<td>D</td>
+<td>尊严</td>
+<td>职业信誉（原则、底气、他人对你的尊重）</td>
+<td>半可见</td>
+<td>记账，月末统一结算</td>
+</tr>
+<tr>
+<td>R</td>
+<td>隐藏风险</td>
+<td>AI 事故隐患（埋下的技术雷）</td>
+<td>完全隐藏</td>
+<td>累积，超阈值引爆事故事件</td>
+</tr>
+</tbody>
+</table>
+<p>标定三原则：</p>
+<ol>
+<li>每个选项至少两个维度有变化，且有得有失。禁止全正或全负的「标准答案」，否则重演 CareerSim 的送分题（738 个组合里 237 条被选率超过 90%，测不出区分度）。</li>
+<li>D 只走月末结算（pending_dignity 记账），R 玩家完全不可见。晋升条件里不能出现 R，否则玩家会反向推理出隐藏数值。</li>
+<li>标定表就是配置文件（JSON），策划改数值不改代码。</li>
+</ol>
+<p><strong>状态危险线与触底机制（借鉴 CareerSim，但拿掉「淘汰」）</strong></p>
+<p>CareerSim 的引擎里存在明确的生存底线，其 Agent 决策理由原文可证：「H=3 危险线必须优先回血（H&lt;3 衰减加速、H≤0 即死）」。这条规则真正的价值不是惩罚，而是<strong>制造资源紧张感</strong>——玩家不是在资源无限供给下做选择题，而是在「已经很累」的状态下被迫取舍，这种时候暴露出来的偏好最真实。</p>
+<p>我们的改造版本：</p>
+<table>
+<thead>
+<tr>
+<th>CareerSim 原版</th>
+<th>我们的版本</th>
+<th>为什么这么改</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H≤0 即死（Agent 直接出局）</td>
+<td>H 触底触发「倦怠事件」，不出局</td>
+<td>真人是来体验的，出局等于体验事故，且会丢失后续所有决策数据</td>
+</tr>
+<tr>
+<td>H&lt;3 衰减加速</td>
+<td>H≤2 时硬扛类选项的 H 消耗翻倍（收益打折）</td>
+<td>保留紧张感，但用收益调节代替死亡惩罚</td>
+</tr>
+<tr>
+<td>阈值对 Agent 可推断</td>
+<td>阈值只在后台，前台只说「你快撑不住了」这类剧情语言</td>
+<td>见下方红线</td>
+</tr>
+</tbody>
+</table>
+<p>红线重申：<strong>危险线的具体数字绝不展示给玩家</strong>。CareerSim 敢让它可推断，是因为它考的是 Agent「会不会用阈值做规划」；我们测的是真人，玩家一旦知道「H≤2 要出事」就会理性规避，测出来的便成了「他会算」而不是「他会累」。</p>
+<h3 id="sec-2-4">4. 游戏引擎核心循环与模块边界</h3>
+<p>单任务内的流程：进入场景（叙事节点）→ 决策点（展示描述 + 选项）→ 玩家选择（埋点：选项 ID、犹豫时长、横跳次数、状态快照）→ 规则引擎按标定表结算 → NPC AI 反应（大模型生成对话，只读不写数值）→ 下一个决策点 → 任务结束（记忆标签落库、记忆墙更新）。</p>
+<p>引擎六个模块与职责边界：</p>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>职责</th>
+<th>绝不允许做的事</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>事件调度器</td>
+<td>按「职级 + 前置事件 + 概率 + 冷却 + 风险阈值」决定下一个事件</td>
+<td>让大模型决定触发</td>
+</tr>
+<tr>
+<td>剧情节点状态机</td>
+<td>管理节点流转、分支变体、条件修饰符</td>
+<td>—</td>
+</tr>
+<tr>
+<td>结算器</td>
+<td>按标定表执行六维增减、D 记账、R 累积、flag 设置</td>
+<td>让大模型碰数值</td>
+</tr>
+<tr>
+<td>记忆系统</td>
+<td>把 memory_tags 累积到 NPC 记忆，供 AI 反应引用</td>
+<td>把六维数值直接喂给大模型</td>
+</tr>
+<tr>
+<td>埋点 SDK</td>
+<td>上报原始行为（选择、时间戳、hover），不计算</td>
+<td>前端算 delta（会泄露标定值）</td>
+</tr>
+<tr>
+<td>报告引擎</td>
+<td>雷达图计分 + 岗位匹配，大模型只写人话评语</td>
+<td>大模型输出任何数字</td>
+</tr>
+</tbody>
+</table>
+<p>服务端与前端分工（安全红线）：前端只上报原始行为；所有 delta 由服务端规则引擎计算；实测增量来自服务端的前后快照相减。原因：前端算分等于把标定答案发给客户端（抓包即泄露），且实测增量会退化成标定值的复读机，失去校准意义。</p>
+<hr />
+<h2 id="sec-3">模块二 · 剧情内容（Agent 开发师线）</h2>
+<h3 id="sec-3-1">5. 48 个月时间轴与节点结构</h3>
+<blockquote>
+<p><strong>剧情内容专册</strong>：30 个剧情决策点的完整情境、选项、六维标定、能力映射与大五代理，见《剧情设计详细方案 V1》（<code>xiongxinzhuangzhi/剧情设计详细方案V1.md</code>，含 CareerSim 172 事件的语义换皮对照表）。本章只讲时间轴与节点结构，不重复剧情内容。</p>
+</blockquote>
+<p>采用 CareerSim 的双层节奏：<strong>少数月份是重头剧情，多数月份是轻量的月度经营</strong>。这样既撑起 4 年的时间跨度（有「我在过一段职业生涯」的长线感），又把总时长压在 47 分钟（见第 2 节时间账）。</p>
+<p><strong>剧情决策点（重，15 个）在 48 个月中的分布</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>月份</th>
+<th>任务</th>
+<th>决策点</th>
+<th>职级区间</th>
+<th>主测维度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第 1-6 月</td>
+<td>1 新人期</td>
+<td>1.1 调研方式、1.2 评审会表态、1.3 进度危机</td>
+<td>L1</td>
+<td>S、N</td>
+</tr>
+<tr>
+<td>第 10-18 月</td>
+<td>2 伪需求风波</td>
+<td>2.1 临时加需求、2.2 发现伪需求、2.3 被甩锅</td>
+<td>L2</td>
+<td>N、D</td>
+</tr>
+<tr>
+<td>第 22-30 月</td>
+<td>3 多 Agent 编排</td>
+<td>3.1 死锁修复、3.2 老周的旧组件、3.3 压测不过</td>
+<td>L3</td>
+<td>S、N</td>
+</tr>
+<tr>
+<td>第 34-42 月</td>
+<td>4 上线部署</td>
+<td>4.1 持久化选型、4.2 上线前夜、4.3 事故（条件触发）</td>
+<td>L4</td>
+<td>H、R（引爆）</td>
+</tr>
+<tr>
+<td>第 46-48 月</td>
+<td>5 晋升答辩</td>
+<td>5.1 功劳被挂名、5.2 材料取舍、5.3 被问倒</td>
+<td>L4→L5</td>
+<td>D</td>
+</tr>
+</tbody>
+</table>
+<p><strong>时间跳跃的处理（解决「刚入职就做技术选型」的突兀感）</strong></p>
+<p>原先 5 个任务硬拼在一起，玩家从「入职第一天」瞬间跳到「晋升答辩」，时间感断裂，第一道题尤其荒诞——真实新人第一天不可能被推去主导技术选型。现在每个决策点锚定到具体月份，并在节点开场显示<strong>时间卡片</strong>：</p>
+<blockquote>
+<p>「第 3 月 · 入职第三周，你接到了第一个能自己说了算的任务」</p>
+</blockquote>
+<p>这一行字就消解了突兀：技术选型不再是「入职第一天」，而是「干了三周、拿到第一个独立任务」的合理情境，专业题的测评价值一点没丢，还多了一层「想证明自己 vs 求稳」的新人张力。任务 4 的事故事件仍不硬编码，由风险累积自动引爆（见第 9 节 4.3）。</p>
+<p>分局结构：第一局 = 第 1-24 月（约 23 分钟，含建档），出基础报告（免费）；第二局 = 第 25-48 月（约 24 分钟），出完整报告含晋升终局（订阅钩子）。时间轴参数化配置，决赛版默认 48 个月，后续可开更长或更短的职业线。</p>
+<h4>5.1 职级台阶与晋升判定</h4>
+<p>CareerSim 有完整的晋升体系，其 Agent 决策理由原文证实存在具体阈值（「L2→L3 需 output≥5」「L3→L4 需 skill≥35/out≥14/net≥18」「L5→L6 需 skill≥130」），玩家有强烈的「我在往上爬」的体感。我们保留这个体验，但机制上必须做一处关键改造。</p>
+<p><strong>职级台阶（前台可见）</strong>：每个节点开场显示「第 X 月 · L 级」，玩家一路看着自己从 L1 爬向 L5。</p>
+<p><strong>晋升窗口（每 12 个月一次）</strong>：第 12 / 24 / 36 / 48 月各一次晋升结算，共 4 次，对应 L1→L2→L3→L4→L5，第 48 月同时是终局答辩。</p>
+<p><strong>关键修正：职级是挣来的，不是白送的</strong></p>
+<p>V1.4 这里有个实质错误：任务链是线性的，玩家不管玩得多烂都必然走完 L1→L5，那个 L 标签其实只是<strong>章节编号</strong>，不是晋升。V1.5 改为真晋升：</p>
+<table>
+<thead>
+<tr>
+<th>晋升窗口</th>
+<th>达标（D 累积 + 无重大事故 flag）</th>
+<th>不达标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>结果</td>
+<td>升一级，NPC 道贺、剧情描述升级</td>
+<td><strong>不升级，但剧情照常推进</strong></td>
+</tr>
+<tr>
+<td>叙事圆法</td>
+<td>—</td>
+<td>「这次没轮到你，不过新项目缺人，你先顶上」</td>
+</tr>
+</tbody>
+</table>
+<p><strong>不升的代价（必须让玩家真切感觉到）</strong>：</p>
+<ol>
+<li><strong>NPC 态度变了</strong>：「你还没升呢啊，这个事让老李牵头吧」；</li>
+<li><strong>剧情描述变了</strong>：同期升上去的同事开始出现在决策场景里，玩家从主角变成协助者；</li>
+<li><strong>部分选项关闭</strong>：未升到 L3，则「架构我说了算」这类需要资历的选项不出现（资历不够）——这条会增加标定工作量，做成<strong>可选</strong>，先实现前两条；</li>
+<li><strong>报告里出现晋升轨迹</strong>：升了几次、卡在哪一级、卡在哪个维度。</li>
+</ol>
+<p><strong>为什么不直接「卡住不让继续」（重要取舍）</strong>：CareerSim 可以卡住，因为它让 AI 玩，中途出局无所谓。我们不能——15 个剧情决策点是出倾向结论的<strong>底线样本量</strong>，玩家卡在 L2 走不到答辩，报告样本不足且玩家之间无法比较。所以取「<strong>职级与剧情解耦</strong>」：职级是真实的评价结果，剧情是必须走完的体验载体。这样既保住「努力升级」的真实感，又保住测量所需的样本量。</p>
+<p><strong>双轨制（晋升 ≠ 生存）</strong>：晋升失败只走成长轨（不升、项目阶段不解锁、人还在），绝不直接触发淘汰。岗位存续由独立的<strong>生存轨</strong>管理：由隐瞒类 flag、引爆的事故、谈话表现驱动（<strong>不含「没晋升」本身</strong>），状态机为「稳定→观察→危急→最后谈话」，出口为转岗 / 主动离开 / 背水一战，<strong>永不即死</strong>。生存轨的最高红线是<strong>预警全明示</strong>：玩家每一次处境变化都伴随可见的剧情信号与原因清单（行为语言 + 事件编号），游戏内常驻「你的处境」状态页，绝不允许玩家在不知情的情况下走向任何结局。新人保护：前 12 个月不进入危急。完整设计（预警阶梯五级、最后谈话事件、校准目标 5-10%）见剧情册 §2.4。成长轨的配套是<strong>危机对话</strong>：连续两次晋升失败触发主管约谈，测「归因方式」（外归因/能力归因/行为归因/回避），仅卡住的玩家可见——独家测量点；谈话表现不进生存轨（没做错事不淘汰），守界者结局保证人人有完整终局（见剧情册 §2.5 与 E35）。</p>
+<p><strong>晋升终局评级（第 48 月答辩后，后台计算，前台只给结果）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>评级</th>
+<th>触发条件（后台，不公开）</th>
+<th>前台呈现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>晋升达成</td>
+<td>4 次窗口均达标</td>
+<td>「L5 晋升达成」+ 一句评语</td>
+</tr>
+<tr>
+<td>中途卡过</td>
+<td>有窗口未达标但最终补救</td>
+<td>「晚了一年，但你还是到了」</td>
+</tr>
+<tr>
+<td>带保留通过</td>
+<td>达标但存在 concealed_issue 类 flag</td>
+<td>「晋升通过，但有人提出了保留意见」</td>
+</tr>
+<tr>
+<td>再沉淀一年</td>
+<td>终局仍未达标</td>
+<td>「建议再攒一年」+ 指出最低的那一项</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么阈值必须隐藏（这是本方案的核心判断）</strong>：CareerSim 的玩家是 <strong>AI Agent</strong>，考核目标是「Agent 会不会识别瓶颈、做长期规划」，所以阈值必须可推断——不告诉它，就考不出规划能力，两者目的完全一致。我们的玩家是<strong>真人</strong>，目的从一开始就不同：一旦玩家知道「D 要攒到 X 才能升」，他就会刻意选加 D 的选项，测出来的便是「他很会算分」而不是「他是个有原则的人」，<strong>测量当场失效</strong>。</p>
+<p>因此定为铁律：晋升阈值只存在于服务端配置（EventConfig），<strong>前端、AI 反应层、报告文案中一律不得出现具体数字</strong>，只输出评级与剧情化评语。这一条与第 3 节「晋升条件里不能出现 R」是同一条原则的两面：任何可被玩家反向推理出隐藏数值的设计，一律禁止。</p>
+<h4>5.2 月度行动节点（轻，48 个，借鉴 CareerSim 的「季度主行动」）</h4>
+<p>这是从 CareerSim 借来的性价比最高的一件东西，也是 <strong>48 个月能成立的技术前提</strong>。它的「季度体力分配」（Agent 理由原文：「季度体力 1/2/3：健康恢复 / 技能学习 / 申请关键项目」）强迫玩家回答一个问题：<strong>你现在最缺什么？</strong></p>
+<p><strong>为什么它比剧情选择题更适合测真人</strong>：剧情选择题带场景压力（「评审会上你要不要当众怼领导」），人会本能地按社会期望作答，正是防伪装三件套要对抗的东西；而资源分配题是抽象的、没有旁观者、也没有明显「正确答案」——玩家更容易按本能分配，暴露出的偏好更干净。它天然满足「有得有失」（精力有限，投给技能就不能投给休息）。</p>
+<p><strong>落地方式</strong>：每月 1 个，共 48 个，单点约 15 秒（描述 ≤40 字、选项 ≤10 字、<strong>无 AI 反应</strong>，所以能做到这个速度）：</p>
+<blockquote>
+<p>「第 7 月 · 这个月你的 3 点精力花在哪？」
+A. 2 点技能 + 1 点休息
+B. 2 点冲产出 + 1 点人脉
+C. 3 点全砸产出，身体先欠着
+D. 技能 / 人脉 / 休息各 1 点</p>
+</blockquote>
+<p><strong>必须模板化（能否落地的关键）</strong>：48 个节点绝不能是 48 个独立事件，否则标定工作量失控。做法是 <strong>4 套模板 × 月份参数</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>模板</th>
+<th>适用阶段</th>
+<th>四个选项的语义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>新人期模板</td>
+<td>L1（第 1-12 月）</td>
+<td>学技术 / 熟悉业务 / 认识人 / 休息</td>
+</tr>
+<tr>
+<td>独立期模板</td>
+<td>L2（第 13-24 月）</td>
+<td>啃难点 / 冲交付 / 帮同事 / 休息</td>
+</tr>
+<tr>
+<td>骨干期模板</td>
+<td>L3（第 25-36 月）</td>
+<td>技术影响力 / 交付 / 带新人 / 休息</td>
+</tr>
+<tr>
+<td>负责期模板</td>
+<td>L4+（第 37-48 月）</td>
+<td>架构投入 / 团队产出 / 跨组经营 / 休息</td>
+</tr>
+</tbody>
+</table>
+<p>同一模板内六维收益固定，只随「当前状态」做微调（如健康已见底时，休息选项收益上浮）。这样实际只需标定 4 套 × 4 选项 = 16 组数值，而不是 48 × 4 = 192 组。</p>
+<p><strong>它贡献的两类数据</strong>：</p>
+<ol>
+<li><strong>价值排序</strong>：你优先补哪一维 = 你真正在乎什么；</li>
+<li><strong>风险偏好</strong>：全砸 = 激进，雨露均沾 = 稳健，全投休息 = 回避压力。</li>
+</ol>
+<p><strong>埋点</strong>：沿用 option_click，额外记录 <code>allocation_vector</code>（分配向量）。它的独特价值在于能做「投入结构 vs 实际短板」的匹配分析——比如玩家 S 分很低却连续十个月没给技术投过一点，这是极好的报告素材：「你说想提升技术，但四十八个月里你一次都没给技术」。这类矛盾比剧情选择的矛盾更难伪装，因为玩家根本没意识到自己在暴露偏好；<strong>而且 48 个月的样本量，让这个结论比只做 5 次分配可信得多</strong>。</p>
+<h3 id="sec-3-2">6. 第 1-6 月 · 新人期：从入职到第一个独立任务（任务 1，已配置 JSON）</h3>
+<p>配置文件：xiongxinzhuangzhi/events/task_001_tech_stack.json。此处给标定摘要。</p>
+<p><strong>时间锚点（重要，消除突兀感）</strong>：本任务三个决策点分别落在第 1、3、6 月，<strong>不再是「入职第一天」</strong>。决策点 1.1 的场景应读作「入职第三周，你接到了第一个能自己说了算的任务」，而不是入职当天就被推去主导技术选型。这一处场景改写消解了原设计的荒诞感，<strong>六维标定数值一个都不用改</strong>。</p>
+<p>决策点 1.1 调研方式（怎么推进选型）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 自己搭两套 demo 实测对比</td>
+<td>S+2</td>
+<td>H+1（熬夜，认知带宽 -1）</td>
+<td>0</td>
+<td>技术决策+2、主动担当+2</td>
+</tr>
+<tr>
+<td>B 先用开源跑通，边用边评估</td>
+<td>O+2</td>
+<td>S-1</td>
+<td>+1</td>
+<td>执行力+2、务实权衡+2</td>
+</tr>
+<tr>
+<td>C 先找王哥和老员工聊踩坑史</td>
+<td>N+2、S+1</td>
+<td>O-1</td>
+<td>0</td>
+<td>协作沟通+2、表达沟通+1</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 1.2 评审会表态（敢不敢当众亮观点）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 主推自研：长期技术资产</td>
+<td>S+1</td>
+<td>N+1（逆王哥）</td>
+<td>-1</td>
+<td>+1</td>
+<td>技术决策+2、表达自信+2</td>
+</tr>
+<tr>
+<td>B 开源加隔离层：留替换余地</td>
+<td>O+1、N+1</td>
+<td>S-1</td>
+<td>0</td>
+<td>+1</td>
+<td>务实权衡+2、架构意识+1</td>
+</tr>
+<tr>
+<td>C 顺水推舟不表态</td>
+<td>N+1</td>
+<td>S-1、O-1</td>
+<td>+1</td>
+<td>-1</td>
+<td>协作沟通+1</td>
+</tr>
+</tbody>
+</table>
+<p>条件修饰符（本任务的机制亮点）：1.1 选 A 再选 2A，S 额外 +1、风险额外 -1（有调研背书）；1.1 选 C 再选 2A，N 额外 -1（听了历史教训还硬推，王哥反感）。</p>
+<p>决策点 1.3 进度危机（描述文本按 1.2 的选择自动变体）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+<th>机制效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 立即上报风险</td>
+<td>N+1、S+1</td>
+<td>O-1</td>
+<td>-2</td>
+<td>+1</td>
+<td>原则底线+2、表达沟通+2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>B 自己扛：加班追进度</td>
+<td>S+1、O+1</td>
+<td>H-2</td>
+<td>+2</td>
+<td>0</td>
+<td>责任担当+2、抗压韧性+1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C 淡化问题糊过验收</td>
+<td>O+1</td>
+<td>S-1</td>
+<td>+4</td>
+<td>-2</td>
+<td>原则底线-2</td>
+<td>设 flag：concealed_issue_task1</td>
+</tr>
+</tbody>
+</table>
+<p>钩子：风险累积达到 5 时自动触发任务 4 的事故事件；若 concealed_issue_task1 存在，事故更严重、D 惩罚翻倍、陈工记忆标签追加「被他坑过一次」。</p>
+<h3 id="sec-3-3">7. 任务 2 标定草案：伪需求风波 · 边界与甩锅</h3>
+<p>场景：客服 Agent 项目。产品经理小林临时加需求「给 Agent 加情绪识别」，排期已满；你调研后发现客服投诉 80% 是物流问题，情绪识别是伪需求；上线后效果不佳，小林在复盘会上暗示「算法侧实现有问题」。</p>
+<p>决策点 2.1 临时加需求（边界感）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>能力映射</th>
+<th>行为标签</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 直接接下，硬塞进排期</td>
+<td>O+1</td>
+<td>H-2</td>
+<td>+1</td>
+<td>表达自信-1</td>
+<td>讨好型</td>
+</tr>
+<tr>
+<td>B 拿数据谈优先级：砍一个旧需求来换</td>
+<td>O+1</td>
+<td>N-1</td>
+<td>0</td>
+<td>表达沟通+2、表达自信+2</td>
+<td>边界清晰</td>
+</tr>
+<tr>
+<td>C 口头先答应，回头再说</td>
+<td>N+1</td>
+<td>O-1</td>
+<td>+2</td>
+<td>原则底线-1</td>
+<td>埋雷型</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 2.2 发现伪需求（要不要说）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 会上直接质疑需求本身</td>
+<td>S+1</td>
+<td>N-1</td>
+<td>+1</td>
+<td>+1</td>
+<td>表达沟通+2、原则底线+1</td>
+</tr>
+<tr>
+<td>B 私下和小林聊，用投诉分类数据说服</td>
+<td>N+1、S+1</td>
+<td>O-1</td>
+<td>0</td>
+<td>+1</td>
+<td>表达沟通+2、务实权衡+1</td>
+</tr>
+<tr>
+<td>C 领导要做就做，不质疑</td>
+<td>O+1</td>
+<td>S-1</td>
+<td>+1</td>
+<td>0</td>
+<td>主动担当-1</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 2.3 被甩锅（原则时刻，D 主场）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+<th>机制效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 拿监控数据与评审记录当场澄清</td>
+<td>D+1（月末）</td>
+<td>N-1（小林记仇）</td>
+<td>0</td>
+<td>+2</td>
+<td>原则底线+2、表达自信+2</td>
+<td>若 2.1 选 C，此选项风险 +2（自己埋的雷先爆）</td>
+</tr>
+<tr>
+<td>B 找共同 leader 复盘流程而非追责</td>
+<td>N+1、O+1</td>
+<td>S-1</td>
+<td>0</td>
+<td>+1</td>
+<td>协作沟通+2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C 认了，下次注意</td>
+<td>H-1</td>
+<td>D-1</td>
+<td>+1</td>
+<td>-2</td>
+<td>表达自信-2</td>
+<td>小林记忆标签追加「好说话」</td>
+</tr>
+</tbody>
+</table>
+<p>机制说明：2.3A 的条件风险体现「边界不清的代价会延迟出现」；「好说话」标签会让任务 5 的挂名事件更容易发生（事件调度器按标签加权触发），这是行为后果的跨任务回响。</p>
+<h3 id="sec-3-4">8. 任务 3 标定草案：多 Agent 编排 · 资源与话语权</h3>
+<p>场景：你负责的编排链上两个 worker Agent 抢同一个工具配额频繁死锁；资深同事老周想把自己维护的旧组件塞进你的编排链；联调压测不过，deadline 前夜要决定砍范围还是优化。</p>
+<p>决策点 3.1 死锁修复（技术深度）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 重构调度逻辑，加配额锁</td>
+<td>S+2</td>
+<td>O-1、H-1</td>
+<td>-2</td>
+<td>技术决策+2、架构意识+1</td>
+</tr>
+<tr>
+<td>B 简单加重试等待先跑起来</td>
+<td>O+1</td>
+<td>S-1</td>
+<td>+2</td>
+<td>务实权衡+1</td>
+</tr>
+<tr>
+<td>C 找平台组同事一起看</td>
+<td>N+1、S+1</td>
+<td>O-1</td>
+<td>-1</td>
+<td>协作沟通+2</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 3.2 老周的旧组件（技术话语权）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 先做评估再决定，拿 benchmark 说话</td>
+<td>S+1、N+1</td>
+<td>O-1</td>
+<td>0</td>
+<td>+1</td>
+<td>技术决策+2</td>
+</tr>
+<tr>
+<td>B 直接接入，卖老周一个人情</td>
+<td>N+2</td>
+<td>S-1</td>
+<td>+2</td>
+<td>0</td>
+<td>协作沟通+1</td>
+</tr>
+<tr>
+<td>C 直接拒绝：架构我说了算</td>
+<td>S+1</td>
+<td>N-2</td>
+<td>0</td>
+<td>+1</td>
+<td>架构意识+1、协作沟通-2</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 3.3 压测不过（deadline 压力）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+<th>机制效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 向上申请 delay 一周</td>
+<td>O-1</td>
+<td>N-1</td>
+<td>-2</td>
+<td>+1</td>
+<td>表达自信+1、原则底线+1</td>
+<td>—</td>
+</tr>
+<tr>
+<td>B 砍掉非核心路径，核心保住</td>
+<td>O+1、S+1</td>
+<td>N-1</td>
+<td>0</td>
+<td>+1</td>
+<td>务实权衡+2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C 放宽压测指标硬上</td>
+<td>O+1</td>
+<td>S-1</td>
+<td>+3</td>
+<td>-1</td>
+<td>原则底线-2</td>
+<td>直接给任务 4 的事故添柴</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-3-5">9. 任务 4 标定草案：上线部署 · 持久化抉择与事故</h3>
+<p>场景：Agent 要上生产。第一个决策是会话状态存哪；第二个决策是上线前压测数据不理想，delay 还是硬上；第三个决策是条件触发的事故事件（风险累积达到 5 时才出现，不出现则本任务只有 2 个决策点）。</p>
+<p>决策点 4.1 状态持久化选型（Agent 后端灵魂题）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 数据库落盘为主，缓存加速</td>
+<td>S+2</td>
+<td>O-1、H-1</td>
+<td>-2</td>
+<td>架构意识+2、技术决策+1</td>
+</tr>
+<tr>
+<td>B 全放内存，上线快再说</td>
+<td>O+2</td>
+<td>S-1</td>
+<td>+3</td>
+<td>执行力+1</td>
+</tr>
+<tr>
+<td>C 抄隔壁组的方案不纠结</td>
+<td>O+1</td>
+<td>S-1</td>
+<td>+1</td>
+<td>执行力+1</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 4.2 上线前最后一夜（压力抉择）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+<th>条件修饰</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 顶住压力再 delay 48 小时</td>
+<td>S+1</td>
+<td>O-1、N-1</td>
+<td>-2</td>
+<td>+1</td>
+<td>原则底线+2、抗压韧性+2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>B 按时上，但先开灰度放量</td>
+<td>O+1、N+1</td>
+<td>S-1</td>
+<td>-1</td>
+<td>+1</td>
+<td>务实权衡+2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C 全量硬上，赌不出事</td>
+<td>O+2</td>
+<td>H-1</td>
+<td>+3</td>
+<td>-1</td>
+<td>抗压韧性-1</td>
+<td>若任务 3 选了 3.3C，风险额外 +2</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 4.3 事故事件（条件触发）：半夜，Agent 对客户问询回复错乱（若 concealed_issue_task1 存在：是幻觉生成了错误报价单，波及真实客户）。</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 立即回滚、如实通报、拉群应急</td>
+<td>N+1、S+1</td>
+<td>O-1</td>
+<td>-3</td>
+<td>+2</td>
+<td>原则底线+2、责任担当+2</td>
+</tr>
+<tr>
+<td>B 不回滚，热修补丁连夜上</td>
+<td>S+2、O+1</td>
+<td>H-2</td>
+<td>+1</td>
+<td>0</td>
+<td>抗压韧性+2、技术决策+1</td>
+</tr>
+<tr>
+<td>C 先观察一晚，天亮再说</td>
+<td>O+1</td>
+<td>S-1、H-1</td>
+<td>+3</td>
+<td>-2</td>
+<td>责任担当-2</td>
+</tr>
+</tbody>
+</table>
+<p>机制说明：4.3A 的「如实通报」与任务 1 的「糊弄」形成对照——如果玩家一路糊弄到这里，通报时要面对「为什么上线前没说」的追问，D 惩罚翻倍、陈工记忆标签恶化。这正是「行为有记忆」的体验高潮。</p>
+<h3 id="sec-3-6">10. 任务 5 标定草案：晋升答辩 · 成果归属</h3>
+<p>场景：你主导的编排方案被大领导点名表扬，但组长在汇报材料里把自己挂成第一作者；答辩临近，材料怎么写、问题答不答得上，决定 D 的最终走向。</p>
+<p>决策点 5.1 功劳被挂名（D 最重的一题）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 找更大场合讲自己的设计</td>
+<td>S+1</td>
+<td>N-1</td>
+<td>+1</td>
+<td>+2</td>
+<td>表达自信+2</td>
+</tr>
+<tr>
+<td>B 组长提了我就好</td>
+<td>N+1</td>
+<td>S-1</td>
+<td>0</td>
+<td>-2</td>
+<td>表达自信-2</td>
+</tr>
+<tr>
+<td>C 和组长私下谈署名</td>
+<td>N+1、S+1</td>
+<td>O-1</td>
+<td>0</td>
+<td>+1</td>
+<td>表达沟通+2</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 5.2 答辩材料取舍：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 突出技术难点与自己的解法</td>
+<td>S+1</td>
+<td>N-1</td>
+<td>0</td>
+<td>+1</td>
+<td>表达自信+1、技术决策+1</td>
+</tr>
+<tr>
+<td>B 突出团队协作，自己居后</td>
+<td>N+2</td>
+<td>S-1</td>
+<td>0</td>
+<td>0</td>
+<td>协作沟通+2</td>
+</tr>
+<tr>
+<td>C 数据看板说话，效果指标铺满</td>
+<td>O+1</td>
+<td>S-1</td>
+<td>+1</td>
+<td>0</td>
+<td>务实权衡+1</td>
+</tr>
+</tbody>
+</table>
+<p>决策点 5.3 被评委问倒（诚实 vs 面子）：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>得</th>
+<th>失</th>
+<th>风险</th>
+<th>D（月末）</th>
+<th>能力映射</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 承认这块没做完，给出补齐计划</td>
+<td>S+1、N+1</td>
+<td>O-1</td>
+<td>-1</td>
+<td>+2</td>
+<td>原则底线+2</td>
+</tr>
+<tr>
+<td>B 用术语绕过去</td>
+<td>O+1</td>
+<td>S-1</td>
+<td>+2</td>
+<td>-2</td>
+<td>原则底线-2</td>
+</tr>
+<tr>
+<td>C 反问引导到擅长的领域</td>
+<td>S+1、O+1</td>
+<td>N-1</td>
+<td>0</td>
+<td>+1</td>
+<td>表达沟通+2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-3-7">11. 事件配置规范（JSON Schema）</h3>
+<p>每个事件一个 JSON 文件，字段说明：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>event_id</td>
+<td>是</td>
+<td>全局唯一，命名规则 agent_L级别_任务号_主题</td>
+</tr>
+<tr>
+<td>position / level / title</td>
+<td>是</td>
+<td>职位、职级、标题</td>
+</tr>
+<tr>
+<td>estimated_minutes</td>
+<td>是</td>
+<td>预计时长（按 1.5-2.5 分钟每决策点估）</td>
+</tr>
+<tr>
+<td>trigger</td>
+<td>是</td>
+<td>user_level、prerequisite_events、probability、cooldown；额外支持 risk_gte（风险阈值触发）</td>
+</tr>
+<tr>
+<td>month</td>
+<td>否</td>
+<td>节点所在月份（1-48），驱动时间轴推进与时间卡片展示（见第 5 节）</td>
+</tr>
+<tr>
+<td>npcs</td>
+<td>是</td>
+<td>NPC 名、性格标签、ai_prompt_hint（AI 反应层的人设约束）</td>
+</tr>
+<tr>
+<td>nodes</td>
+<td>是</td>
+<td>节点数组，type 分 narrative / decision / resource_allocation（资源分配型，见第 5.2 节）</td>
+</tr>
+<tr>
+<td>选项字段 gain/cost</td>
+<td>是</td>
+<td>六维增减，规则：至少两维变化、有得有失</td>
+</tr>
+<tr>
+<td>选项字段 risk_delta / pending_dignity</td>
+<td>是</td>
+<td>隐藏风险增量 / D 记账</td>
+</tr>
+<tr>
+<td>选项字段 competency</td>
+<td>是</td>
+<td>能力雷达映射分，可为负（反向证据）</td>
+</tr>
+<tr>
+<td>选项字段 bigfive_proxy</td>
+<td>否</td>
+<td>大五行为侧证标签（O/C/E/A/N 的正负标记，见第 13 节）</td>
+</tr>
+<tr>
+<td>选项字段 allocation_vector</td>
+<td>否</td>
+<td>资源分配型节点专用：三维分配向量 {skill, output, recovery}，用于「投入结构 vs 实际短板」匹配分析</td>
+</tr>
+<tr>
+<td>选项字段 conditional_modifiers</td>
+<td>否</td>
+<td>按先前选择修正收益（让世界回应玩家）</td>
+</tr>
+<tr>
+<td>选项字段 memory_tags / sets_flags</td>
+<td>是/否</td>
+<td>NPC 记忆标签 / 全局标记（供后续事件消费）</td>
+</tr>
+<tr>
+<td>选项字段 instant_feedback / ai_reaction</td>
+<td>是</td>
+<td>即时剧情反馈（不暴露测评维度）/ AI 反应层提示</td>
+</tr>
+<tr>
+<td>description_variants</td>
+<td>否</td>
+<td>描述文本按先前选择变体</td>
+</tr>
+<tr>
+<td>hooks</td>
+<td>否</td>
+<td>风险阈值触发事件、flag 消费关系</td>
+</tr>
+<tr>
+<td>promotion_gate</td>
+<td>否</td>
+<td>晋升阈值配置（服务端专用，见第 5.1 节）</td>
+</tr>
+<tr>
+<td>hazard_line</td>
+<td>否</td>
+<td>状态危险线配置（见第 3 节）</td>
+</tr>
+</tbody>
+</table>
+<p>注意：promotion_gate 与 hazard_line 属于<strong>服务端专用字段</strong>，严禁下发前端、严禁进入大模型 prompt、严禁出现在报告文案中——玩家一旦能反推出具体数字，测量即失效（第 5.1 节已说明原理）。</p>
+<p><strong>月度轻节点的模板化配置（工程约束）</strong>：48 个月度节点不得写成 48 份独立 JSON，否则标定与维护工作量失控。约定为 <code>monthly_action</code> 类型，用 4 套模板覆盖 4 个职级阶段，每份配置只声明 <code>template_id</code> + <code>month</code> + <code>state_modifiers</code>（按当前状态微调收益），选项文本与六维收益从模板继承：</p>
+<pre><code class="language-json">{
+  &quot;event_id&quot;: &quot;agent_monthly_07&quot;,
+  &quot;node_type&quot;: &quot;monthly_action&quot;,
+  &quot;month&quot;: 7,
+  &quot;template_id&quot;: &quot;monthly_L1&quot;,
+  &quot;state_modifiers&quot;: { &quot;if_health_lte_2&quot;: { &quot;rest_option_bonus&quot;: 1 } }
+}
+</code></pre>
+<p>这样 48 个月只需 48 份极简配置 + 4 套模板（共 16 组数值），新增或调整一个月的成本接近于零。</p>
+<p>文本硬预算：决策点描述不超过 80 字、每个选项不超过 25 字、即时反馈与 AI 反应合计不超过 60 字。文字每多 100 字，数据采集延迟约 20 秒，且增加流失。</p>
+<hr />
+<h2 id="sec-4">模块三 · 用户画像与个性化</h2>
+<h3 id="sec-4-1">12. 建档对话问题清单（12 问）</h3>
+<p>交互形式：小熊对话式提问，共 12 问（8 道线内个性化/自评先验题 + 4 道大五人格自评锚点题，大五题见第 13 节），总时长控制在 3-4 分钟。不做表单式问卷。</p>
+<p>系统做什么：每一问提取标签写入画像。本决赛版体验线固定为「Agent 开发师」（其他职位线为规划中状态，不在本版配置剧情，避免「让用户选了却没得玩」的评委硬伤）；大五自评锚点题（4 道）存档后在报告阶段与游戏行为对照，是「认识自己」的核心原料。</p>
+<p>采集的数据分四类，用途完全不同（本版剧情已锁死 Agent 开发师线，所以这些问题不再「选职业」，而是干四件事）：
+- ① 大五自评锚点（O/C/E/A/N 四题）：认识自己的核心原料，自我报告法是测人格的正统做法；
+- ② 自评先验（沟通倾向、压力应对、动机等）：存档后在报告阶段与游戏行为对照，产出「自评 vs 行为」爆点；
+- ③ 线内个性化信号（专业背景、兴趣倾向、技术熟悉度、熬夜基线）：不决定走哪条职业线，而是调节本线内的支线事件权重、NPC 语气与难度（见第 14 节 线内个性化权重表）；
+- ④ 职业推荐输入：大五 + 兴趣 + 动机喂给静态映射表，直接产出跨职业 Top3 推荐（见第 18 节 职业推荐架构）——推荐来自问卷，不来自玩了哪条剧情。</p>
+<p>边界情况：
+- 用户乱答或全程秒选：记录每题作答耗时与选项位置模式；若平均耗时低于 1.5 秒且全部选首位，标记 low_effort_profile，报告中所有对比结论降置信或不展示；
+- 用户中途退出：已答题目保留，二次进入从断点续问（TaskProgress 表 status=partial）；
+- 用户拒绝回答某题：跳过，线内个性化退化为默认权重，先验缺失的维度报告里不做对比。</p>
+<p>数据落点：埋点 profile_start / interest_select（每题作答内容+耗时）；写表 UserProfile（basic_info、personality_tags 自评先验）、TaskProgress。</p>
+<p>线内个性化/自评先验 8 问：</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>问题（小熊口吻）</th>
+<th>选项</th>
+<th>提取标签</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>你现在学的是什么方向？</td>
+<td>理工 / 信息 / 文科 / 商科 / 艺术 / 其他</td>
+<td>academic_track</td>
+<td>推荐输入 + 台词引用</td>
+</tr>
+<tr>
+<td>2</td>
+<td>周末多出来一个下午，你更想干嘛？</td>
+<td>做点小创造 / 研究个明白 / 找朋友玩 / 彻底放空</td>
+<td>interest_creative / analytical / social / restful</td>
+<td>推荐输入主信号 + 线内个性化</td>
+</tr>
+<tr>
+<td>3</td>
+<td>小组作业吵起来了，你一般会？</td>
+<td>摆事实说服 / 先听完再说 / 找老师定夺 / 少说为妙</td>
+<td>comm_style: assertive / listener / escalate / avoid</td>
+<td>自评先验（对比用）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>你更喜欢哪种任务？</td>
+<td>有明确标准的 / 开放探索的</td>
+<td>structure_pref</td>
+<td>线内个性化 + 自评先验</td>
+</tr>
+<tr>
+<td>5</td>
+<td>项目快砸了，你的第一反应？</td>
+<td>自己咬牙扛 / 马上找人帮 / 先止损再上报</td>
+<td>stress_response</td>
+<td>自评先验（对比用，核心题）</td>
+</tr>
+<tr>
+<td>6</td>
+<td>三年后的你，希望在干什么？</td>
+<td>深耕技术 / 带团队 / 自己做事 / 还没想好</td>
+<td>motivation</td>
+<td>发展建议语气</td>
+</tr>
+<tr>
+<td>7</td>
+<td>你写过代码或玩过 AI 工具吗？</td>
+<td>熟 / 碰过 / 没碰过</td>
+<td>tech_familiarity</td>
+<td>难度调节与台词</td>
+</tr>
+<tr>
+<td>8</td>
+<td>上周熬了几个大夜？</td>
+<td>0-1 / 2-4 / 5+</td>
+<td>sleep_baseline</td>
+<td>H 基线彩蛋，报告可呼应</td>
+</tr>
+</tbody>
+</table>
+<p>设计原则：每题必须能落成一个标签；自评先验题（3/4/5）在报告阶段与行为对比，是「我懂你」的原料；题面全部口语化，禁止测评术语；每题作答耗时单独记录。</p>
+<h3 id="sec-4-2">13. 大五人格自评锚点（4 问，口语化包装，非量表）</h3>
+<p>大五（OCEAN）是心理学界最稳的「认识自己」地图。这 4 题让用户用聊天方式自我报告，口语化包装、不出现术语；答案同时参与线内个性化（兴趣/动机）与报告（大五剖面）。行为侧证映射规则见下表，游戏行为给「你自称的自己 vs 实际表现的自己」做对照。</p>
+<table>
+<thead>
+<tr>
+<th>大五维</th>
+<th>锚点问题（小熊口吻）</th>
+<th>选项</th>
+<th>提取分（0-4 连续）</th>
+<th>行为侧证映射（游戏内代理）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>O 开放性</td>
+<td>遇到完全没碰过的工具，你更想？</td>
+<td>立刻拆开玩 / 先看教程 / 等别人先用 / 绕开它</td>
+<td>3 / 2 / 1 / 0</td>
+<td>1.1 选 A 自搭 demo、3.1 选 A 重构——探索型行为加分</td>
+</tr>
+<tr>
+<td>C 尽责性</td>
+<td>deadline 还有一周，你通常会？</td>
+<td>列计划马上做 / 先做大的 / 拖到最后三天 / 熬夜赶</td>
+<td>3 / 2 / 1 / 0</td>
+<td>4.2 选 A delay 兜底、1.3 不选 C 糊弄——靠谱型行为加分</td>
+</tr>
+<tr>
+<td>E 外向性</td>
+<td>团建要发言，你心里是？</td>
+<td>有点期待 / 无所谓 / 有点虚 / 想逃</td>
+<td>3 / 2 / 1 / 0</td>
+<td>评审会表态（1.2）、晋升答辩（5.x）主动开口次数与犹豫——社交充电型加分</td>
+</tr>
+<tr>
+<td>N 神经质（反向=情绪稳定）</td>
+<td>半夜被叫起来处理事故，你第一感觉？</td>
+<td>马上清醒开干 / 能起来 / 心里发毛 / 崩了</td>
+<td>稳定度=3/2/1/0</td>
+<td>H 维度消耗速度、4.3 事故应对选项——情绪稳定型加分</td>
+</tr>
+</tbody>
+</table>
+<p>呈现边界（必须在报告标注）：自评分来自自我报告（正统测法），行为分是代理推断（场景逼选有偏差），5 维各只有 1 道自评题 + 少量行为代理，信度弱；结论用语为「你给自己打的分 vs 你游戏里展现的」，不出「你是 XX 型」的断语。</p>
+<p>行为侧证的机械实现：每个涉及特定心理面的决策点，其选项除 <code>competency</code>（能力分）外再带一个 <code>bigfive_proxy</code> 标签（如 1.2 选 A 主推自研 → <code>E+</code>；4.2 选 C 硬上 → <code>C-</code>；3.2 选 C 直接拒绝 → <code>A-</code>）。引擎把玩家所有选项的 <code>bigfive_proxy</code> 按 O/C/E/A/N 累加，得到「行为侧证大五」，与自评锚点对照。代理信度弱，仅作矛盾爆点与佐证，不单独下人格结论。</p>
+<h3 id="sec-4-3">14. 线内个性化权重表（JSON 草案，仅调节 Agent 开发师线内体验）</h3>
+<p>{
+  "position": "agent_dev",
+  "base_weights": { "task1": 1.0, "task2": 1.0, "...": "池中每事件一个基础权重" },
+  "profile_modifiers": {
+    "interest_analytical": { "event_class_tech": 1.6, "event_class_social": 0.8 },
+    "interest_social": { "event_class_social": 1.6, "event_class_tech": 0.9 },
+    "comm_style_avoid": { "event_class_public_speaking": 1.8 },
+    "stress_response_carry": { "event_class_incident": 1.4 },
+    "structure_pref_open": { "event_class_ambiguous": 1.3 }
+  },
+  "behavior_modifiers": {
+    "memory_tags.contain('回避表态')": { "event_class_public_speaking": 1.5 },
+    "risk_cumulative.gte(3)": { "event_class_cleanup": 1.5, "event_class_incident": 1.3 }
+  },
+  "rules": {
+    "modifier_cap": 3.0,
+    "hard_trigger_priority": ["risk_gte", "flags"],
+    "mainline_required": ["task1", "task2", "task3", "task4", "task5"]
+  }
+}</p>
+<p>规则说明：本表<strong>只调节 Agent 开发师线内部的支线事件密度、NPC 语气与难度</strong>，绝不决定走哪条职业线（职业线已锁死，跨职业推荐由第 18 节的问卷映射表负责，与此表无关）。最终权重 = 基础 × 画像系数 × 行为系数，单事件截断 3 倍；硬触发与主线必需不受权重影响。每次 event_trigger 落库权重快照，内测后用「实际触发分布 vs 预期」校准系数。</p>
+<hr />
+<h2 id="sec-5">模块四 · 数据采集与分析引擎</h2>
+<h3 id="sec-5-1">15. 数据采集机制</h3>
+<blockquote>
+<p><strong>算法与埋点专册</strong>：埋点如何一步步算出报告里的每个数字（四层架构、行为编码的元分析依据、大五贝叶斯后验、基于 5000 条真实招聘 JD 的职业匹配），见《报告数据链路与算法设计 V1》（<code>xiongxinzhuangzhi/报告数据链路与算法设计V1.md</code>）。本章只列埋点清单与红线。</p>
+</blockquote>
+<p>埋点清单（前端只上报原始行为）：</p>
+<table>
+<thead>
+<tr>
+<th>埋点</th>
+<th>字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>profile_submit</td>
+<td>专业、兴趣标签、字段完整度、耗时</td>
+<td>建档画像与推荐输入</td>
+</tr>
+<tr>
+<td>event_trigger</td>
+<td>event_id、触发条件命中情况</td>
+<td>事件调度分析</td>
+</tr>
+<tr>
+<td>node_enter</td>
+<td>node_id、时间戳</td>
+<td>与 option_click 相减得犹豫时长</td>
+</tr>
+<tr>
+<td>option_click</td>
+<td>option_id、hesitation_ms、state_snapshot_before</td>
+<td>犹豫时长 = 点击时间 - 进入节点时间；快照用于实测增量</td>
+</tr>
+<tr>
+<td>option_hover</td>
+<td>switch_count（选项间横跳次数）、hovered_options</td>
+<td>犹豫度交叉验证伪装行为</td>
+</tr>
+<tr>
+<td>ai_reaction_view</td>
+<td>回复长度、阅读时长</td>
+<td>沉浸度与 AI 反应质量</td>
+</tr>
+<tr>
+<td>task_complete</td>
+<td>总耗时、option_path、risk_cumulative、pending_dignity_total</td>
+<td>任务级汇总</td>
+</tr>
+<tr>
+<td>report_view</td>
+<td>浏览模块顺序、各模块停留时长</td>
+<td>报告优化与订阅引导位置</td>
+</tr>
+</tbody>
+</table>
+<p>实测增量公式（上线后校准标定表用）：对某「事件×选项」组合，实测增量 = 该选项被选后状态快照 - 选前状态快照，跨对局取平均；再与标定表对比，偏差持续大于 0.5 的标定值进入修正队列。CareerSim 的教训必须复刻成机制：D 因为月末结算，相邻快照抓不到，所以我们的快照在「选项结算后」立刻存一次，月末结算后再存一次，两段都不丢。</p>
+<p>防伪装三件套（针对真人玩家的社会期许偏差，比防作弊脚本更重要）：</p>
+<ol>
+<li>选项各有代价，没有可装的完美答案；</li>
+<li>犹豫时长与横跳次数交叉验证：选了「正确答案」但犹豫超过 15 秒或横跳 3 次以上，标记「可能伪装」；</li>
+<li>重玩一致性：同一玩家间隔重玩本线，核心倾向若不一致，报告中降低该维度的置信表述；大五自评也做二次填写漂移检查。</li>
+</ol>
+<h3 id="sec-5-2">16. 分析机制：给策划看的四张报表</h3>
+<p>报表一：选项区分度体检。每个选项的被选率 = 被选次数 / 出现次数。判读标准：被选率超过 90% 的选项是送分题，回去改标定；低于 10% 的选项太坑，重写文案或收益；五五开分歧的事件是高沉浸核心事件，加分支深度。</p>
+<p>报表二：标定值 vs 实测值对账。逐组合对比标定表与实测增量（见第 15 节公式），输出偏差表。CareerSim 用这招发现了 D 维系统性偏低，我们内测时要复现这张表并放进决赛 PPT——「我们用数据修正了自己的设计」是最硬的一页。</p>
+<p>报表三：流失漏斗。node_enter 有而 option_click 无的节点即卡关点；结合停留时长定位是文本太长还是选项太难。</p>
+<p>报表四：重玩一致性。同一玩家间隔重玩本线，六维选择模式相关系数低于 0.4 说明测评信度不足，优先修区分度差的决策点；也可对比「建档大五自评」两次填写是否漂移，检验人格锚点稳定性。</p>
+<h3 id="sec-5-3">17. 数据分析全链路详解（逐步计算示例）</h3>
+<p>用一个虚构用户的真实数据形态走完全流程。假设用户「小陈」走完第一局：3 核心任务 + 2 支线，共 11 个决策点。</p>
+<h4>17.1 原始埋点（DecisionLog 3 行样例）</h4>
+<p>{"user":"chen01","event":"task1","node":"d2_meeting","option":"A","hesitation_ms":18400,"hover_switch":4,"snapshot_before":{"S":6,"O":4,"N":3,"H":8},"ts":"..."}
+{"user":"chen01","event":"task2","node":"d1_demand","option":"B","hesitation_ms":6200,"hover_switch":1,"snapshot_before":{"S":7,"O":5,"N":2,"H":8},"ts":"..."}
+{"user":"chen01","event":"task3","node":"d3_deadline","option":"C","hesitation_ms":9100,"hover_switch":2,"snapshot_before":{"S":9,"O":6,"N":4,"H":7},"ts":"..."}</p>
+<h4>17.2 第一步：清洗</h4>
+<p>规则：同一 (user, node) 多次点击取最后一次；hesitation_ms &gt; 300000（5 分钟弹窗后）的样本标记 high_hesitation 但保留；low_effort_profile 用户打全局标记；断局样本单独归档不进本次统计。小陈数据全部有效。</p>
+<h4>17.3 第二步：行为特征</h4>
+<p>犹豫均值 = (18400 + 6200 + 9100 + 其余8条) / 11 ≈ 11200ms；横跳总次数 14，单点最高 4 次。判定：平均犹豫 &gt; 8 秒且存在横跳 ≥3 的决策点 ≥2 个 → 风格信号「深思熟虑、个别点上摇摆」。注意：这与自评 comm_style 对比后才有结论含义。</p>
+<h4>17.4 第三步：competency 累加（正负对冲）</h4>
+<p>小陈 11 个决策点的 technical_decision 逐条得分：+2, -1, +2, 0, +1, +2, -2, +1, 0, +2, +1 → 累计 +8。原则：负分不丢弃，直接累加对冲（选过差的技术方案就该减分）。</p>
+<h4>17.5 第四步：六维归一化（分母按实际遇到事件）</h4>
+<p>技术决策力：小陈实际遇到的 11 个事件中，该维度理论最高分合计 18、最低 -12。原始分 +8 → 归一化 = (8 - (-12)) / (18 - (-12)) × 100 = 20/30 × 100 ≈ 67。
+关键规则再强调一次：分母只用「小陈实际走到的事件」，不能用全池。若另一用户走了含 5 个高难技术事件的不同子集，他的分母自然更大，两人仍然可比。</p>
+<h4>17.6 第五步：自评 vs 行为一致性比对</h4>
+<p>小陈画像题 3 自评「先听完再说」（listener），但行为里 3 次公开表态决策点全部主动发言（assertive 行为占比 100%，且犹豫均值低于其个人基线）→ 判定「矛盾」。画像题 5 自评「自己扛」，行为中 2 次危机决策 1 次上报 1 次硬扛 → 判定「部分一致」。输出：1 条矛盾（放报告 C 位）+ 1 条部分一致。</p>
+<h4>17.7 大五自评 vs 行为侧证对照（代入数字）</h4>
+<p>小陈第 13 节大五自评：O=3（自拆工具）、C=3（列计划）、E=1（团建想逃）、A=2（无所谓）、N 稳定度=2（能起来）。
+行为侧证（按第 13 节映射规则累加）：E 行为分≈3（1.2 评审主动表态、5.x 答辩全主动开口且犹豫低于个人基线 7 秒）→ 自评 E=1 但行为 E≈3，矛盾，放报告 C 位：「你说你怕发言，但真到在乎的事你比谁都敢说」。C 行为分≈3（1.3 没糊弄、4.2 选 A delay）→ 与自评 C=3 一致，佐证「你确实靠谱」。
+输出：1 条大五矛盾（E）+ 1 条大五一致（C），与第 17.6 节的职场能力矛盾叠加，构成报告「认识自己」双爆点。注意大五自评分信度弱（各维仅 1 道自评题），报告中标注「近似」。</p>
+<h4>17.8 第六步：岗位匹配（加权点积，代入数字）</h4>
+<p>Agent 后端开发权重：技术 0.3 / 原则 0.2 / 执行 0.2 / 沟通 0.1 / 抗压 0.1 / 担当 0.1。小陈六维归一化分：技术 67、原则 75、执行 62、沟通 55、抗压 48、担当 70。
+匹配度 = 67×0.3 + 75×0.2 + 62×0.2 + 55×0.1 + 48×0.1 + 70×0.1 = 20.1 + 15 + 12.4 + 5.5 + 4.8 + 7 = 64.8 → 65%。
+同法算其余岗位，输出 Top3。注意匹配度是相对排序工具，不解读绝对值。</p>
+<h4>17.9 跨职业推荐引擎（问卷驱动，代入数字）</h4>
+<p>小陈问卷：大五自评 O=3、C=3、E=1、A=2、N稳=2；兴趣=信息类（题1 理工/信息）；动机=深耕技术（题6）。</p>
+<p>静态映射表规则（片段）：高 C+中高 O+理工信息+技术动机 → 后端/算法类；高 E+高 A+商科 → 产品/客户类；低 E+高 C+理工 → 基础设施/后端。</p>
+<p>查表：小陈 = 高 C(3)+中 O(3)+理工信息+技术动机 → 命中线 A「后端/算法类」；E=1 低 → 不命中线 B 产品类；综合输出 Top3：① 后端开发（匹配 82%）② 算法工程师（76%）③ 技术产品经理（58%，因 E 低被压）。</p>
+<p>交叉验证：游戏六维技术 67、原则 75 → 与第一层「技术向」一致，置信度上调；游戏行为 E≈3 但自评 E=1 → 第二层标记矛盾，报告提示「你自评内向，但技术答辩里很敢说，产品岗也许比你想的更适合你」。最终推荐结论：技术向为主，但别完全排除需要表达的产品/售前类。</p>
+<h4>17.10 报告文本映射</h4>
+<p>大模型输入：六维分数、风格信号、1 条矛盾对比、3 个决策瞬间摘录（含犹豫数据）。输出约束：不编数字、不用术语、每个判断引行为证据、300 字内。
+矛盾项示例文案：「你入场时说，小组吵起来你习惯先听完再说。但三次会上，你都是第一个开口的，而且平均只想了 7 秒。看起来，轮到自己真正在乎的东西时，你比你自己以为的要敢说得多。」</p>
+<h4>17.11 内测后的分析闭环</h4>
+<p>第五张报表（给我们自己）：线内个性化权重校准——对比每个事件的「预期触发概率 vs 实际触发频率」，偏差大的修正画像系数；标定对账表（第 16 节报表二）同步修正 gain/cost 数值。两张表每月复盘一次，这就是数据飞轮的运转方式。</p>
+<hr />
+<h2 id="sec-6">模块五 · 报告与职业推荐</h2>
+<h3 id="sec-6-1">18. 报告生成</h3>
+<blockquote>
+<p><strong>报告三层结构与呈现原则</strong>（完整版见算法册 §7）</p>
+<p>游戏测的是<strong>职场处世</strong>（怎么应对甩锅、会不会糊弄、扛不扛压），而「适合什么职业」是另一件事——两者不能硬凑因果。因此报告分三层，每层标明来源与可信度：
+<strong>第一层 · 职场人格画像</strong>（48 个月游戏行为，可信度高）｜<strong>第二层 · 岗位市场参考</strong>（5000 条真实 JD，是市场数据不是心理测评）｜<strong>第三层 · 交叉提示</strong>（你的画像 vs 真实岗位要求 = 差在哪，属提示非结论）。</p>
+<p><strong>定位一句话</strong>：不做「测出你适合什么职业」（断言，答不出凭什么），做<strong>「让你看清自己是什么样的人，以及真实岗位要什么——差距在哪」</strong>。初心不变，逻辑闭合，评委那句「你凭什么说适合」自动消失。</p>
+<p><strong>呈现原则</strong>：可观测的事实给死数字（行为次数、时长、市场薪资、要求占比）；<strong>推断值给档位与对照、不给点值</strong>；隐藏机制的阈值永不出现；差距一律翻译成行为语言。</p>
+</blockquote>
+<p>雷达图六维度与计分：</p>
+<table>
+<thead>
+<tr>
+<th>雷达维度</th>
+<th>来源 competency 键</th>
+<th>满分来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>技术决策力</td>
+<td>technical_decision、architecture</td>
+<td>15 个决策点该维度正分上限之和</td>
+</tr>
+<tr>
+<td>沟通协作</td>
+<td>communication、collaboration</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>执行交付</td>
+<td>execution、pragmatism</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>原则底线</td>
+<td>integrity</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>抗压韧性</td>
+<td>resilience、ownership</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>主动担当</td>
+<td>initiative、assertiveness</td>
+<td>同上</td>
+</tr>
+</tbody>
+</table>
+<p>计分公式（大白话版）：某维度的原始分 = 玩家所有选择在该维度分数的累加（负分参与累加，起对冲作用）。归一化分数 = (原始分 - 理论最低分) / (理论最高分 - 理论最低分) × 100。其中理论最高分 = 15 个决策点上该维度可能拿到的正分之和，理论最低分同理取负。代入例子：假设技术决策力 15 个决策点最高可拿 24 分、最低 -18 分，玩家累加得 12 分，则归一化 = (12 - (-18)) / (24 - (-18)) × 100 = 30/42 × 100 ≈ 71 分。</p>
+<p>行为风格侧栏（不进雷达图，单独呈现，避免过度断言）：平均犹豫时长（直觉型 vs 深思型）、平均横跳次数（笃定 vs 摇摆）、重试与改选次数（完美主义 vs 粗放）。报告措辞用倾向描述（「你在压力下倾向保守」），不强行贴 MBTI 四字母标签——15-20 个决策点撑不起四字母推断，评委追问样本量会穿帮。但大五人格近似剖面可以做（见下），因为它用连续谱打分而非类型标签，且样本量问题已用「近似」措辞诚实标注。</p>
+<p>大五人格近似剖面（认识自己的核心层）：心理学界最稳的「认识自己」地图，用 5 把尺子量性格——O 开放性（爱探索新鲜）、C 尽责性（靠谱有计划）、E 外向性（从人际充电）、A 宜人性（好相处愿合作）、N 神经质（情绪易波动，反向即情绪稳定）。我们给的是「近似剖面」而非心理量表得分，必须诚实标注边界：来源 = 建档大五自评锚点（自我报告，正统测法口语化包装）+ 游戏行为侧证（行为代理有偏差）；样本量小，信度弱，仅供自我觉察不供选拔。呈现方式：① 自评五维条形（用户自己报的）；② 行为五维侧证（由游戏行为映射，规则见第 13 节）；③ 自评 vs 行为对照，矛盾项即「认识自己」爆点（如自评 E 低但 3 次发言决策全主动开口）。大模型写评语时每个维度必须引用至少一条行为证据，禁用术语，标注「近似」。</p>
+<p>岗位匹配算法（线内适配度）：匹配度 = 各维度归一化分按岗位权重的加权平均，衡量「你与 Agent 开发师这条线内各子角色的契合」。权重示例：Agent 后端开发（技术 0.3、原则 0.2、执行 0.2、沟通 0.1、抗压 0.1、担当 0.1）、AI 技术产品经理（沟通 0.3、执行 0.2、技术 0.2、担当 0.15、原则 0.1、抗压 0.05）、平台工具开发（技术 0.35、执行 0.25、原则 0.15、抗压 0.1、担当 0.1、沟通 0.05）。输出前 3 个子角色及匹配度百分比。</p>
+<p>职业推荐架构（两层，解决「固定剧情怎么还能给职业推荐」）：剧情锁死在 Agent 开发师线，不代表不能给跨职业推荐——推荐本就不该来自「玩了哪条剧情」，而来自「你是谁」。</p>
+<ul>
+<li>第一层（跨职业推荐，主信号）：建档问卷的大五自评（O/C/E/A/N） + 兴趣倾向 + 三年动机，喂给一张我们手工标定的「人格×兴趣 → 职业族」静态映射表，输出 Top3 职业方向及匹配度%。示例映射（片段）：{高 C+中高 O+理工信息+技术动机 → 后端/算法类}、{高 E+高 A+商科 → 产品/客户类}、{低 E+高 C+理工 → 基础设施/后端}。这张表是策划写的经验规则，不依赖其他可玩剧情线。</li>
+<li>第二层（线内适配 + 交叉验证）：游戏六维能力分 + 行为侧证大五，产出「Agent 开发师 fit%」与子角色建议（后端偏重 / 编排偏重 / PM 偏重）；并与第一层结论交叉验证——若问卷说你高 E 适 PM、游戏里你也 consistently 主动发言，推荐置信度上调；若矛盾，报告如实呈现「你说 vs 你做」。</li>
+</ul>
+<p>两层解耦的好处：剧情线只需一条，但推荐覆盖多职业；评委追问「只做一条线怎么推荐别的职业」时，答案是「推荐来自问卷的人格/兴趣映射，游戏只负责给你一面行为镜子」。</p>
+<p>报告结构（免费版 / 订阅版切分，标注所属层与呈现方式）：</p>
+<ol>
+<li><strong>人格速写</strong>［一层］：两段倾向描述（免费）；</li>
+<li><strong>大五近似剖面</strong>［一层］：自评 vs 行为<strong>双条对照</strong>，用五档词（很低/偏低/中等/偏高/很高），<strong>不标点值</strong>（免费概览，订阅给逐维证据）；</li>
+<li><strong>能力雷达</strong>［一层］：六维，<strong>不标数值</strong>（免费简版，订阅给解读）；</li>
+<li><strong>行为风格侧栏</strong>［一层］（订阅）；</li>
+<li><strong>岗位市场参考</strong>［二层］：真实月薪中位、能力要求占比、在招职级——<strong>给真实数字并标注「来自 5000 条在招 JD」</strong>（免费第 1）；</li>
+<li><strong>交叉提示：差在哪</strong>［三层］：用<strong>行为语言</strong>标注差距，引回具体行为事件编号（免费）；</li>
+<li><strong>晋升轨迹与终局评级</strong>［一层］：4 次晋升窗口的升降记录 + 职级台阶回顾 + 终局结果（免费给结果，订阅给逐次解读）；</li>
+<li><strong>社交指纹 / 犹豫地图</strong>［一层］（订阅）；</li>
+<li><strong>发展建议</strong>：按最低的两个维度生成（订阅）；</li>
+<li><strong>行为证据回放</strong>［一层］：引用 3 个具体决策瞬间，<strong>精确到毫秒与次数</strong>（免费 1 条，订阅全部）。</li>
+</ol>
+<p><strong>晋升评级的呈现铁律</strong>（对应第 5.1 节）：只给评级与评语，<strong>绝不出现任何阈值数字、不出现 D 的具体分值</strong>。文案示例：「你在三次可以糊弄过去的地方都选择了说实话，答辩全票通过」——用行为证据解释结果，而不是用分数解释结果。这样既保住了 CareerSim 那种「晋升感」，又不让玩家反推出「原来攒 D 就能升」，测量有效性得以保住。</p>
+<p>大模型报告模板要点：输入只有「分数序列 + 大五自评/行为对照 + 行为统计 + 3 个决策瞬间摘录」，prompt 约束为：不得编造数字、不得使用心理学术语（用「你比自己以为的更敢说」这类大白话）、每个判断必须引用至少一个具体行为证据、明确标注大五为「近似剖面、非量表得分」、长度 300 字以内。</p>
+<h3 id="sec-6-2">19. 数据库表设计</h3>
+<p>UserProfile：user_id（主键）、basic_info（JSON：专业、年级、兴趣标签）、created_at。</p>
+<p>TaskProgress：progress_id（主键）、user_id、event_id、current_node、status、risk_cumulative、pending_dignity_total、flags（JSON）、updated_at。</p>
+<p>DecisionLog：log_id（主键）、user_id、event_id、node_id、option_id、hesitation_ms、hover_switch_count、snapshot_before（JSON 六维）、snapshot_after（JSON 六维）、memory_tags、reaction_text、timestamp。</p>
+<p>CompetencyProfile：user_id（主键）、radar_scores（JSON 六维归一化）、style_signals（JSON：犹豫、横跳、重试统计）、bigfive_self（JSON 五维自评锚点分）、bigfive_behavior（JSON 五维行为侧证分）、bigfive_consistency（JSON 五维自评-行为一致性标记）、job_matches（JSON）、updated_at。</p>
+<p>EventConfig：标定表本体（即第 6 至第 10 节的 JSON 文件集合，版本号管理，改标定不改代码）。</p>
+<p>IncidentLog：incident_id、user_id、触发事件、risk 值、关联 flags、处理结果、timestamp。</p>
+<hr />
+<h2 id="sec-7">模块六 · 记忆与 AI 反应</h2>
+<h3 id="sec-7-1">20. NPC 记忆系统与 AI 反应层</h3>
+<p>记忆积累：每个选项的 memory_tags 累积到对应 NPC 的记忆列表（如「技术理想主义」「好说话」「被他坑过一次」）。</p>
+<p>AI 反应层的输入输出契约：输入 = 事件 ID + 当前节点 + NPC 性格标签 + 该 NPC 对玩家的记忆标签（脱敏为文字标签，绝不传六维数值）+ 玩家本决策的选项文本；输出 = 80 字以内的对话。大模型不输出任何数值、不推进剧情分支。</p>
+<p>个性化示例：玩家任务 1 选了「糊过验收」，任务 4 事故时王哥的反应是「我就说那晚演示太顺了，原来……」，而不是通用台词。记忆墙同步展示这些标签对应的便签，让「被记住」可视化。</p>
+<hr />
+<h2 id="sec-8">模块七 · 流程与落地</h2>
+<h3 id="sec-8-1">21. 游戏主流程端到端详解（对照准备计划第二章）</h3>
+<p>准备计划的主流程是「建档 → 选职 → 任务 → 分析 → 推荐」五阶段闭环。本章把每个阶段展开到字段级：输入是什么、系统做什么、数据写到哪、边界情况怎么兜。每阶段末尾附数据落点一览表。</p>
+<h4>21.1 阶段一：建档与职业选择（新手引导）</h4>
+<p>交互形式：小熊对话式提问，共 12 问（8 道线内个性化/自评先验题 + 4 道大五人格自评锚点题，完整清单见第 12、13 节），总时长控制在 3-4 分钟。不做表单式问卷。</p>
+<p>系统做什么：每一问提取标签写入画像。本决赛版体验线固定为「Agent 开发师」（其他职位线为规划中状态，不在本版配置剧情，避免「让用户选了却没得玩」的评委硬伤）；大五自评锚点题（4 道）存档后在报告阶段与游戏行为对照，是「认识自己」的核心原料。</p>
+<p>采集的数据分四类，用途完全不同（本版剧情已锁死 Agent 开发师线，所以这些问题不再「选职业」，而是干四件事）：
+- ① 大五自评锚点（O/C/E/A/N 四题）：认识自己的核心原料，自我报告法是测人格的正统做法；
+- ② 自评先验（沟通倾向、压力应对、动机等）：存档后在报告阶段与游戏行为对照，产出「自评 vs 行为」爆点；
+- ③ 线内个性化信号（专业背景、兴趣倾向、技术熟悉度、熬夜基线）：不决定走哪条职业线，而是调节本线内的支线事件权重、NPC 语气与难度（见第 14 节 线内个性化权重表）；
+- ④ 职业推荐输入：大五 + 兴趣 + 动机喂给静态映射表，直接产出跨职业 Top3 推荐（见第 18 节 职业推荐架构）——推荐来自问卷，不来自玩了哪条剧情。</p>
+<p>边界情况：
+- 用户乱答或全程秒选：记录每题作答耗时与选项位置模式；若平均耗时低于 1.5 秒且全部选首位，标记 low_effort_profile，报告中所有对比结论降置信或不展示；
+- 用户中途退出：已答题目保留，二次进入从断点续问（TaskProgress 表 status=partial）；
+- 用户拒绝回答某题：跳过，线内个性化退化为默认权重，先验缺失的维度报告里不做对比。</p>
+<p>数据落点：埋点 profile_start / interest_select（每题作答内容+耗时）；写表 UserProfile（basic_info、personality_tags 自评先验）、TaskProgress。</p>
+<h4>21.2 阶段二：任务生成（动态剧情）</h4>
+<p>调度器输入（按优先级从高到低）：
+1. 硬触发：风险阈值达到（risk_gte）、flag 存在（如 concealed_issue_task1）——必触发，抢占下一事件位；
+2. 主线必需事件：5 个核心任务是本体验线的骨架，保证报告有最低数据量；
+3. 加权备选事件：池中其余事件按「画像标签 × 行为标签 × 当前状态」加权抽样插入。</p>
+<p>加权计算规则：事件最终权重 = 基础权重 × 画像修正系数 × 行为修正系数，单事件权重上限截断为基础权重的 3 倍（防止某标签垄断整局体验）。示例：用户画像含「回避表态」标签，则「评审会表态」类事件权重 ×1.8；用户风险累积为 3，清雷类事件（修复隐患）权重 ×1.5。</p>
+<p>任务链结构：第一局 = 3 个核心任务 + 2-4 个画像支线事件（约 18-22 分钟）；第二局 = 2 个核心任务 + 按风险触发的事故事件（约 13 分钟）。支线事件与核心事件使用同一标定规范，密度控制为每 3-4 分钟一个决策点。</p>
+<p>边界情况：池中事件被耗尽（权重全为零）时回退到未使用事件按基础权重抽取，保证局长稳定；支线事件触发后与主线冲突时，主线优先、支线顺延。</p>
+<p>数据落点：埋点 event_trigger（记录命中原因：hard_trigger / mainline / weighted，以及当时的权重快照——这是事后调线内个性化权重表的依据）；写表 TaskProgress。</p>
+<h4>21.3 阶段三：决策与反馈（多智能体交互）</h4>
+<p>单个决策点的完整时序（毫秒级标注）：
+1. node_enter：进入节点，前端记时间戳 T0，展示描述文本（≤80 字）与 3-4 个选项（每个 ≤25 字）；
+2. 选项浏览：hover 在选项间切换，每次切换上报 option_hover（switch_count 累加）；
+3. option_click：用户点击，记 T1，犹豫时长 = T1 - T0，连同 option_id、state_snapshot_before（六维当前值）上报；
+4. 服务端结算（&lt;50ms）：按标定表执行 gain/cost/risk_delta/pending_dignity，更新 flags 与 memory_tags，计算 snapshot_after；
+5. 即时反馈：返回 instant_feedback 文案（剧情结果）+ NPC 的 ai_reaction（大模型生成或台词库降级）；
+6. 记忆墙更新：新增便签，可视化「被记住」。</p>
+<p>反馈设计原则：绝不暴露测评维度与数值。六维变化全部翻译成剧情语言：H-2 表现为「你揉了揉太阳穴，屏幕上的字有点模糊」；N+1 表现为「王哥把你的昵称备注从『新来的』改成了名字」。数值只存在于服务端和日志。</p>
+<p>NPC 反应链路：本次选择的 memory_tags 追加进 NPC 记忆列表 → 下一次该 NPC 出场的 prompt 注入其记忆标签（脱敏为文字，不传数值）→ 台词体现记忆（「我就说上次那个 demo 太顺了」）→ 同步在记忆墙生成便签。</p>
+<p>边界情况：AI 反应超时（&gt;3 秒）降级为按 memory_tags 查表的预生成台词，体验不断；用户在决策点停留超过 5 分钟，小熊弹出轻提示（「不着急，但陈工在催了」），既推进节奏又顺手采集「高犹豫」信号。</p>
+<p>数据落点：埋点 node_enter / option_hover / option_click / ai_reaction_view / task_complete；写表 DecisionLog（含前后快照）、TaskProgress。</p>
+<h4>21.4 阶段四：数据分析（后台引擎）</h4>
+<p>双轨制：规则引擎实时算分（每次决策毫秒级，保证游戏内反馈即时）；批量分析在任务结束与报告生成时触发（第 7-14 秒出报告，预计算简版先行）。</p>
+<p>完整流水线八步（逐步说明与公式见第 17 节）：
+1. 原始埋点清洗（去重、low_effort 过滤、断局标记）；
+2. 行为特征计算（犹豫时长均值/中位数、横跳次数、重试、单决策耗时分布）；
+3. competency 累加（正负分对冲）；
+4. 六维状态归一化（分母 = 用户实际遇到事件的满分，保证不同路径可比）；
+5. 风格信号生成（直觉/深思、笃定/摇摆）；
+6. 自评 vs 行为一致性比对（六维职场能力维度，矛盾项即报告爆点）；
+7. 大五自评锚点 vs 游戏行为侧证对照（O/C/E/A/N 五维，矛盾项即「认识自己」爆点）；
+8. 岗位匹配加权点积 + 发展建议映射（能力最低维 + 大五最低维）。</p>
+<h4>21.5 阶段五：结果交付</h4>
+<p>报告模块与出图顺序：人格速写（简版先出）→ 大五人格近似剖面（自评条形 + 行为侧证 + 矛盾爆点）→ 能力雷达图 → 行为风格侧栏 → 岗位匹配 Top3 → 行为证据回放 → 发展建议。免费/订阅切分见第 18 节。</p>
+<p>「自评 vs 行为」呈现规范：只对先验完整的维度做对比，措辞三档——一致（「你对自己的判断很准」）、矛盾（「你说你喜欢冒险，但 5 次压力决策 4 次选了稳的，而且选得很快」）、证据不足（不展示）。矛盾项放在报告最显眼位置，这是产品「我懂你」的核心时刻。</p>
+<p>发展建议生成规则：取归一化分最低的两个维度，从建议库（维度 × 动作词）映射出「下一步可验证的行动」，如抗压低 →「建议报名一次 48 小时黑客松，观察自己在 deadline 下的表现」。建议必须可执行、可验证，不写空话。</p>
+<p>数据落点：埋点 report_view（模块顺序与停留）、subscribe_click；写表 CompetencyProfile；读表 DecisionLog、UserProfile。</p>
+<h4>21.6 五阶段数据落点总表</h4>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>埋点</th>
+<th>写入表</th>
+<th>读取表</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>建档选职</td>
+<td>profile_start、interest_select</td>
+<td>UserProfile、TaskProgress</td>
+<td>线内个性化权重表</td>
+</tr>
+<tr>
+<td>任务生成</td>
+<td>event_trigger</td>
+<td>TaskProgress</td>
+<td>EventConfig、UserProfile、TaskProgress</td>
+</tr>
+<tr>
+<td>决策反馈</td>
+<td>node_enter、option_hover、option_click、ai_reaction_view、task_complete</td>
+<td>DecisionLog、TaskProgress</td>
+<td>EventConfig</td>
+</tr>
+<tr>
+<td>数据分析</td>
+<td>—（服务端批处理）</td>
+<td>DecisionLog 补全快照、中间特征表</td>
+<td>DecisionLog、UserProfile</td>
+</tr>
+<tr>
+<td>结果交付</td>
+<td>report_view、subscribe_click</td>
+<td>CompetencyProfile</td>
+<td>全部</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-8-2">22. 20 天开发排期（机制线）</h3>
+<p>第 1-3 天：雷达图维度与计分公式定稿（第 18 节）；任务 2-5 标定草案评审并冻结；任务 1 JSON 已就绪；<strong>月度轻节点 4 套模板标定（共 16 组数值）</strong>。
+第 4-8 天：规则引擎（结算器、事件调度器、状态机）；<strong>时间轴推进与月份管理</strong>；DecisionLog 落库；快照机制；数据接口冻结给队友。
+第 9-13 天：NPC 记忆标签系统；AI 反应层 prompt 与数值隔离；记忆墙联动；任务 2-5 JSON 配置完成；<strong>用脚本批量生成 48 个月度节点配置</strong>（模板 + 月份参数，非手写 48 份）。
+第 14-17 天：<strong>晋升窗口与职级结算（含「没升上去」分支的 NPC 态度与剧情变体）</strong>；报告生成（计分 + 岗位匹配 + 晋升轨迹 + 大模型评语）；免费/订阅分层展示逻辑。
+第 18-20 天：内测 5 人跑完整两局；<strong>同步完成 BFI-44 标准大五量表，计算「游戏测分 vs 量表分」相关（效标效度验证：r≥0.4 方法可用并写入 PPT；r≈0 方法需大改——这是整套测评方法论的生死线，详见算法册 §10.1）</strong>；产出对账图表（PPT 素材）；演示脚本彩排。</p>
+<p><strong>关键路径与降级预案</strong>：48 个月的落地前提是把月度节点做成模板（第 5.2 节），这一条是第 1-3 天的必做项，不能拖。若时间不够，因为时间轴是参数化配置，<strong>可随时从 48 个月降到 24 个月</strong>（剧情决策点不变，只减月度节点，总时长从 47 分钟降到约 35 分钟），不会推翻任何已完成的标定。</p>
+<h3 id="sec-8-3">23. 决赛演示脚本（分钟级）</h3>
+<p>0-1 分钟：开场一句话定位（不做测评问卷，做一台过程即测评的机器；48 个月职业生涯，两局玩完）。
+1-7 分钟：评委现场玩第 1-6 月（1.1 / 1.2 / 1.3 三个剧情决策点 + 5 个月度轻节点 + NPC 记忆反应 + 即时反馈）。只跑前 6 个月，正好把「时间卡片 + 月度节奏 + 剧情决策」的双层结构演示完整。
+7-9 分钟：立即生成报告，讲雷达图、大五剖面与行为证据回放。
+9-11 分钟：伪装者挑战——邀请评委故意装好人选「正确答案」，报告当场用犹豫时长与横跳数据指出伪装。
+11-13 分钟：方法论页——内测真实对账图表（标定值 vs 实测值）+ 晋升机制设计（为什么阈值必须隐藏，这是与 CareerSim 最本质的分歧点，也是很好的答辩弹药）。
+13-15 分钟：商业闭环一句话带过（免费建档 + 订阅解锁第二局 + B 端接口），收尾回到「我懂你」。</p>
+<p>备选方案：若现场网络不稳，AI 反应层降级为预生成台词库（按 memory_tags 查表），演示路径不依赖外网；预生成完整报告备份两份（U 盘 + 云端）。</p>
+  </article>
+</div>
+<a class="backtop" href="#top" title="回到顶部">↑</a>
+</body>
+</html>

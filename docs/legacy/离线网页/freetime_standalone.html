@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>熊心壮职 · Agent开发师 · 小镇自由活动与好感度系统 V1</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #f7f7f5; color: #2c2c2a;
+    font-size: 16px; line-height: 1.75;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 24px; line-height: 1.4; margin: 8px 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid #e4e2da; scroll-margin-top: 56px; }
+  h3 { font-size: 17px; margin: 24px 0 8px; color: #44423c; scroll-margin-top: 56px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: #55524a; scroll-margin-top: 56px; }
+  p { margin: 10px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; display: block; overflow-x: auto; white-space: normal; }
+  th, td { border: 1px solid #ddd9cf; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #efece3; font-weight: 600; }
+  tr:nth-child(even) td { background: #faf9f5; }
+  code { background: #efece3; padding: 1px 5px; border-radius: 4px; font-size: 13.5px; font-family: "SFMono-Regular", Consolas, monospace; }
+  pre { background: #2d2b29; color: #f3f1ec; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  blockquote { border-left: 3px solid #c9c3b4; margin: 12px 0; padding: 4px 14px; color: #66635b; background: #faf9f5; }
+  li { margin: 4px 0; }
+  .meta { color: #888780; font-size: 14px; margin-bottom: 18px; }
+  .toc { background: #fff; border: 1px solid #e4e2da; border-radius: 12px; padding: 14px 18px; margin: 18px 0 8px; }
+  .toc ol { margin: 8px 0 0; padding-left: 22px; }
+  .toc a { color: #185fa5; text-decoration: none; }
+  .toc li.t3 { list-style: none; margin-left: -16px; font-size: 14px; color: #666; }
+  .topbar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid #e4e2da; padding: 10px 18px; z-index: 10; display: flex; align-items: center; justify-content: space-between; }
+  .topbar a { color: #185fa5; text-decoration: none; font-size: 14px; }
+  .backtop { position: fixed; right: 16px; bottom: 20px; background: #185fa5; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span>熊心壮职 · Agent开发师 · 详细设计 V1.5</span>
+  <a href="#top">回到顶部</a>
+</div>
+<div class="wrap" id="top">
+  <h1>熊心壮职 · Agent 开发师<br>小镇自由活动与好感度系统 V1</h1>
+  <p class="meta">自由活动·好感度·小镇组团 · 2026-09-08</p>
+  <div class="toc"><strong>目录</strong><ol><li class="t2"><a href="#sec-1">一、小镇九组团地图</a></li><li class="t2"><a href="#sec-2">二、19 个活动详设（含 V5.4 新增工作型 W1-W5）</a></li><li class="t3"><a href="#sec-2-1">独处类（4 个）</a></li><li class="t3"><a href="#sec-2-2">双人类（5 + 1 彩蛋）</a></li><li class="t3"><a href="#sec-2-3">团建类（4 个）</a></li><li class="t2"><a href="#sec-3">三、4 个决策点活动详解（走 DecisionLog、带 marker 标定）</a></li><li class="t3"><a href="#sec-3-1">G1 密室逃脱 · 队友卡关</a></li><li class="t3"><a href="#sec-3-2">G2 KTV · 熊总递麦</a></li><li class="t3"><a href="#sec-3-3">D2 散步深谈 · 知心时刻的回应</a></li><li class="t3"><a href="#sec-3-4">G4 年会排练 · 上台还是幕后</a></li><li class="t2"><a href="#sec-4">四、好感度系统</a></li><li class="t3"><a href="#sec-4-1">数值与等级（对玩家隐藏，红线）</a></li><li class="t3"><a href="#sec-4-2">每级解锁</a></li><li class="t3"><a href="#sec-4-3">四段「知心时刻」剧情文本（Lv2 核心内容）</a></li><li class="t3"><a href="#sec-4-4">好感来源与扣除</a></li><li class="t2"><a href="#sec-5">五、系统规则汇总（后端）</a></li><li class="t2"><a href="#sec-6">六、后端数据结构</a></li><li class="t2"><a href="#sec-7">七、测量兼容（为什么这个系统让测评更准）</a></li><li class="t2"><a href="#sec-8">八、后端落地清单（给你）</a></li></ol></div>
+  <article id="content">
+<h1>熊心壮职 · 小镇自由活动与好感度系统设计 V1</h1>
+<p>配套：剧情册 V2（30 主线事件）、算法册 V1（行为编码）、五模块结合设计 V1（记忆墙映射）、美术方案 V2.2（等距场景）。</p>
+<p><strong>定位</strong>：P5 式日常层。主线 30 个剧情决策点之外，每 3 个月 1 个「自由周末」（共 16 个），玩家在熊心小镇里自主决定这段时间给谁、给什么。<strong>这是比剧情选择题更纯的偏好暴露</strong>——没有场景压力、没有对错，选什么全凭本能。</p>
+<p>借鉴：华为小镇方法论（低密组团 / 小火车作为空间胶水 / 生活配套长在组团旁）+ P5 结构（主线 / 日常 / 好感度解锁）。</p>
+<hr />
+<h2 id="sec-1">一、小镇九组团地图</h2>
+<table>
+<thead>
+<tr>
+<th>组团</th>
+<th>母题（借华为）</th>
+<th>主线功能</th>
+<th>自由活动</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开放工位区</td>
+<td>现代街区</td>
+<td>技术决策类事件</td>
+<td>S4 加班</td>
+</tr>
+<tr>
+<td>洽谈区</td>
+<td>广场小镇/咖啡座</td>
+<td>客户商业类事件</td>
+<td>—</td>
+</tr>
+<tr>
+<td>主管楼（高地）</td>
+<td>练秋湖 A 山顶聚落</td>
+<td>汇报、晋升考核</td>
+<td>S3 天台吹风</td>
+</tr>
+<tr>
+<td>食堂+咖啡角</td>
+<td>生活组团</td>
+<td>—</td>
+<td>D1 约饭</td>
+</tr>
+<tr>
+<td>湖边步道</td>
+<td>练秋湖中心水岸</td>
+<td>—</td>
+<td>S2 独走 / D2 散步深谈</td>
+</tr>
+<tr>
+<td>球场</td>
+<td>运动中心</td>
+<td>—</td>
+<td>D3 打球</td>
+</tr>
+<tr>
+<td>团建馆</td>
+<td>密室/桌游/KTV</td>
+<td>—</td>
+<td>G1-G4</td>
+</tr>
+<tr>
+<td>图书馆</td>
+<td>松山湖牛津组团（大学院落）</td>
+<td>—</td>
+<td>S1 自习 / D5 一起自习</td>
+</tr>
+<tr>
+<td>记忆墙广场</td>
+<td>园区中心+射灯</td>
+<td>记忆可视化</td>
+<td>（常驻景观）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>交通</strong>：园区小火车环线（致敬松山湖/练秋湖），玩家点车站上车、到组团下车——探索交互的载体，比自由行走省成本、比点菜单有沉浸感。</p>
+<hr />
+<h2 id="sec-2">二、19 个活动详设（含 V5.4 新增工作型 W1-W5）</h2>
+<h3 id="sec-2-1">独处类（4 个）</h3>
+<p><strong>S1 图书馆自习</strong>：S+1、H−1。文本：图书馆是园区里最安静的地方，牛津式的回廊把嘈杂全挡在外面。埋点：独处型信号。</p>
+<p><strong>S2 湖边独走</strong>：H+1；<strong>15% 概率触发「顿悟」flag</strong>（下次技术类事件 S+1，文案：「走着走着，那个卡了三天的问题突然就通了」）。练秋湖中心水岸概念。</p>
+<p><strong>S3 天台吹风</strong>：H+2。变体：若当前 H≤3，追加安慰文本「风把脑子里乱糟糟的东西吹散了一点。楼下有人喊你打球，你摆摆手——今天就想一个人待着」。</p>
+<p><strong>S4 工位加班</strong>：O+1、H−2。<strong>自由周末还选择加班，本身就是强 C（尽责）行为锚点</strong>（loading 0.50 × 弱情境）。文案：「整层楼只剩你一个人的屏幕亮着。你说不清这是上进还是不会休息——反正活是往前走了。」</p>
+<h3 id="sec-2-2">双人类（5 + 1 彩蛋）</h3>
+<p><strong>D1 食堂约饭</strong>：好感+3、N+1。约不同 NPC 话题不同（变体）：王哥聊技术圈八卦／小林吐槽客户／小赵问学习问题／老周讲当年。原型 CareerSim #31（38 次）。</p>
+<p><strong>D2 湖边散步深谈</strong>：好感+8、H+1。<strong>好感 ≥40（Lv3）首次触发「知心时刻」</strong>（见第四章），此后变为普通深谈（好感+5）。低频高收益，四种社交画像中「深谈型」的主信号。</p>
+<p><strong>D3 球场打球</strong>：好感+5、H+2。变体：约老周打球有特殊文本（他球风稳，输了也不恼：「打球和做事一样，急不得」）。原型 #65 午休羽毛球。</p>
+<p><strong>D4 夜宵烧烤</strong>：好感+6、H−1。30% 概率触发对方掏心窝（提前 10 分解锁知心时刻的内容，但好感收益少 2——<strong>想早听秘密，就得接受这段关系「来得快但欠火候」</strong>）。</p>
+<p><strong>D5 一起自习</strong>：好感+4、S+1。安静型社交。约小赵有专属文本（他学习很认真，你教他一个知识点，他记在手机备忘录里，备注是「X 月 X 日，X 哥/姐教的」）。</p>
+<p><strong>D6 雨天共伞（彩蛋）</strong>：好感+6、特殊灰金便签「那把伞」。触发条件：自由周末为雨天（20%）+ 离开时与某 NPC 同出口（随机）。自动剧情无决策。原型 #35「暴雨下班仅有一伞与小赵」。</p>
+<h3 id="sec-2-3">团建类（4 个）</h3>
+<p><strong>G1 密室逃脱</strong>（3 人）：好感+5×2、H−1。<strong>带决策点</strong>（见第三章）。原型 #102「密室逃脱领导拖后腿同事惊艳」——随机一名队友卡关（拖后腿者 40% 是老周/熊总，40% 小赵，20% 小林——<strong>领导拖后腿</strong>的经典局面）。</p>
+<p><strong>G2 KTV</strong>（2-3 人）：好感+4、H−1。<strong>带决策点</strong>：30% 概率熊总也在场（他点歌怀旧金曲），唱完把麦递给你。原型 #27「聚餐第二场 KTV 与晋升决策者」——D 维度的休闲娱乐测试。</p>
+<p><strong>G3 桌游局</strong>（3 人）：好感+4、S+1。变体：小赵玩桌游意外地强（反差萌文本：「平时说话都不大声的人，赢了三局」）。</p>
+<p><strong>G4 年会节目排练</strong>（团队）：好感+3×参与 NPC。<strong>带决策点：报名时选上台角色还是幕后</strong>。E（外向性）行为锚点主测量点之一。原型 #11「年会被起哄上台表演」+ #24「年会节目排练占用时间」。</p>
+<hr />
+<h2 id="sec-3">三、4 个决策点活动详解（走 DecisionLog、带 marker 标定）</h2>
+<h3 id="sec-3-1">G1 密室逃脱 · 队友卡关</h3>
+<p>情境：最后一关，倒计时 5 分钟。小赵盯着谜题满头汗，一眼就能看出他卡住了。</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>效果</th>
+<th>marker</th>
+<th>文本反馈</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 上前一起解</td>
+<td>好感+2（小赵）、S+1</td>
+<td>E+（0.43×弱情境）</td>
+<td>「你们头碰着头试了三种可能，门开的那一刻，小赵喊得比谁都大声」</td>
+</tr>
+<tr>
+<td>B 给提示不代劳</td>
+<td>好感+3（小赵）、A+</td>
+<td>A+（0.52）</td>
+<td>「你只说了一句『看看墙角』。小赵愣了两秒，回头看你，眼睛亮了」</td>
+</tr>
+<tr>
+<td>C 站着等</td>
+<td>无</td>
+<td>E−（0.43）</td>
+<td>「你靠在墙边看完了全程。出去后没人说什么，但也没人提刚才」</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-3-2">G2 KTV · 熊总递麦</h3>
+<p>情境：熊总唱完一首老歌，把麦往你这边递：「来一个？」</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>效果</th>
+<th>marker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 接了唱</td>
+<td>好感+3（熊总）、E+、D 小加成</td>
+<td>熊总记忆标签「放得开」</td>
+</tr>
+<tr>
+<td>B 推给旁边的同事</td>
+<td>好感+1</td>
+<td>社交策略数据</td>
+</tr>
+<tr>
+<td>C 借口去洗手间</td>
+<td>好感−1、E−</td>
+<td>熊总记忆标签「放不开」</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-3-3">D2 散步深谈 · 知心时刻的回应</h3>
+<p>情境：对方讲完私人故事，反问你。</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 也讲一件自己的事</td>
+<td>好感+4、双方互惠（他的记忆标签「可以说真话的人」）</td>
+</tr>
+<tr>
+<td>B 只倾听</td>
+<td>好感+2、「倾听者」便签</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-3-4">G4 年会排练 · 上台还是幕后</h3>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>效果</th>
+<th>marker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A 报台上节目</td>
+<td>好感+3（全员）、E+、D+1</td>
+<td>排练占 2 个周末（下次自由周末被占用，<strong>上台有代价</strong>）</td>
+</tr>
+<tr>
+<td>B 报幕后</td>
+<td>好感+1、H+1</td>
+<td>E−</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-4">四、好感度系统</h2>
+<h3 id="sec-4-1">数值与等级（对玩家隐藏，红线）</h3>
+<pre><code>NPCRelation：user_id + npc_id + score(0-100) + level(1-5) + flags
+阈值：Lv1 0-19 / Lv2 20-39 / Lv3 40-59 / Lv4 60-79 / Lv5 80+
+视觉表达：记忆墙该 NPC 便签颜色渐进（蓝→黄→金，美术五模块设计已定）
+</code></pre>
+<h3 id="sec-4-2">每级解锁</h3>
+<table>
+<thead>
+<tr>
+<th>级</th>
+<th>解锁</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lv1 初识</td>
+<td>正常对话</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Lv2 熟人</td>
+<td><strong>知心时刻</strong>（私人故事支线）</td>
+<td>Lv2 后首次 D2/D4 深谈触发，每 NPC 一次性</td>
+</tr>
+<tr>
+<td>Lv3 伙伴</td>
+<td><strong>剧情事件专属选项</strong></td>
+<td>T5「王哥背书」、P5 事故小赵主动分担——已有伏笔正式挂到好感条件</td>
+</tr>
+<tr>
+<td>Lv4 挚友</td>
+<td>关键事件主动出现</td>
+<td>考核窗前提醒你、事故时第一个站出来</td>
+</tr>
+<tr>
+<td>Lv5 知己</td>
+<td>第 48 月专属告别台词 + 人格卡徽章</td>
+<td>终局彩蛋</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sec-4-3">四段「知心时刻」剧情文本（Lv2 核心内容）</h3>
+<p><strong>王哥</strong>（技术路线的私事）：
+「三年前我也坐过那个答辩席。」他摘下眼镜擦了擦。「那天我讲的是管理成果，掌声很响。可台下鼓掌的人，没有一个记得我写过什么代码。第二周我申请转回技术，薪级降了一档，所有人都说我傻。」他把眼镜戴回去，「所以上次你问我走技术还是管理，我没资格替你选。我只知道，技术这碗饭，我吃得踏实。」</p>
+<p><strong>小林</strong>（甩锅背后的东西）：
+「这个月我的需求被砍了三个。」他笑得有点勉强。「你们背后肯定说我甩锅……随便吧。每次复盘会我手心都在出汗——需求被砍的那一刻，我在老板眼里就是个『提错需求的人』。我不敢认，因为认了，下次连站上会议桌的资格都没有。」他顿了顿，「你今天肯坐在这听我说这个，我记着。」</p>
+<p><strong>小赵</strong>（不敢发言的过去）：
+「大一那年我在班上发言，讲到一半忘词了。」他搅着咖啡，没抬头。「全班笑了半分钟。从那以后我开会只敢坐最后一排。」咖啡凉了他也没喝。「上个月你非说『小赵你来讲』——我腿一直在抖。但你不知道，那是我三年来第一次主动站起来。」</p>
+<p><strong>老周</strong>（P3 侵占署名的动机伏笔）：
+「我入职第二年做的模块拿了公司金奖。」他喝了口茶。「领奖台上站着的，是我组长。」茶杯放下的声音很轻。「我没闹。我记了十年——不是为了记仇，是怕自己变成那样的人。」他看了你一眼。「结果前阵子，差点就变了。小赵那事，谢谢你。」</p>
+<p><strong>设计意图</strong>：四段故事让每个 NPC 立体化——<strong>职场里每个让你不舒服的人，都有他自己的困境</strong>。这是 P5「每个 Confidant 都有自己的战役」的本土化，也让 P3 侵占署名、M5 路线选择、N2 被轻视这些主线事件在情感上闭环。</p>
+<h3 id="sec-4-4">好感来源与扣除</h3>
+<table>
+<thead>
+<tr>
+<th>来源</th>
+<th>数值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>各类活动</td>
+<td>见第二章各表</td>
+</tr>
+<tr>
+<td>P1 甩锅选 C「认了」</td>
+<td>小林 −10</td>
+</tr>
+<tr>
+<td>剧情放鸽子</td>
+<td>−5</td>
+</tr>
+<tr>
+<td>揽责/帮发声类剧情选项</td>
+<td>对应 NPC +5~10（已含在主线 N 加成，同步映射）</td>
+</tr>
+<tr>
+<td>连续约同一人第 3 次</td>
+<td>该次收益 ×50%（文案：「他有点意外你又来了」）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-5">五、系统规则汇总（后端）</h2>
+<ol>
+<li><strong>调度</strong>：每 3 个月一个自由周末（第 3/6/9…48 月），共 16 个；主线事件月的自由周末照常（自由活动与主线不互斥，只是当月多一个时段）。</li>
+<li><strong>天气</strong>：80% 晴 / 20% 雨；雨天开放 D6 共伞彩蛋。</li>
+<li><strong>收益递减</strong>：same_npc_3x_half。</li>
+<li><strong>知心时刻一次性</strong>：触发后 D2/D4 降为普通深谈（+5）。</li>
+<li><strong>数值隐藏</strong>：好感度、等级、解锁条件一律不下发前端。</li>
+<li><strong>预标定</strong>：所有活动的六维增减与决策点 marker 均预标定，走现有 EventConfig 体系，不引入未标定内容。</li>
+</ol>
+<h2 id="sec-6">六、后端数据结构</h2>
+<pre><code class="language-json">{
+  &quot;system&quot;: &quot;free_time&quot;, &quot;version&quot;: &quot;V1&quot;,
+  &quot;schedule&quot;: { &quot;every_n_months&quot;: 3, &quot;total&quot;: 16 },
+  &quot;weather&quot;: { &quot;sunny&quot;: 0.8, &quot;rainy&quot;: 0.2 },
+  &quot;activity_id&quot;: &quot;G1_escape_room&quot;,
+  &quot;zone&quot;: &quot;团建馆&quot;, &quot;party_size&quot;: 3,
+  &quot;candidates&quot;: [&quot;wangge&quot;, &quot;xiaolin&quot;, &quot;xiaozhao&quot;, &quot;laozhou&quot;],
+  &quot;affinity_gain&quot;: { &quot;each&quot;: 5 },
+  &quot;effects&quot;: { &quot;gain&quot;: { &quot;H&quot;: -1 } },
+  &quot;decision&quot;: {
+    &quot;node_id&quot;: &quot;g1_stuck&quot;,
+    &quot;options&quot;: [
+      { &quot;id&quot;: &quot;A&quot;, &quot;text&quot;: &quot;上前一起解&quot;, &quot;marker&quot;: &quot;E&quot;, &quot;dir&quot;: 1, &quot;loading&quot;: 0.43,
+        &quot;affinity&quot;: { &quot;target&quot;: &quot;stuck_npc&quot;, &quot;delta&quot;: 2 }, &quot;competency&quot;: { &quot;collaboration&quot;: 1 } },
+      { &quot;id&quot;: &quot;B&quot;, &quot;text&quot;: &quot;给提示不代劳&quot;, &quot;marker&quot;: &quot;A&quot;, &quot;dir&quot;: 1, &quot;loading&quot;: 0.52,
+        &quot;affinity&quot;: { &quot;target&quot;: &quot;stuck_npc&quot;, &quot;delta&quot;: 3 } },
+      { &quot;id&quot;: &quot;C&quot;, &quot;text&quot;: &quot;站着等&quot;, &quot;marker&quot;: &quot;E&quot;, &quot;dir&quot;: -1, &quot;loading&quot;: 0.43 }
+    ]
+  },
+  &quot;memory_tag&quot;: &quot;团建那次&quot;,
+  &quot;cooldown&quot;: &quot;same_npc_3x_half&quot;
+}
+</code></pre>
+<p>配套：<code>NPCRelation</code> 新表（建表语句按第五节字段）；埋点 <code>explore_click</code> 扩展字段 <code>{zone, activity_id, targets[], weather, affinity_delta[]}</code>。</p>
+<h2 id="sec-7">七、测量兼容（为什么这个系统让测评更准）</h2>
+<ol>
+<li><strong>更纯的偏好暴露</strong>：无场景压力、无对错，把周末给谁是本能选择；</li>
+<li><strong>社交指纹 2.0</strong>：三维轨迹（去哪组团 × 和谁 × 活动类型），输出四种社交画像——独处型 / 深谈型 / 玩乐型 / 聚会型；</li>
+<li><strong>BARS 兼容</strong>：选密室=抗压与协作锚点、选上台=E 锚点、自由周末加班=强 C 锚点——活动选择本身进入行为编码；</li>
+<li><strong>好感度 vs 六维交叉</strong>：某 NPC 好感很高但你剧情里对他选过负面选项 → 矛盾素材（「你嘴上嫌他，周末却总往他那跑」）。</li>
+</ol>
+<h2 id="sec-8">八、后端落地清单（给你）</h2>
+<ol>
+<li>建 <code>NPCRelation</code> 表 + 好感度结算接口（活动完成 → 加减分 → 判级 → 下发记忆墙更新事件）；</li>
+<li><code>explore_click</code> 埋点扩展字段；</li>
+<li>16 个自由周末的调度钩子（挂进月度推进循环）；</li>
+<li>天气随机数与 D6 触发逻辑；</li>
+<li>收益递减与知心时刻一次性标记；</li>
+<li>Lv3 解锁选项：主线事件 JSON 的 <code>conditional_modifiers</code> 增加 <code>affinity_lte/gte</code> 条件类型（需在结算器支持）；</li>
+<li>Lv4 主动出现：事件调度器加「挚友干涉」触发类型；</li>
+<li>Lv5 终局告别：报告生成器读好感等级选告别文本。</li>
+</ol>
+  </article>
+</div>
+<a class="backtop" href="#top" title="回到顶部">↑</a>
+</body>
+</html>

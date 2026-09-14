@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "messageId": "msg-014-m10-wang-h-low",
+      "npcId": "wang_ge",
+      "kind": "state",
+      "title": "王哥发来一条消息",
+      "body": "「你这月连续加班第三周了，生命值我看不下去了。周五下午放下手头的活，来天台待十分钟。」",
+      "month": 10,
+      "memoryRefs": [
+        {
+          "eventId": "b4d8f6a1-2e93-4c05-8a77-6f01c9d3e2b8",
+          "seq": 26,
+          "month": 10,
+          "storyId": null,
+          "layer": "state",
+          "tag": null,
+          "fact": "连续 3 周加班，生命降到 2。"
+        }
+      ],
+      "priority": 2,
+      "read": false
+    },
+    {
+      "messageId": "msg-011-m9-xiaolin-stage",
+      "npcId": "xiao_lin",
+      "kind": "relation",
+      "title": "小林发来一条邀约",
+      "body": "「关系到了伙伴这一档，按约定轮到我来请你——周六湖边，聊聊你们技术侧怎么看情绪识别这个需求。」",
+      "month": 9,
+      "memoryRefs": [
+        {
+          "eventId": "9c22d1e0-71ab-4f30-b5a6-2c7d8e4f1a55",
+          "seq": 19,
+          "month": 9,
+          "storyId": null,
+          "layer": "relation",
+          "tag": "stage_up",
+          "fact": "与小林的关系阶段升到 Lv3 伙伴。"
+        }
+      ],
+      "priority": 1,
+      "read": false
+    }
+  ]
+}

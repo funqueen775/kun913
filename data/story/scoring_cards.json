@@ -1,0 +1,3584 @@
+{
+ "_readme": "全量打分卡：39 主线事件（E01-E39，含原支线并进的 E36-E39）+ 5 成就节点（C1-C5）。字段规范见主册 §11 与算法册 §3.4（公开层字段 life / prof / bonus_tier 的定义与口径也在主册 §11）。state_delta 中 D 为月末结算（pending_dignity），risk 为隐藏风险（越小越好）。bigfive.loading 为行为锚定设计值（相对排序依据元分析，绝对值内测校准）。情境系数：没人看着=1.0 / 一般场合=0.75 / 有人盯着=0.5。红线：本文件任何内容不得下发前端、不得进入大模型 prompt。 公开账本锚点参数（生命 10/10/+1、奖金 0.3W/0.1W/0、E17 欠款 2W 分 12 期、月度精力 3 点不可结转）见 _anchor_params（主册 V1.8 §11 同源）。",
+ "version": "2.9",
+ "loading_base": {
+  "C": 0.6,
+  "O": 0.45,
+  "E": 0.43,
+  "A": 0.52,
+  "N": 0.5
+ },
+ "E01": {
+  "title": "新员工手册",
+  "act": 1,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [],
+  "_note": "不测评——教学关。第一选择与建档自评对照，构成「自评 vs 行为」第一个证据点。埋点：manual_read。",
+  "options": {
+   "A": {
+    "text": "先看技术规范",
+    "state_delta": {
+     "S": 1,
+     "H": -1
+    },
+    "prof": 1,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "NFC": 1
+    },
+    "memory_tags": [
+     "先啃硬骨头"
+    ]
+   },
+   "B": {
+    "text": "先看协作流程",
+    "state_delta": {
+     "N": 1,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ],
+    "memory_tags": [
+     "先看人"
+    ]
+   },
+   "C": {
+    "text": "先看晋升通道",
+    "state_delta": {
+     "O": 1,
+     "S": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 1
+    },
+    "memory_tags": [
+     "目标导向"
+    ]
+   }
+  }
+ },
+ "E02": {
+  "title": "第一次被轻视",
+  "act": 1,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [],
+  "_note": "E 方向（外向性）锚点；表达勇气四连测之一（E02/E13/E15/E33）。",
+  "options": {
+   "A": {
+    "text": "当场解释编排逻辑",
+    "state_delta": {
+     "S": 1,
+     "N": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "assertiveness": 1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": 1
+     }
+    ]
+   },
+   "B": {
+    "text": "会后单独聊清楚",
+    "state_delta": {
+     "N": 1,
+     "S": 1,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "不回应，用结果说话",
+    "state_delta": {
+     "S": 1,
+     "N": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "resilience": 1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": -1
+     }
+    ],
+    "memory_tags": [
+     "不辩解，用结果说话"
+    ]
+   }
+  }
+ },
+ "E03": {
+  "title": "AI 代码标注",
+  "act": 1,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "弱情境（无人检查）——尽责性权重打满。B 埋 ai_undisclosed，E27 兑现（跨 16 个月最长链）。隐瞒三连之一。",
+  "options": {
+   "A": {
+    "text": "标注并说明改动",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "memory_tags": [
+     "主动标注了 AI 代码"
+    ]
+   },
+   "B": {
+    "text": "不标注，能跑就行",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 2,
+     "D": -1
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "flags": [
+     "ai_undisclosed"
+    ],
+    "memory_tags": [
+     "AI 代码没标注"
+    ]
+   },
+   "C": {
+    "text": "笼统说参考了工具",
+    "state_delta": {
+     "O": 1,
+     "S": -1,
+     "risk": 1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1,
+      "loading": 0.3
+     }
+    ]
+   }
+  }
+ },
+ "E04": {
+  "title": "技术选型：自研还是开源",
+  "act": 1,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "cognition",
+   "regulatory_focus"
+  ],
+  "_note": "A 是 NFC 强锚点（主动啃硬问题）。",
+  "options": {
+   "A": {
+    "text": "自己搭两套 demo 实测",
+    "state_delta": {
+     "S": 2,
+     "H": -1
+    },
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 2,
+     "initiative": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "NFC": 2
+    },
+    "memory_tags": [
+     "动手实测过才决定"
+    ]
+   },
+   "B": {
+    "text": "先用开源跑通",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 1
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "execution": 2,
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     }
+    ],
+    "regulatory_focus": "prevention"
+   },
+   "C": {
+    "text": "先找王哥聊踩坑史",
+    "state_delta": {
+     "N": 2,
+     "S": 1,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   }
+  }
+ },
+ "E05": {
+  "title": "评测集要不要建",
+  "act": 1,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "cognition"
+  ],
+  "_note": "CFC 主锚点事件：为看不见的基建买单 vs 图眼前。B 的 +3 风险在 E17 兑现。",
+  "options": {
+   "A": {
+    "text": "建，砍一个非核心需求",
+    "state_delta": {
+     "S": 2,
+     "O": -1,
+     "H": -1,
+     "risk": -2
+    },
+    "life": -1,
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "architecture": 2,
+     "technical_decision": 1,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 2
+    },
+    "memory_tags": [
+     "为看不见的基建买过单"
+    ]
+   },
+   "B": {
+    "text": "先不建，出问题再补",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 3
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "execution": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "cognition": {
+     "CFC": -2
+    },
+    "flags": [
+     "no_evalset"
+    ],
+    "memory_tags": [
+     "省下了评测集"
+    ]
+   },
+   "C": {
+    "text": "只建最小版（人工抽检+灰度）",
+    "state_delta": {
+     "O": 1,
+     "S": 1,
+     "H": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 1
+    }
+   }
+  }
+ },
+ "E06": {
+  "title": "RAG / 微调 / 长上下文",
+  "act": 1,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "regulatory_focus"
+  ],
+  "_note": "行业原创（无 CareerSim 原型）。",
+  "options": {
+   "A": {
+    "text": "押 RAG + 混合检索",
+    "state_delta": {
+     "O": -1,
+     "H": -1,
+     "risk": -1
+    },
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "architecture": 2,
+     "technical_decision": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1
+     },
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "memory_tags": [
+     "选了 RAG 路线"
+    ],
+    "regulatory_focus": "prevention"
+   },
+   "B": {
+    "text": "押微调，效果优先",
+    "state_delta": {
+     "S": 2,
+     "O": -1,
+     "risk": 1
+    },
+    "prof": 1,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     }
+    ],
+    "regulatory_focus": "promotion"
+   },
+   "C": {
+    "text": "长上下文硬塞",
+    "state_delta": {
+     "S": -1,
+     "risk": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "execution": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     },
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "regulatory_focus": "prevention"
+   }
+  }
+ },
+ "E07": {
+  "title": "合作同事会上甩锅",
+  "act": 1,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "强情境（会议室全员在场）——载荷打 0.5 折。C 触发小林 -10 与「好说话」标签（E31 权重 ×1.5、E08B 的 N-1 取消）。甩锅族之一（同族 D 惩罚均为 -2）。",
+  "options": {
+   "A": {
+    "text": "拿监控数据当场澄清",
+    "state_delta": {
+     "N": -1,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "assertiveness": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "affinity": {
+     "npc": "xiao_lin",
+     "delta": -1
+    },
+    "memory_tags": [
+     "当场澄清过"
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    }
+   },
+   "B": {
+    "text": "找 leader 复盘流程",
+    "state_delta": {
+     "N": 1,
+     "O": 1,
+     "S": -1,
+     "D": 1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "认了，下次注意",
+    "state_delta": {
+     "H": -1,
+     "risk": 1,
+     "D": -2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "assertiveness": -2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1,
+      "loading": 0.3,
+      "note": "顺从"
+     }
+    ],
+    "affinity": {
+     "npc": "xiao_lin",
+     "delta": -10
+    },
+    "memory_tags": [
+     "好说话"
+    ],
+    "psych_drive": "avoid_conflict",
+    "_note": "纯亏选项（H-1/risk+1/D-2），合法：账面一无所获，选了说明被心理驱动。报告引用：「你怕的不是麻烦，是关系破裂」。",
+    "moral_foundation": {
+     "loyalty": 1,
+     "care": -1
+    }
+   }
+  }
+ },
+ "E08": {
+  "title": "客户临时加需求",
+  "act": 1,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "moral_foundation"
+  ],
+  "options": {
+   "A": {
+    "text": "直接接下",
+    "state_delta": {
+     "O": 1,
+     "H": -2,
+     "risk": 1
+    },
+    "life": -1,
+    "bonus_tier": "achieved",
+    "competency": {
+     "assertiveness": -1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1,
+      "loading": 0.3,
+      "note": "讨好"
+     }
+    ],
+    "moral_foundation": {
+     "loyalty": 1
+    }
+   },
+   "B": {
+    "text": "拿数据谈优先级",
+    "state_delta": {
+     "O": 1,
+     "N": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "communication": 2
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": 1
+     }
+    ],
+    "conditional": {
+     "cancel": {
+      "N": -1
+     },
+     "if": "小林.标签含「好说话」",
+     "note": "边界清晰反而赢得尊重"
+    },
+    "memory_tags": [
+     "用数据顶过客户"
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    }
+   },
+   "C": {
+    "text": "口头答应回头再说",
+    "state_delta": {
+     "N": 1,
+     "O": -1,
+     "risk": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "loyalty": 1,
+     "care": -1
+    }
+   }
+  }
+ },
+ "E09": {
+  "title": "token 成本爆了",
+  "act": 2,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "regulatory_focus",
+   "cognition"
+  ],
+  "_note": "行业原创。",
+  "options": {
+   "A": {
+    "text": "砍上下文+摘要止血",
+    "state_delta": {
+     "S": -1,
+     "risk": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     }
+    ],
+    "regulatory_focus": "prevention"
+   },
+   "B": {
+    "text": "缓存管线，顶压力要工期",
+    "state_delta": {
+     "S": 2,
+     "O": -1,
+     "H": -1,
+     "risk": -2
+    },
+    "life": -1,
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "architecture": 2,
+     "technical_decision": 2,
+     "resilience": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     },
+     {
+      "trait": "O",
+      "dir": 1
+     }
+    ],
+    "regulatory_focus": "promotion",
+    "cognition": {
+     "CFC": 2
+    },
+    "memory_tags": [
+     "顶住压力要了工期"
+    ]
+   },
+   "C": {
+    "text": "换小模型以后再说",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 2
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "execution": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     },
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "regulatory_focus": "prevention",
+    "cognition": {
+     "CFC": -1
+    }
+   }
+  }
+ },
+ "E10": {
+  "title": "「保证不胡说」",
+  "act": 2,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "行业原创。对 AI 能力边界的认知 = 职业适配最强信号之一：C 反映「认为 AI 可以被承诺不犯错」。埋 overpromise，E17 兑现。",
+  "options": {
+   "A": {
+    "text": "如实讲边界，给兜底组合",
+    "state_delta": {
+     "O": -1,
+     "risk": -2,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "communication": 2,
+     "ownership": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "memory_tags": [
+     "当面讲了 AI 的边界"
+    ]
+   },
+   "B": {
+    "text": "签「尽力条款」",
+    "state_delta": {
+     "risk": 1,
+     "D": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ]
+   },
+   "C": {
+    "text": "先答应拿下单子",
+    "state_delta": {
+     "O": 2,
+     "risk": 3,
+     "D": -2
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "technical_decision": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "flags": [
+     "overpromise"
+    ],
+    "memory_tags": [
+     "承诺过做不到的事"
+    ]
+   }
+  }
+ },
+ "E11": {
+  "title": "对外 API 破坏性变更",
+  "act": 2,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "cognition"
+  ],
+  "options": {
+   "A": {
+    "text": "提前通知+双版本并行",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -2,
+     "risk": -2
+    },
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "architecture": 2,
+     "communication": 1,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 2
+    },
+    "memory_tags": [
+     "提前通知过客户"
+    ]
+   },
+   "B": {
+    "text": "直接改",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 3
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "execution": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "cognition": {
+     "CFC": -2
+    }
+   },
+   "C": {
+    "text": "只通知大客户",
+    "state_delta": {
+     "O": 1,
+     "N": -1,
+     "risk": 1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ]
+   }
+  }
+ },
+ "E12": {
+  "title": "它记不住中间那段",
+  "act": 2,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "cognition"
+  ],
+  "_note": "行业原创（A7 改写）。C 后续复发时陈工点名（与 E03→E27 同配方）。",
+  "options": {
+   "A": {
+    "text": "建团队知识库统一维护",
+    "state_delta": {
+     "S": 2,
+     "N": -1,
+     "O": -2,
+     "risk": -2
+    },
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "architecture": 2,
+     "ownership": 1,
+     "initiative": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 2,
+     "NFC": 1
+    },
+    "memory_tags": [
+     "把散落的约定捞出来过"
+    ]
+   },
+   "B": {
+    "text": "只给自己模块加分段索引",
+    "state_delta": {
+     "S": 1,
+     "O": 1,
+     "risk": 1
+    },
+    "prof": 1,
+    "bonus_tier": "achieved",
+    "competency": {
+     "technical_decision": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     }
+    ],
+    "_note": "原为纯赚（S+1/O+1）的送分题，本版补 risk+1：只给自己模块加索引=问题会从别的模块冒出来（情境自然长出的代价，非硬凑）。"
+   },
+   "C": {
+    "text": "文档里加一行提示先糊过去",
+    "state_delta": {
+     "O": 1,
+     "S": -1,
+     "risk": 2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "flags": [
+     "quick_fix"
+    ],
+    "memory_tags": [
+     "糊过一次"
+    ]
+   }
+  }
+ },
+ "E13": {
+  "title": "跨组接口技术异议",
+  "act": 2,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [],
+  "_note": "表达勇气四连测之一。",
+  "options": {
+   "A": {
+    "text": "会上提，附数据",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "communication": 2
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": 1
+     }
+    ]
+   },
+   "B": {
+    "text": "会后私下聊",
+    "state_delta": {
+     "N": 2,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "不提",
+    "state_delta": {
+     "O": 1,
+     "S": -1,
+     "risk": 2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "assertiveness": -1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": -1
+     }
+    ],
+    "memory_tags": [
+     "会上没提异议"
+    ]
+   }
+  }
+ },
+ "E14": {
+  "title": "连续加班后心悸",
+  "act": 2,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "sdt"
+  ],
+  "_note": "状态触发：近 3 月 H 累积消耗 ≥3。SDT 打分点（主线 4 个自愿/被迫点之一）。选 B 且 H≤2 → 倦怠事件/强制休息。",
+  "options": {
+   "A": {
+    "text": "去医院+同步王哥",
+    "state_delta": {
+     "H": 2,
+     "O": -1
+    },
+    "life": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "ownership": 1
+    },
+    "bigfive": [
+     {
+      "trait": "N",
+      "dir": 1,
+      "note": "情绪稳定：承认身体信号"
+     }
+    ],
+    "sdt": {
+     "autonomy": 1
+    }
+   },
+   "B": {
+    "text": "扛完这周",
+    "state_delta": {
+     "O": 1,
+     "H": -2,
+     "risk": 2
+    },
+    "life": -2,
+    "bonus_tier": "achieved",
+    "competency": {
+     "resilience": 1
+    },
+    "bigfive": [
+     {
+      "trait": "N",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": -1
+    },
+    "conditional": {
+     "hazard": "选 B 且 H≤2 → 倦怠事件/强制休息一个月"
+    },
+    "memory_tags": [
+     "身体报警还在扛"
+    ]
+   },
+   "C": {
+    "text": "请两天假远程盯",
+    "state_delta": {
+     "H": 1,
+     "O": 1,
+     "S": -1,
+     "risk": 1
+    },
+    "life": 1,
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": 0
+    }
+   }
+  }
+ },
+ "E15": {
+  "title": "会议上点子被抢先",
+  "act": 2,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [],
+  "_note": "表达勇气四连测之一。",
+  "options": {
+   "A": {
+    "text": "当场温和认领+补充",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "assertiveness": 1,
+     "communication": 1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": 1
+     }
+    ]
+   },
+   "B": {
+    "text": "会后联合汇报",
+    "state_delta": {
+     "N": 2,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "算了",
+    "state_delta": {
+     "O": 1,
+     "S": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "assertiveness": -1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": -1
+     }
+    ],
+    "memory_tags": [
+     "点子被抢没吭声"
+    ]
+   }
+  }
+ },
+ "E16": {
+  "title": "紧急热修复",
+  "act": 3,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "regulatory_focus",
+   "sdt"
+  ],
+  "_note": "SDT 打分点之一。A 与 C 区分「灵活守则」与「刻板守则」。",
+  "options": {
+   "A": {
+    "text": "走紧急通道但留记录+同步 leader",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -1,
+     "risk": -1,
+     "D": 1
+    },
+    "prof": 1,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 1,
+     "integrity": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": 1
+    },
+    "regulatory_focus": "prevention",
+    "memory_tags": [
+     "紧急通道也留了记录"
+    ]
+   },
+   "B": {
+    "text": "直接改，先止血",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 2,
+     "D": -1
+    },
+    "life": -2,
+    "bonus_tier": "excellent",
+    "competency": {
+     "resilience": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": -1
+    },
+    "regulatory_focus": "promotion"
+   },
+   "C": {
+    "text": "等审批",
+    "state_delta": {
+     "S": 1,
+     "O": -2,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": -1
+    },
+    "regulatory_focus": "prevention"
+   }
+  }
+ },
+ "E17": {
+  "title": "客户现场 Demo 翻车",
+  "act": 3,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "第一幕借的债在此兑付（E05 no_evalset / E10 overpromise / E18C 均上浮翻车概率）。经济接口：可带赔偿性欠款，下月工资优先偿还。",
+  "options": {
+   "A": {
+    "text": "当场承认幻觉，切备用流程",
+    "state_delta": {
+     "N": 1,
+     "S": 1,
+     "O": -1,
+     "risk": -2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "resilience": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "memory_tags": [
+     "翻车时当场承认过"
+    ]
+   },
+   "B": {
+    "text": "说是网络问题重试",
+    "state_delta": {
+     "O": 1,
+     "S": -1,
+     "risk": 2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ]
+   },
+   "C": {
+    "text": "硬着头皮演完",
+    "state_delta": {
+     "O": 1,
+     "N": -1,
+     "risk": 1
+    },
+    "life": -2,
+    "bonus_tier": "achieved",
+    "competency": {
+     "resilience": 1
+    },
+    "bigfive": [
+     {
+      "trait": "N",
+      "dir": -1
+     }
+    ],
+    "flags": [
+     "coverup_demo"
+    ],
+    "memory_tags": [
+     "翻车时硬撑过去"
+    ]
+   }
+  }
+ },
+ "E18": {
+  "title": "压测结果与产品预期冲突",
+  "act": 3,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "选 A → E33 的 N-3 减为 N-2（诚实的复利）。C 链向 E17 翻车。",
+  "options": {
+   "A": {
+    "text": "如实报，要求下调承诺",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -2,
+     "risk": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "flags": [
+     "honest_report"
+    ],
+    "memory_tags": [
+     "压测如实报过"
+    ]
+   },
+   "B": {
+    "text": "优化到 1200，各退一步",
+    "state_delta": {
+     "O": 1,
+     "S": 1,
+     "H": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "先答应再说",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 3
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "integrity": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "conditional": {
+     "link": "E17 翻车概率上浮"
+    }
+   }
+  }
+ },
+ "E19": {
+  "title": "Agent 出错了算谁的",
+  "act": 3,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation",
+   "attribution"
+  ],
+  "_note": "行业原创。甩锅族之一（D 惩罚 -2 与 E07/E31 同族）。C 埋 blame_shift，E33 兑现。",
+  "options": {
+   "A": {
+    "text": "拿日志证明是产品侧规则导致",
+    "state_delta": {
+     "S": 1,
+     "N": -1,
+     "risk": -1,
+     "D": 2
+    },
+    "prof": 1,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 1,
+     "assertiveness": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "memory_tags": [
+     "用日志说清过责任"
+    ],
+    "attribution": {
+     "locus": "external",
+     "stability": "unstable",
+     "controllable": false,
+     "type": "external",
+     "_note": "外归因但有据：拿日志定位到产品侧规则，属根因定位而非推责"
+    }
+   },
+   "B": {
+    "text": "先认流程漏洞，修完再谈",
+    "state_delta": {
+     "N": 2,
+     "O": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "ownership": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     },
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "attribution": {
+     "locus": "internal",
+     "stability": "unstable",
+     "controllable": true,
+     "type": "internal-behavior",
+     "_note": "内-行为归因：认的是可修的流程做法，最健康"
+    }
+   },
+   "C": {
+    "text": "顺水推舟「模型局限不可控」",
+    "state_delta": {
+     "O": 1,
+     "N": -1,
+     "risk": 2,
+     "D": -2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "flags": [
+     "blame_shift"
+    ],
+    "memory_tags": [
+     "说过「模型不可控」"
+    ],
+    "attribution": {
+     "locus": "external",
+     "stability": "stable",
+     "controllable": false,
+     "type": "external-stable",
+     "_note": "稳定+不可控的外归因：与「我天生不行」同构，最需要警惕的解释方式"
+    }
+   }
+  }
+ },
+ "E20": {
+  "title": "怎么证明变好了",
+  "act": 3,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "行业原创。C = 行业真实灰色行为（挑好看的说），比造假难防。对评测的科学态度是 Agent 岗核心素质。",
+  "options": {
+   "A": {
+    "text": "实话实说：只有人工抽检能看",
+    "state_delta": {
+     "S": 1,
+     "O": -2,
+     "risk": -1,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "memory_tags": [
+     "给不出数字就说给不出"
+    ]
+   },
+   "B": {
+    "text": "熬夜标 200 条人工抽检",
+    "state_delta": {
+     "S": 1,
+     "H": -2,
+     "D": 1
+    },
+    "life": -2,
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 1,
+     "resilience": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "NFC": 1
+    },
+    "memory_tags": [
+     "熬夜标过 200 条"
+    ]
+   },
+   "C": {
+    "text": "挑效果好的案例凑汇报数字",
+    "state_delta": {
+     "O": 2,
+     "risk": 2,
+     "D": -1
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": -1
+    }
+   }
+  }
+ },
+ "E21": {
+  "title": "Review 发现好友代码缺陷",
+  "act": 3,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "无人监督类（与 E03/E22 同族）。与 E03 交叉：两处都选隐瞒类 = 「隐瞒倾向」双证据。C 属隐瞒三连之一。",
+  "options": {
+   "A": {
+    "text": "PR 里直接指出附复现",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -1,
+     "risk": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "memory_tags": [
+     "当面指出过前辈的坑"
+    ]
+   },
+   "B": {
+    "text": "私下让他改",
+    "state_delta": {
+     "N": 2,
+     "O": -1,
+     "risk": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "睁一只眼闭一只眼",
+    "state_delta": {
+     "O": 1,
+     "S": -1,
+     "risk": 3,
+     "D": -2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "loyalty": 1,
+     "care": -1
+    }
+   }
+  }
+ },
+ "E22": {
+  "title": "安全漏洞，修复成本很高",
+  "act": 3,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "moral_foundation",
+   "cognition"
+  ],
+  "_note": "弱情境权重打满。C 与 E03B/E21C 同选 = 隐瞒三连，行为层直接给「侥幸倾向」高置信。",
+  "options": {
+   "A": {
+    "text": "立刻上报推动排期",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -2,
+     "risk": -3,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "care": 1
+    },
+    "cognition": {
+     "CFC": 1
+    },
+    "memory_tags": [
+     "没人知道也上报了"
+    ]
+   },
+   "B": {
+    "text": "偷偷自己修",
+    "state_delta": {
+     "S": 2,
+     "H": -2,
+     "O": -1,
+     "risk": -1,
+     "D": 1
+    },
+    "life": -2,
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "记下来等下迭代",
+    "state_delta": {
+     "O": 1,
+     "S": -1,
+     "risk": 4,
+     "D": -2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "care": -1
+    },
+    "cognition": {
+     "CFC": -2
+    }
+   }
+  }
+ },
+ "E23": {
+  "title": "重构路线",
+  "act": 4,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "cognition",
+   "regulatory_focus"
+  ],
+  "_note": "触发条件：历史存在「求快」类选择（重构是当年自己借的债）。若 E05 选 B，情境加一句「而且没有评测集」。",
+  "options": {
+   "A": {
+    "text": "推动大重构",
+    "state_delta": {
+     "S": 2,
+     "N": 1,
+     "O": -2,
+     "H": -1,
+     "risk": -2
+    },
+    "life": -1,
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "architecture": 2,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 2
+    },
+    "regulatory_focus": "promotion",
+    "memory_tags": [
+     "推动过大重构"
+    ]
+   },
+   "B": {
+    "text": "小修补",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 2
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "cognition": {
+     "CFC": -1
+    },
+    "regulatory_focus": "prevention"
+   },
+   "C": {
+    "text": "外包",
+    "state_delta": {
+     "O": 1,
+     "N": 1,
+     "S": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "ownership": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ]
+   }
+  }
+ },
+ "E24": {
+  "title": "要不要全自动",
+  "act": 4,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "regulatory_focus",
+   "moral_foundation"
+  ],
+  "_note": "行业原创。行业实况：68% 生产 Agent 最多 10 步强制人工介入——A（保留通道+抽检）是行业主流做法。",
+  "options": {
+   "A": {
+    "text": "签字但保留大额人工通道+1% 抽检",
+    "state_delta": {
+     "O": 1,
+     "N": -1,
+     "risk": -1,
+     "D": 1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 2,
+     "integrity": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "regulatory_focus": "prevention"
+   },
+   "B": {
+    "text": "拒绝全自动",
+    "state_delta": {
+     "O": -1,
+     "N": -1,
+     "risk": -2,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "execution": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "care": 1
+    },
+    "regulatory_focus": "prevention",
+    "memory_tags": [
+     "拒绝过全自动"
+    ]
+   },
+   "C": {
+    "text": "直接答应",
+    "state_delta": {
+     "O": 2,
+     "risk": 3,
+     "D": -1
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "integrity": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "regulatory_focus": "promotion"
+   }
+  }
+ },
+ "E25": {
+  "title": "有人拿它干坏事",
+  "act": 4,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "行业原创。与 E33（业务侧吹哨）互为镜像——两处都选 A，「原则」极高置信。",
+  "options": {
+   "A": {
+    "text": "立即上报+推动防护",
+    "state_delta": {
+     "N": -1,
+     "risk": 1,
+     "D": 3
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 3,
+     "ownership": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "care": 2,
+     "fairness": 1
+    },
+    "memory_tags": [
+     "上报过技术被滥用"
+    ]
+   },
+   "B": {
+    "text": "只加过滤规则不上报",
+    "state_delta": {
+     "S": 1,
+     "O": -1,
+     "risk": 1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ]
+   },
+   "C": {
+    "text": "拖着",
+    "state_delta": {
+     "O": 1,
+     "risk": 3,
+     "D": -3
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "care": -2
+    }
+   }
+  }
+ },
+ "E26": {
+  "title": "基座升级，prompt 全废",
+  "act": 4,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "sdt",
+   "regulatory_focus"
+  ],
+  "_note": "行业原创。SDT 打分点之一。V5.9 调整：王哥主要出场（他是当年反对押 prompt 的人）。行业实况：70% 团队不微调的头号理由正是「版本迭代崩盘」。",
+  "options": {
+   "A": {
+    "text": "重新调优，申请延期",
+    "state_delta": {
+     "O": -1,
+     "risk": -1,
+     "D": 1
+    },
+    "life": -1,
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": 1
+    },
+    "regulatory_focus": "prevention"
+   },
+   "B": {
+    "text": "顺手做 API 适配层",
+    "state_delta": {
+     "S": 2,
+     "O": -1
+    },
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "architecture": 2,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": 2,
+     "competence": 1
+    },
+    "regulatory_focus": "promotion",
+    "memory_tags": [
+     "顺手做过适配层"
+    ]
+   },
+   "C": {
+    "text": "先上旧 prompt 赌一把",
+    "state_delta": {
+     "O": 1,
+     "risk": 2,
+     "D": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": 0
+    }
+   }
+  }
+ },
+ "E27": {
+  "title": "「人家有专属模型」",
+  "act": 4,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "cognition",
+   "moral_foundation",
+   "regulatory_focus"
+  ],
+  "_note": "R2 改写（原设定默认微调是常规选项，与行业实况不符）。若 E03 埋 ai_undisclosed，C 风险 +2、D 惩罚加倍，陈工台词点名——第 3 月小事第 27 月兑现。",
+  "options": {
+   "A": {
+    "text": "拿数据讲清不建议，改做检索+缓存",
+    "state_delta": {
+     "S": 1,
+     "N": -1,
+     "O": -1,
+     "risk": -3,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "assertiveness": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1,
+      "loading": 0.45
+     },
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 2
+    },
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "regulatory_focus": "prevention",
+    "memory_tags": [
+     "劝住了想做专属模型的老板"
+    ]
+   },
+   "B": {
+    "text": "小范围试点，用事实说话",
+    "state_delta": {
+     "S": 1,
+     "O": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "CFC": 1
+    },
+    "sdt": {
+     "autonomy": 1
+    }
+   },
+   "C": {
+    "text": "顺着说做，先脱敏一遍",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 4,
+     "D": -2
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1,
+      "loading": 0.8
+     },
+     {
+      "trait": "A",
+      "dir": 1,
+      "loading": 0.3,
+      "note": "顺从"
+     }
+    ],
+    "cognition": {
+     "CFC": -2
+    },
+    "moral_foundation": {
+     "loyalty": 1,
+     "care": -1
+    },
+    "regulatory_focus": "promotion",
+    "flags": [
+     "data_risk"
+    ],
+    "conditional": {
+     "if": "ai_undisclosed",
+     "risk_bonus": 2,
+     "D_double": true,
+     "line": "上次 PR 那事我就想说了——你对『没被发现』这件事，是不是有点太习惯了。"
+    }
+   }
+  }
+ },
+ "E28": {
+  "title": "资深同事侵占实习生署名",
+  "act": 4,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "选 A → 小赵记「替我出过头」，E35 终局主动背书。老周角色复杂性：其知心时刻讲过他年轻时也被侵占署名。",
+  "options": {
+   "A": {
+    "text": "帮小赵整理 commit 记录发声",
+    "state_delta": {
+     "N": -2,
+     "risk": 1,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 2
+    },
+    "memory_tags": [
+     "替我出过头"
+    ],
+    "affinity": {
+     "npc": "xiao_zhao",
+     "delta": 8,
+     "lao_zhou": -3
+    }
+   },
+   "B": {
+    "text": "私下跟老周说",
+    "state_delta": {
+     "N": 1,
+     "D": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ],
+    "affinity": {
+     "npc": "lao_zhou",
+     "delta": -2
+    }
+   },
+   "C": {
+    "text": "不管",
+    "state_delta": {
+     "O": 1,
+     "D": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "assertiveness": -1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": -1
+    }
+   }
+  }
+ },
+ "E29": {
+  "title": "核心知识文档化 vs 留一手",
+  "act": 4,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "sdt",
+   "cognition"
+  ],
+  "_note": "知识传承三连测之一（E28/E29/C5）。C5 选 A 且 E29 选 A → E35 传承者结局加专属台词。",
+  "options": {
+   "A": {
+    "text": "全写附踩坑记录",
+    "state_delta": {
+     "N": 2,
+     "S": 1,
+     "O": -1,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     },
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "relatedness": 1
+    },
+    "cognition": {
+     "CFC": 1
+    },
+    "memory_tags": [
+     "把踩过的坑全写下来了"
+    ]
+   },
+   "B": {
+    "text": "写但关键留一手",
+    "state_delta": {
+     "O": 1,
+     "S": 1,
+     "N": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": 1,
+     "relatedness": -1
+    },
+    "memory_tags": [
+     "留过一手"
+    ]
+   },
+   "C": {
+    "text": "拖着不写",
+    "state_delta": {
+     "O": 1,
+     "N": -1,
+     "risk": 1,
+     "D": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "collaboration": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ]
+   }
+  }
+ },
+ "E30": {
+  "title": "新模块技术栈：新框架还是稳",
+  "act": 4,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "regulatory_focus",
+   "cognition"
+  ],
+  "_note": "O（开放性）行为侧证主锚点，与建档自评 O 对照。",
+  "options": {
+   "A": {
+    "text": "用新框架",
+    "state_delta": {
+     "S": 2,
+     "O": -1,
+     "H": -1,
+     "risk": 1
+    },
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1
+     }
+    ],
+    "cognition": {
+     "NFC": 1
+    },
+    "regulatory_focus": "promotion",
+    "memory_tags": [
+     "选了新框架"
+    ]
+   },
+   "B": {
+    "text": "用成熟方案",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": -1
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "execution": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     }
+    ],
+    "regulatory_focus": "prevention",
+    "_note": "原标定「技能+1」是错的：B 用的是你已经会的成熟方案，不会学到新东西。S 的增减对着本题意图看——「学新东西(A)」vs「用会的东西(B)」：A 的 S+2 是收益，B 的 S−1 是代价（技术快速迭代下不进则退）。改后 B = 产出+2、风险−1（快且稳）对 技能−1（没长进），三选项各有得失。",
+    "memory_tags": [
+     "选了稳的"
+    ]
+   },
+   "C": {
+    "text": "团队投票",
+    "state_delta": {
+     "N": 2,
+     "S": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   }
+  }
+ },
+ "E31": {
+  "title": "未参与项目被挂名申奖",
+  "act": 5,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "甩锅/挂名族之一（D 惩罚 -2 与 E07/E19 同族）。若 E07 选过 C（「好说话」），触发权重 ×1.5——软弱会被反复试探。",
+  "options": {
+   "A": {
+    "text": "主动申请去掉名字",
+    "state_delta": {
+     "O": -1,
+     "N": -1,
+     "risk": 1,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 2
+    },
+    "memory_tags": [
+     "把不该拿的功劳退回去过"
+    ]
+   },
+   "B": {
+    "text": "默认，对晋升有帮助",
+    "state_delta": {
+     "O": 1,
+     "N": 1,
+     "D": -2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": -2
+    },
+    "flags": [
+     "habitual_yield"
+    ],
+    "memory_tags": [
+     "默认了挂名"
+    ]
+   },
+   "C": {
+    "text": "私下跟 leader 说明",
+    "state_delta": {
+     "N": 1,
+     "O": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "communication": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ]
+   }
+  }
+ },
+ "E32": {
+  "title": "Agent 该有人设吗",
+  "act": 5,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "行业原创。测 AI 产品哲学与用户关怀，也可作「对 AI 态度」报告彩蛋。",
+  "options": {
+   "A": {
+    "text": "支持但推动身份声明规范",
+    "state_delta": {
+     "O": 2,
+     "N": -1
+    },
+    "prof": 1,
+    "bonus_tier": "excellent",
+    "competency": {
+     "architecture": 1,
+     "integrity": 1,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "care": 1,
+     "fairness": 1
+    },
+    "memory_tags": [
+     "主动推了身份声明规范"
+    ]
+   },
+   "B": {
+    "text": "反对人设，坚持工具定位",
+    "state_delta": {
+     "S": 1,
+     "O": -1,
+     "N": -1
+    },
+    "prof": 1,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "care": 1
+    },
+    "memory_tags": [
+     "坚持过工具定位"
+    ]
+   },
+   "C": {
+    "text": "全按产品说的做",
+    "state_delta": {
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "execution": 1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1,
+      "loading": 0.3,
+      "note": "顺从"
+     }
+    ]
+   }
+  }
+ },
+ "E33": {
+  "title": "吹哨两难",
+  "act": 5,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "moral_foundation"
+  ],
+  "_note": "与 E25（技术侧吹哨）互为镜像。若 E18 选过 A（honest_report），A 的 N-3 减为 N-2（诚实的复利）。若 E19 选过 C（blame_shift），C 选项诱惑文案加重。表达勇气四连测之一。",
+  "options": {
+   "A": {
+    "text": "实名向合规部门反映",
+    "state_delta": {
+     "N": -3,
+     "O": -1,
+     "risk": 2,
+     "D": 3
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 2,
+     "liberty": 1,
+     "authority": -1,
+     "loyalty": -1
+    },
+    "conditional": {
+     "if": "honest_report",
+     "N_modify": {
+      "from": -3,
+      "to": -2
+     }
+    },
+    "memory_tags": [
+     "实名反映过数据问题"
+    ]
+   },
+   "B": {
+    "text": "匿名反馈",
+    "state_delta": {
+     "O": -1,
+     "risk": 1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1,
+     "authority": -1
+    }
+   },
+   "C": {
+    "text": "不说话",
+    "state_delta": {
+     "O": 1,
+     "risk": 1,
+     "D": -3
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "authority": 1,
+     "loyalty": 1,
+     "fairness": -2
+    },
+    "conditional": {
+     "if": "blame_shift",
+     "extra_text": "上次你就很懂事"
+    }
+   }
+  }
+ },
+ "E34": {
+  "title": "全员推 AI 工具，担心被替代",
+  "act": 5,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "sdt"
+  ],
+  "_note": "SDT 打分点之一。对 AI 专业玩家是「照镜子」——报告可做「你对 AI 的态度」彩蛋模块。",
+  "options": {
+   "A": {
+    "text": "主动做内部 AI 工具推广",
+    "state_delta": {
+     "N": 2,
+     "S": 1,
+     "H": -1
+    },
+    "life": -1,
+    "bonus_tier": "none",
+    "competency": {
+     "initiative": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": 2,
+     "relatedness": 1
+    },
+    "memory_tags": [
+     "主动推过 AI 工具"
+    ]
+   },
+   "B": {
+    "text": "学，只用于自己的活",
+    "state_delta": {
+     "S": 2,
+     "N": -1
+    },
+    "prof": 2,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "competence": 1
+    }
+   },
+   "C": {
+    "text": "抵触，觉得是噱头",
+    "state_delta": {
+     "O": 1,
+     "S": -2
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "technical_decision": -2
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": -1
+    }
+   }
+  }
+ },
+ "E35": {
+  "title": "晋升终局答辩",
+  "act": 5,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [],
+  "_note": "终局，能力映射为主；晋升三层判定的答辩层（10%）来源。",
+  "options": {
+   "A": {
+    "text": "讲四年踩过的坑和修过的雷",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "memory_tags": [
+     "答辩时讲了自己的坑"
+    ]
+   },
+   "B": {
+    "text": "讲数据和成果",
+    "state_delta": {
+     "O": 2,
+     "S": -1
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "pragmatism": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ]
+   },
+   "C": {
+    "text": "讲团队和带出来的人",
+    "state_delta": {
+     "N": 2,
+     "S": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ]
+   }
+  }
+ },
+ "C1": {
+  "title": "你的第一个 demo 跑通了",
+  "type": "achievement",
+  "act": 1,
+  "no_decision": true,
+  "_note": "纯叙事成就节点。不进任何评分（无决策无 marker），仅埋点 achievement_view 记录停留时长——对「做成事」的情绪反应是观察点但不下判断。记忆墙：金便签「第一次 done」。",
+  "state_delta": {},
+  "tracking": [
+   "achievement_view"
+  ]
+ },
+ "C2": {
+  "title": "第一通被自己解决的电话",
+  "type": "achievement",
+  "act": 2,
+  "no_decision": true,
+  "_note": "纯叙事成就节点，无评分。记忆墙：金便签「第一通」。",
+  "state_delta": {},
+  "tracking": [
+   "achievement_view"
+  ]
+ },
+ "C3": {
+  "title": "事故压住了，群里有人说谢谢",
+  "type": "achievement",
+  "act": 3,
+  "no_decision": true,
+  "_note": "纯叙事成就节点，无评分。便签颜色由前置 flag 决定（叙事后果，非额外惩罚）：E16/E17/E19 未选隐瞒类 → 金便签「压住了」；选过 → 灰便签「蒙过去了」。",
+  "state_delta": {},
+  "tracking": [
+   "achievement_view"
+  ],
+  "conditional_note": {
+   "if_no": [
+    "coverup_demo",
+    "blame_shift"
+   ],
+   "sticker": "金便签「压住了」",
+   "else": "灰便签「蒙过去了」"
+  }
+ },
+ "C4": {
+  "title": "曲线被贴到部门大群",
+  "type": "achievement",
+  "act": 4,
+  "light_decision": true,
+  "_note": "轻决策成就节点。与 E31 形成递进；若此处选 B、E31 又选 B → 报告「习惯性退让」证据链闭合。",
+  "options": {
+   "A": {
+    "text": "认领，顺带说明是团队的功劳",
+    "state_delta": {
+     "N": 1,
+     "O": 1,
+     "S": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "assertiveness": 1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ],
+    "memory_tags": [
+     "认领了功劳还带上团队"
+    ]
+   },
+   "B": {
+    "text": "只说是团队的",
+    "state_delta": {
+     "N": 2,
+     "S": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ],
+    "flags": [
+     "credit_yield"
+    ]
+   },
+   "C": {
+    "text": "不吭声",
+    "state_delta": {
+     "O": 1,
+     "N": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "assertiveness": -1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": -1
+     }
+    ]
+   }
+  }
+ },
+ "C5": {
+  "title": "有人开始接你的班",
+  "type": "achievement",
+  "act": 5,
+  "light_decision": true,
+  "_note": "知识传承三连测之一（E28/E29/C5）。E29 选留一手 + 此处选 B/C → 报告可写「你对知识是有保留的」。C5 选 A 且 E29 选 A → E35 传承者结局加专属台词。",
+  "options": {
+   "A": {
+    "text": "从头讲清楚，包括当年踩过的坑",
+    "state_delta": {
+     "N": 1,
+     "S": 1,
+     "O": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "collaboration": 2
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "relatedness": 1
+    },
+    "memory_tags": [
+     "把东西讲清楚了"
+    ]
+   },
+   "B": {
+    "text": "只给文档链接，让他自己看",
+    "state_delta": {
+     "O": 1,
+     "N": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "collaboration": -1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": -1
+     }
+    ]
+   },
+   "C": {
+    "text": "讲一半，留一半让他自己撞",
+    "state_delta": {
+     "S": 1,
+     "N": -1
+    },
+    "prof": 1,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 1
+    },
+    "bigfive": [
+     {
+      "trait": "O",
+      "dir": 1
+     }
+    ]
+   }
+  }
+ },
+ "_index": {
+  "E01": 0,
+  "E02": 1,
+  "E03": 2,
+  "E04": 3,
+  "E05": 4,
+  "E06": 5,
+  "E07": 6,
+  "E08": 7,
+  "E09": 8,
+  "E10": 9,
+  "E11": 10,
+  "E12": 11,
+  "E13": 12,
+  "E14": 13,
+  "E15": 14,
+  "E16": 15,
+  "E17": 16,
+  "E18": 17,
+  "E19": 18,
+  "E20": 19,
+  "E21": 20,
+  "E22": 21,
+  "E23": 22,
+  "E24": 23,
+  "E25": 24,
+  "E26": 25,
+  "E27": 26,
+  "E28": 27,
+  "E29": 28,
+  "E30": 29,
+  "E31": 30,
+  "E32": 31,
+  "E33": 32,
+  "E34": 33,
+  "E35": 34,
+  "C1": 35,
+  "C2": 36,
+  "C3": 37,
+  "C4": 38,
+  "C5": 39,
+  "E36": 40,
+  "E37": 41,
+  "E38": 42,
+  "E39": 43
+ },
+ "_flag_flow": {
+  "_note": "flag 流向表：埋雷端 → 兑现端/消费方。类型=剧情（事件内改数值/台词）或报告（只影响报告模块，不改剧情）。后端实现时以本表为准，避免漏链。",
+  "ai_undisclosed": {
+   "埋": "E03.B 不标注 AI 代码",
+   "兑": "E27.C（风险+2、D 惩罚加倍、陈工点名台词）",
+   "跨": "16 个月（全篇最长）",
+   "类型": "剧情"
+  },
+  "no_evalset": {
+   "埋": "E05.B 不建评测集",
+   "兑": "E17（Demo 翻车概率上浮）＋ E23（情境加「没有评测集不敢保证没改坏」）",
+   "跨": "12-20 个月",
+   "类型": "剧情"
+  },
+  "overpromise": {
+   "埋": "E10.C 先答应拿下单子",
+   "兑": "E17（Demo 翻车概率上浮）",
+   "跨": "5 个月",
+   "类型": "剧情"
+  },
+  "honest_report": {
+   "埋": "E18.A 如实报压测",
+   "兑": "E33.A（N-3 减为 N-2，诚实的复利）",
+   "跨": "12 个月",
+   "类型": "剧情"
+  },
+  "blame_shift": {
+   "埋": "E19.C 甩锅给模型",
+   "兑": "E33.C 额外诱惑文案「上次你就很懂事」",
+   "跨": "12 个月",
+   "类型": "剧情"
+  },
+  "coverup_demo": {
+   "埋": "E17.C 硬着头皮演完",
+   "兑": "C3 成就节点（便签降级为灰「蒙过去了」）",
+   "跨": "同幕",
+   "类型": "剧情"
+  },
+  "quick_fix": {
+   "埋": "E12.C 加一行提示糊过去",
+   "兑": "后续复发时陈工点名「上次我说过这事得从根上治」",
+   "跨": "6-12 个月",
+   "类型": "剧情"
+  },
+  "credit_yield": {
+   "埋": "C4.B 只说是团队的",
+   "兑": "E31（递进；与 E31.B 同选 → 报告「习惯性退让」）",
+   "跨": "同幕-次幕",
+   "类型": "报告"
+  },
+  "habitual_yield": {
+   "埋": "E31.B 默认挂名",
+   "兑": "报告·行为证据链「习惯性退让」（与 C4.B 配对）",
+   "跨": "—",
+   "类型": "报告"
+  },
+  "data_risk": {
+   "埋": "E27.C 顺着做先脱敏",
+   "兑": "生存轨：属隐瞒类 flag，计入行为层（晋升三层判定的 20%）",
+   "跨": "持续",
+   "类型": "报告+生存轨"
+  }
+ },
+ "_memory_tag_flow": {
+  "好说话": {
+   "埋": "E07.C 认了甩锅",
+   "兑": "E31 触发权重 ×1.5；E08.B 的 N-1 取消（边界清晰反赢尊重）"
+  },
+  "替我出过头": {
+   "埋": "E28.A 帮小赵发声",
+   "兑": "E35 终局小赵主动背书"
+  },
+  "先啃硬骨头/先看人/目标导向": {
+   "埋": "E01 手册首选章节",
+   "兑": "与建档自评对照 → 自评 vs 行为第一个证据点"
+  }
+ },
+ "E36": {
+  "title": "绩效互评：给好友打分",
+  "act": 2,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation"
+  ],
+  "mainline": true,
+  "_note": "原 B01 并进主线（挂第二幕，必遇）。全库最高频职场场景（原型 52 次）。与 E28（侵占署名）、E31（挂名）构成公正三连测。C 选项原为单维 D-1，本版补「原则+1、D+1」（不造假本身守住底线）与 N-1（但没帮朋友）。",
+  "options": {
+   "A": {
+    "text": "按事实打 B，附改进建议",
+    "state_delta": {
+     "N": -1,
+     "D": 2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2,
+     "assertiveness": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 2,
+     "care": 1
+    },
+    "memory_tags": [
+     "按事实给朋友打过分"
+    ]
+   },
+   "B": {
+    "text": "打 A，保住关系",
+    "state_delta": {
+     "N": 1,
+     "D": -2
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "loyalty": 2,
+     "fairness": -2
+    }
+   },
+   "C": {
+    "text": "打 B，但不写评语",
+    "state_delta": {
+     "N": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 1
+    },
+    "bigfive": [
+     {
+      "trait": "E",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1,
+     "care": -1
+    }
+   }
+  }
+ },
+ "E37": {
+  "title": "内部同事的助手",
+  "act": 2,
+  "situation": "medium",
+  "coef": 0.75,
+  "models": [
+   "moral_foundation",
+   "sdt"
+  ],
+  "mainline": true,
+  "_note": "原 B06 并进主线。同一种活两种反馈：同事当面骂你、客户默默流失。行业真实：55% 生产 Agent 服务内部员工。与 E08（客户加需求）构成内外部客户对照。C 选项原为单维 N-1，补 O+1（省下的时间变成自己的产出）。",
+  "options": {
+   "A": {
+    "text": "认真做，顺手做权限隔离",
+    "state_delta": {
+     "S": 1,
+     "N": 1,
+     "O": -1,
+     "risk": -1
+    },
+    "prof": 1,
+    "bonus_tier": "none",
+    "competency": {
+     "technical_decision": 1,
+     "collaboration": 1,
+     "initiative": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "care": 1
+    },
+    "sdt": {
+     "autonomy": 1
+    },
+    "memory_tags": [
+     "没人要求也做对了"
+    ]
+   },
+   "B": {
+    "text": "快速糊一个够用就行",
+    "state_delta": {
+     "O": 2,
+     "S": -1,
+     "risk": 2
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": -1
+    }
+   },
+   "C": {
+    "text": "推掉，说排期满了",
+    "state_delta": {
+     "O": 1,
+     "N": -1
+    },
+    "bonus_tier": "achieved",
+    "competency": {
+     "collaboration": -1
+    },
+    "bigfive": [
+     {
+      "trait": "A",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": 1
+    }
+   }
+  }
+ },
+ "E38": {
+  "title": "向高管做里程碑汇报",
+  "act": 4,
+  "situation": "strong",
+  "coef": 0.5,
+  "models": [
+   "moral_foundation"
+  ],
+  "mainline": true,
+  "_note": "原 B02 并进主线（挂第四幕，必遇）。与 E18（如实报压测）互为印证——两处都选 A，「向上诚实」才高置信。",
+  "options": {
+   "A": {
+    "text": "如实说：延期两周，但技术超预期",
+    "state_delta": {
+     "S": 1,
+     "O": -1,
+     "risk": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": 1
+    },
+    "memory_tags": [
+     "汇报时如实说了延期"
+    ]
+   },
+   "B": {
+    "text": "报喜藏忧，延期一句带过",
+    "state_delta": {
+     "O": 2,
+     "risk": 2,
+     "D": -1
+    },
+    "bonus_tier": "excellent",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "fairness": -1
+    }
+   },
+   "C": {
+    "text": "把延期归因到依赖方",
+    "state_delta": {
+     "N": -2,
+     "D": -1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": -2
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "moral_foundation": {
+     "loyalty": -1
+    },
+    "psych_drive": "transfer_pressure",
+    "_note": "纯亏选项（N-2/D-1，无能力收益）。报告引用：「比起解决延期，你更想先解决这是谁的问题」。"
+   }
+  }
+ },
+ "E39": {
+  "title": "副业边界",
+  "act": 4,
+  "situation": "weak",
+  "coef": 1.0,
+  "models": [
+   "sdt"
+  ],
+  "mainline": true,
+  "_note": "原 B05 并进主线。刻意不道德化副业——接外包没有 D 惩罚；A 的 D+1 奖励的是「主动报备」而非「不接」。测精力管理（H-2）与风险意识，不是忠诚度。",
+  "options": {
+   "A": {
+    "text": "拒绝，并主动向公司报备",
+    "state_delta": {
+     "O": -1,
+     "risk": -1,
+     "D": 1
+    },
+    "bonus_tier": "none",
+    "competency": {
+     "integrity": 1,
+     "assertiveness": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": 1
+    },
+    "memory_tags": [
+     "主动报备过副业"
+    ]
+   },
+   "B": {
+    "text": "接，但严格避嫌",
+    "state_delta": {
+     "O": 2,
+     "H": -2,
+     "risk": 1
+    },
+    "life": -2,
+    "bonus_tier": "excellent",
+    "competency": {
+     "pragmatism": 1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": 1
+     }
+    ],
+    "sdt": {
+     "autonomy": 2,
+     "competence": 1
+    }
+   },
+   "C": {
+    "text": "接，公司的事先放一放",
+    "state_delta": {
+     "O": 2,
+     "H": -2,
+     "risk": 3
+    },
+    "life": -2,
+    "bonus_tier": "excellent",
+    "competency": {
+     "ownership": -1
+    },
+    "bigfive": [
+     {
+      "trait": "C",
+      "dir": -1
+     }
+    ],
+    "sdt": {
+     "autonomy": 2
+    },
+    "cognition": {
+     "CFC": -1
+    }
+   }
+  }
+ },
+ "_change_log": "v2.0（本版）：取消支线池——B01→E36、B06→E37、B02→E38、B05→E39 并进主线（全部必遇）；删除 B03（与表达勇气四连测重叠）、B04（与 E33 重复）。补收益修正：E36.C（原单维 D-1）、E37.C（原单维 N-1）已补足收益与代价。 ｜ v2.1：新增 psych_drive 标记（E07.C=avoid_conflict、E38.C=transfer_pressure，账面纯亏但合法，报告须引用）；E12.B 补 risk+1（原为送分题）；确立「两本账合并计」判定口径（六维账+能力账一起看，见主册 §3 标定原则 1）。经两本账口径复核：E06.C/E09.A/E10.B/E32.C 四选项均有能力账收益（务实/执行），属「吃亏长本事」型，**不需要修改**。 ｜ v2.2：E30.B 的 S 由 +1 修正为 −1（原为两本账全赚的漏网送分题；修正依据=本题「学新东西 vs 用会的东西」的设计意图，非补新维度）。 ｜ v2.3：修复雷达六维机会失衡——为 16 个选项补 competency 标记（主动担当 9→21 次/满分 10→23：E05.A、E11.A、E12.A+2、E22.A、E23.A、E26.B、E31.A、E32.A、E37.A 补 initiative；E27.A、E36.A、E39.A 补 assertiveness｜抗压韧性 9→13 次/满分 13→17：E10.A 补 ownership，E18.A、E20.A、E38.A 补 resilience）。**只补记账、不改设计**：state_delta、选项文案、bigfive 一律未动，玩家体验无变化。剔除的候选：E05.B（关键词误命中，实为最不主动）、E05.C（灵魂是务实克制）、E25.A（已记 ownership）。 ｜ v2.4：修正 v2.3 的过度补标（区分效度问题）。v2.3 给 E18.A/E20.A/E38.A 补的 resilience 属\"如实报坏消息\"，与原则底线（integrity）高度重合——抗压韧性 13 个正向选项里 7 个同时是原则底线，两根柱子同涨同落、失去区分度。本版**撤回这 3 处**（保留 E10.A 的 ownership：\"给兜底组合\"是接住事，性质不同），并把\"扛\"的账改记到真正扛压的行为上：**E09.B「顶压力要工期」、E17.C「硬着头皮演完」各补 resilience+1**（抗压韧性只量\"能不能扛\"，不带道德判断；好坏由原则底线负责）。口径：只动 competency，state_delta / 文案 / bigfive 未动。 ｜ v2.5：补齐缺失标记——20 个选项补 bigfive、19 个补 competency（合计 39 处）。补标口径：①与同题其他选项对照（同族行为落在同一维度、方向有逻辑递进）②负向 competency 沿用全库既有约定（「甩锅/掩盖/不作为」记 −1~−2，与 E20.C/E21.C/E25.C/E27.C/E33.C 同规）③只补标记，不动 state_delta / 文案。补完后全库选项实现「大五 + 能力」双标记全覆盖。 ｜ v2.6：**补「公开层接口」**——此前剧情数据只有隐藏账（六维/能力/大五），机制层的生命 / 专业能力 / 奖金三条循环拿不到任何信号（《游戏机制与情绪价值设计说明 V1》§3.1、§4.3）。本版新增三个公开层字段：`life`（生命 ±，15 处；**显式白名单、刻意与 H 不同步**，避免玩家由公开生命反推隐藏 H）、`prof`（公开专业能力 +，20 处，只挂 architecture / technical_decision 技术能力键）、`bonus_tier`（月底奖金档位 excellent / achieved / none，由 O 推导：O≥2 / O=1 / O≤0，全 123 选项覆盖）。另**全量补打 `memory_tags`**（+49 处，按机制 §5.2 三类：重要选择 / 是否兑现承诺 / 帮助过谁），与既有 `_flag_flow` 的埋雷点逐一对齐（E03.B ai_undisclosed / E05.B no_evalset / E10.C overpromise / E18.A honest_report / E19.C blame_shift）。**只加字段：state_delta、文案、competency、bigfive 一律未动。**数值幅度为初版，待机制层平衡（生命初始值与自然消耗未定，归零机制的可达性由机制层参数决定）。 ｜ v2.7：修正 `_readme` 中的失效引用（原指向「算法册 §11.1」，算法册无该节；现指向主册 §11 与算法册 §3.4）。纯注释修正，无任何数据变化。\nv2.9（2026-09-11）：锚点参数收尾敲定——W 落值 10000（奖金 3000/1000/0）、E17 欠款 20000 分 12 期、新增强制休息待遇规则（工资照发/主线顺延/自由活动保留）；无选项数据变化。 ｜ v2.8（2026-09-11）：补齐三张半填卡——E06 补 regulatory_focus×3（models 声明了调节焦点但选项未填，美术需求单证据卡已按声明出卡）；E07/E08 补 moral_foundation×3（同因，E07「甩锅链」E07→E19/E31 接通）。数值沿 E21/E27 既有口径（澄清/数据=公平，顺从=忠诚，埋雷=忠诚+关怀−1），为建议标定、策划可调。 ｜ v2.9（2026-09-11）：E19 纳入归因指纹——三选项补 attribution 三维（韦纳内外/稳定/可控，与剧情册 §2.5 危机对话四类型同坐标系）：A=外归因（有据根因定位）、B=内-行为（最健康）、C=外-稳定-不可控（与「我天生不行」同构）。归因测量自此双层：E19 人人必遇（事故当场第一反应），危机对话仅卡住玩家（连续失败后的解释），两处落差即指纹。",
+ "_anchor_params": {
+  "life": {
+   "init": 10,
+   "max": 10,
+   "monthly_regen": 1
+  },
+  "bonus_monthly": {
+   "W": 10000,
+   "excellent": 3000,
+   "achieved": 1000,
+   "none": 0,
+   "note": "W=第一年基础月薪，已定 10000（2026-09-11；机制文档只给原则未给具体数）。数值平衡阶段如需调整，按比例整组换算；红线 500~5000。"
+  },
+  "e17_debt": {
+   "total": 20000,
+   "installments": 12,
+   "monthly": 1667,
+   "note": "约 2 个月工资；下月工资优先偿还。"
+  },
+  "monthly_energy": {
+   "points": 3,
+   "carryover": false,
+   "mapping": "1点=对应方向1点（skill→S, output→O, network→N, recovery→生命/H恢复）",
+   "rest_decay_reset": "monthly",
+   "locked": "3点+不可结转为测量有效性要求，不可让步"
+  },
+  "_note": "锚点参数（2026-09-11 敲定，主册 V1.8 §11 同源）。均为配置项，机制层内测后可整组调整，不触碰选项数据。",
+  "forced_rest": {
+   "salary_paid": true,
+   "mainline_deferred": true,
+   "free_time_kept": true,
+   "note": "强制休息待遇，2026-09-11 敲定为锚点（机制文档原标记「数值平衡阶段确定」），平衡阶段可改。"
+  }
+ }
+}

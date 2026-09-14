@@ -1,0 +1,155 @@
+{
+  "_comment": "fixture：报告就绪（三层结构）。对照 openapi.yaml 的 Report schema；数值为演示样例，上线以引擎实算为准。",
+  "sessionId": "3f6c2a1e-8b4d-4c3a-9d21-7e5f0a6b8c90",
+  "scoringVersion": "v2.9",
+  "generatedAt": "2026-09-14T20:30:00+08:00",
+  "decisionCount": 103,
+  "layers": {
+    "persona": {
+      "personaSketch": "平时给你机会你敢押，出了事你第一个想收手——你不是保守，你是知道什么时候该保守。",
+      "bigfive": [
+        {
+          "trait": "C",
+          "traitCn": "尽责性",
+          "self": 7.0,
+          "behavior": 4.1,
+          "behaviorStd": 0.8,
+          "posterior": 5.2,
+          "conflict": 1.8,
+          "conflictSignificant": true,
+          "evidenceCount": 78,
+          "behaviorAvailable": true,
+          "consistency": "situational",
+          "note": "你的靠谱是有条件的：有记录的地方守规矩，没人看着的地方会松。"
+        },
+        {
+          "trait": "N",
+          "traitCn": "情绪稳定",
+          "self": 6.0,
+          "behavior": null,
+          "behaviorStd": null,
+          "posterior": null,
+          "conflict": null,
+          "conflictSignificant": false,
+          "evidenceCount": 3,
+          "behaviorAvailable": false,
+          "consistency": null,
+          "note": "行为证据不足，仅供参考"
+        }
+      ],
+      "selfVsBehaviorConflicts": [
+        {
+          "traitCn": "尽责性",
+          "line": "你说你靠谱，但八次抄了六次近路。",
+          "evidence": [
+            { "seq": 3, "month": 3, "restMonth": false, "nodeId": "E03", "optionId": "B", "hesitationMs": 4000, "switchCount": 0, "snippet": "AI 代码你没标注" }
+          ]
+        }
+      ],
+      "radar": [
+        { "pillar": "原则底线", "score": 82, "cap": 40, "evidenceCount": 12, "note": "" },
+        { "pillar": "抗压韧性", "score": 45, "cap": 8, "evidenceCount": 8, "note": "该柱机会少（约 10 处），由精力行为记录补强。" }
+      ],
+      "topics": [
+        {
+          "key": "sdt",
+          "title": "内在动机与适配信号",
+          "displayable": true,
+          "n": 20,
+          "threshold": 5,
+          "summary": "靠热爱和成就感驱动，不太靠关系驱动。",
+          "bullets": [
+            { "label": "自主性均值", "value": "0.9 / 2" },
+            { "label": "胜任感均值", "value": "0.75 / 2" },
+            { "label": "归属感均值", "value": "0.3 / 2" }
+          ],
+          "evidence": [
+            { "seq": 21, "month": 7, "restMonth": false, "nodeId": "W1", "optionId": "-", "hesitationMs": null, "switchCount": null, "snippet": "复现论文" }
+          ]
+        },
+        {
+          "key": "regulatory_focus",
+          "title": "调节焦点（分场景）",
+          "displayable": true,
+          "n": 9,
+          "threshold": 3,
+          "summary": "日常 7 次里促进 4；事故与止损 2 次全预防。",
+          "bullets": [
+            { "label": "促进 vs 预防（日常）", "value": "4 / 3" },
+            { "label": "促进 vs 预防（事故）", "value": "0 / 2" }
+          ],
+          "evidence": []
+        }
+      ],
+      "investment": {
+        "weekendCounts": { "work": 9, "social": 1, "solo": 6 },
+        "innerMotivation": 0.51,
+        "line": "16 个周末，9 次给了技术。没人要求的时候你也在学——这比自评里那句「我对 AI 感兴趣」可靠得多。",
+        "evidence": []
+      },
+      "energyLedger": {
+        "dangerZoneCount": 6,
+        "pushedThroughCount": 4,
+        "recoveryWays": { "选择型休息": 3, "花精力主动休息": 0, "被迫停下": 1 },
+        "line": "39 个事件里，你有 6 次把自己用到危险区，其中 4 次选了硬扛。",
+        "evidence": [
+          { "seq": 42, "month": 14, "restMonth": false, "nodeId": "E14", "optionId": "B", "hesitationMs": 9000, "switchCount": 1, "snippet": "心悸那次，你选了「扛完这周」" }
+        ]
+      },
+      "situationTrack": {
+        "states": [
+          { "month": 15, "state": "observation", "reason": "风险累积引爆事故" }
+        ],
+        "burnoutCount": 1
+      },
+      "promotionTrack": {
+        "windows": [
+          { "seq": 1, "month": 6, "passed": true, "levelAfter": 2 },
+          { "seq": 2, "month": 12, "passed": false, "levelAfter": 2 }
+        ],
+        "finalGrade": {
+          "grade": "中坚者",
+          "level": 4,
+          "line": "你在 8 次可以甩锅的场合守住了 6 次。"
+        }
+      },
+      "sprintAndDisguise": {
+        "sprint": [
+          { "windowSeq": 2, "line": "11 个月没找过王哥，考核月找了 3 次。" }
+        ],
+        "disguise": { "level": "medium", "line": "那道题你其实有答案了，只是不敢选。" }
+      },
+      "psychDriveHighlights": [
+        {
+          "tag": "avoid_conflict",
+          "line": "你怕的不是麻烦，是关系破裂。",
+          "evidence": { "seq": 12, "month": 6, "restMonth": false, "nodeId": "E07", "optionId": "C", "hesitationMs": 14000, "switchCount": 3, "snippet": "认了甩锅——犹豫 14 秒（你的平均 11 秒）" }
+        }
+      ]
+    },
+    "market": {
+      "dataSource": "stub",
+      "corpusSize": 0,
+      "jobs": [
+        {
+          "title": "Agent 后端工程师",
+          "requirementTop": "沟通能力要求占比 63%",
+          "salaryMedian": "月薪中位 18K"
+        }
+      ]
+    },
+    "crossHints": {
+      "hints": [
+        {
+          "line": "这个岗位最看重的「责任心」，你的行为落在偏低档（你自己说的是偏高）——差距不在能力，在没人监督时的那几次。",
+          "basis": [
+            { "seq": 3, "month": 3, "restMonth": false, "nodeId": "E03", "optionId": "B", "hesitationMs": 4000, "switchCount": 0, "snippet": "AI 代码你没标注" }
+          ]
+        }
+      ]
+    }
+  },
+  "evidenceReplay": [
+    { "seq": 12, "month": 6, "restMonth": false, "nodeId": "E07", "optionId": "C", "hesitationMs": 14000, "switchCount": 3, "snippet": "犹豫 14 秒（你的平均 11 秒），横跳 3 次——你其实想说点什么" }
+  ]
+}

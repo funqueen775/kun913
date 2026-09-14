@@ -1,0 +1,49 @@
+/* 小熊镇设计 token —— 全部从《小熊镇地图》采样，三屏共用。
+   规矩：组件里禁止写字面色值，只能引用这里的变量。改配色只改这一个文件。
+
+   版式参照用户给的三张开场参考图：
+   · 外框是深棕木质雕花框（木色 + 藤蔓 + 顶部钟楼），里面才是羊皮纸
+   · 按钮圆角很小、几乎是平的（只有 2~3px 的底边厚度），不做厚重立体投影
+   · 存档条 / 页码 / 底部提示都装在「带细边的小牌」里，不用胶囊
+*/
+:root {
+  /* 羊皮纸与描边 */
+  --xz-cream: #F3E3C2;
+  --xz-cream-light: #FAF0D9;
+  --xz-parchment-deep: #EBD8B2;
+  --xz-ink: #5B3A26;
+  --xz-ink-soft: rgba(91, 58, 38, 0.4);
+  --xz-brown-text: #7A5533;
+
+  /* 木质外框 */
+  --xz-wood-dark: #452716;
+  --xz-wood: #7A4A32;
+  --xz-wood-light: #9C6644;
+  --xz-leaf: #6BA24A;
+
+  /* 按钮与装饰 */
+  --xz-brick: #B94A32;
+  --xz-brick-dark: #9C3A25;
+  --xz-orange: #E08A3C;
+  --xz-orange-dark: #C96A2E;
+  --xz-green: #2F7A33;
+  --xz-grass: #7CBF4A;
+  --xz-title: #FBEBC8;
+
+  /* 参考图的圆角都很小：按钮 6、牌子 10、外框 16 */
+  --xz-radius-xs: 4px;
+  --xz-radius-sm: 6px;
+  --xz-radius-md: 10px;
+  --xz-radius-lg: 16px;
+  --xz-stroke: 2px;
+  --xz-stroke-lg: 3px;
+
+  /* 厚度只有薄薄一层，不是厚实的立体投影 */
+  --xz-bevel-light: inset 0 2px 0 rgba(255, 255, 255, 0.26);
+  --xz-bevel-light-strong: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  --xz-bevel-dark: 0 3px 0 rgba(91, 58, 38, 0.36);
+  --xz-plate-shadow: 0 8px 0 rgba(69, 39, 22, 0.32);
+  --xz-frame-shadow: 0 10px 0 rgba(69, 39, 22, 0.4), 0 26px 48px rgba(20, 12, 6, 0.5);
+
+  --xz-font: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+}

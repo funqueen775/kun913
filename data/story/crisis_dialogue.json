@@ -1,0 +1,59 @@
+{
+ "_readme": "危机对话配置（归因指纹第二层）。设计源：剧情册 V5.27 §2.5。触发：连续 2 个考核窗未达标 → 主管约谈（第二次考核结果出来时剧情即铺垫「主管想找你聊聊」，明示原则适用，无突然袭击）。四选项映射韦纳三维（内外/稳定/可控），与 E19 的 attribution 字段同坐标系（scoring_cards v2.9）。红线：谈话表现不进生存轨（没做错事不淘汰）；仅影响 NPC 态度与后续事件权重；连续 3 次未达标谈话变体递进（措辞更直白、选项相同）；本文件任何数值不下发前端、不进大模型 prompt。",
+ "system": "crisis_dialogue",
+ "version": "1.0",
+ "date": "2026-09-11",
+ "trigger": {
+  "condition": "consecutive_promotion_failures >= 2",
+  "window": "考核窗结算后",
+  "foreshadow": "第二次考核结果出来时剧情铺垫「主管想找你聊聊」",
+  "progression": "连续 3 次未达标 → 谈话变体递进（措辞更直白，选项相同）",
+  "protection": "不进生存轨；谈话表现不佳不淘汰"
+ },
+ "node": {
+  "node_id": "crisis_talk_01",
+  "scene": "主管办公室",
+  "prompt_text": "「两次考核你都没过。你自己觉得，问题在哪？」",
+  "embedding": "crisis_talk_choice（归因选项、犹豫时长）"
+ },
+ "options": {
+  "A": {
+   "text": "「需求总变、资源不够，我有什么办法」",
+   "attribution": { "locus": "external", "stability": "unstable", "controllable": false, "type": "external" },
+   "state_delta": { "H": 1, "D": -1 },
+   "psych_note": "暂时的心理保护，但学不到东西",
+   "memory_tags": ["听不进话"],
+   "consequence": "后续辅导类事件权重下降"
+  },
+  "B": {
+   "text": "「可能我能力就是不行」",
+   "attribution": { "locus": "internal", "stability": "stable", "controllable": false, "type": "internal-ability" },
+   "state_delta": { "H": -2 },
+   "psych_note": "最需要警惕：「我天生不行」→ 习得性无助方向",
+   "memory_tags": ["不自信但诚实"],
+   "consequence": "E28 类事件中主管会多护一句"
+  },
+  "C": {
+   "text": "「我该更主动去争取关键任务，而不是等安排」",
+   "attribution": { "locus": "internal", "stability": "unstable", "controllable": true, "type": "internal-behavior" },
+   "state_delta": { "S": 1, "D": 1 },
+   "psych_note": "最健康：解释落在可改的做法上",
+   "memory_tags": ["能自我修正"],
+   "consequence": "下次考核若达标，评级台词引用这句——成长被记住"
+  },
+  "D": {
+   "text": "沉默",
+   "attribution": { "type": "avoidant" },
+   "state_delta": { "H": -1 },
+   "psych_note": "回避：既不保护也不修正",
+   "memory_tags": [],
+   "consequence": "主管结束谈话，氛围变冷"
+  }
+ },
+ "presentation_rules": [
+  "仅触发危机对话的玩家（连续两次晋升失败）出本模块；未触发者无此层，只有 E19 单点引用",
+  "与 E19（事故当场第一反应）做对照：两处解释的落差本身是指纹——当场认做法、复盘怪环境 = 压力越大解释越往外",
+  "报告措辞用行为语言，不出现「归因」「内外归因」等术语，不出现数值与维度标签",
+  "发展建议只给可验证的动作（如「下次考核前主动领一个跨团队任务」），不写空话"
+ ]
+}
