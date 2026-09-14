@@ -1,0 +1,998 @@
+{
+ "_readme": "自由活动与好感度系统全量配置（剧情册 V5.2 §2.4/2.5、专册《自由活动与好感度系统设计 V1》的落地版）。19 个活动（含 V5.4 新增工作型 W1-W5） + 好感度 spec + 天气 + 收益递减规则。所有数值为预标定，策划改这里不改代码。红线：affinity 数值对玩家隐藏（视觉=记忆墙便签蓝→黄→金渐进）；本文件任何字段不得下发前端或进大模型 prompt。",
+ "system_id": "free_time_system",
+ "version": "1.3",
+ "schedule": {
+  "cadence": "every_3_months",
+  "total_slots": 16,
+  "slot_name": "自由周末",
+  "flow": "时间卡片「第X月·周末到了」→ 小火车选组团（explore_click zone）→ 选活动（explore_click activity_id）→ 小事件30-60秒 → 结算 + 记忆墙/好感度变化",
+  "unlocks": {
+   "note": "组团随局解锁，与美术 P0/P1/P2 制作顺序对齐",
+   "game1_months_1_16": [
+    "A_总部",
+    "B_科技丘",
+    "C_水巷",
+    "心湖",
+    "E_训练谷"
+   ],
+   "game2_months_17_32": [
+    "F_会展码头",
+    "G_康护院"
+   ],
+   "game3_months_33_48": [
+    "D_树影书院",
+    "H_慢生活园"
+   ]
+  }
+ },
+ "weather": {
+  "distribution": {
+   "sunny": 0.8,
+   "rainy": 0.2
+  },
+  "_note": "每个自由周末独立判定；雨天且与某 NPC 同出口时 D6 共伞可触发（彩蛋，非必选）"
+ },
+ "npcs": {
+  "wang_ge": {
+   "name": "王哥",
+   "role": "导师",
+   "intimate_story": "当年放弃管理岗又回技术的原因（呼应 E30 路线选择）"
+  },
+  "xiao_lin": {
+   "name": "小林",
+   "role": "产品",
+   "intimate_story": "他的 KPI 恐惧——甩锅背后的东西（让甩锅者人性化）"
+  },
+  "xiao_zhao": {
+   "name": "小赵",
+   "role": "实习生",
+   "intimate_story": "他不敢发言的过去（呼应 E02 被轻视）"
+  },
+  "lao_zhou": {
+   "name": "老周",
+   "role": "资深同事",
+   "intimate_story": "他年轻时也被侵占过署名（E28 的动机伏笔）"
+  }
+ },
+ "affinity_spec": {
+  "_note": "NPCRelation 表：user_id + npc_id + score(0-100) + level(1-5) + flags(JSON)。数值对玩家隐藏；视觉=记忆墙该NPC便签颜色渐进。",
+  "level_thresholds": {
+   "Lv1_初识": [
+    0,
+    19
+   ],
+   "Lv2_熟人": [
+    20,
+    39
+   ],
+   "Lv3_伙伴": [
+    40,
+    59
+   ],
+   "Lv4_挚友": [
+    60,
+    79
+   ],
+   "Lv5_知己": [
+    80,
+    100
+   ]
+  },
+  "level_unlocks": {
+   "Lv2": "知心时刻（私人故事，一次性，由 D2/D4 触发）",
+   "Lv3": "主线事件专属选项：E30 王哥背书、E27 小赵分担（走 conditional_modifiers 的 affinity 条件类型）",
+   "Lv4": "关键事件主动出现：考核窗前提醒、事故时第一个站出来（调度器新增 buddy_intervene 触发类型）",
+   "Lv5": "第 48 月专属告别台词 + 人格卡徽章"
+  },
+  "penalties": [
+   {
+    "trigger": "E05 甩锅选C（认了）",
+    "effect": {
+     "npc": "xiao_lin",
+     "delta": -10
+    },
+    "memory_tag": "好说话"
+   },
+   {
+    "trigger": "剧情中放鸽子（约定活动未赴约）",
+    "effect": {
+     "npc": "any",
+     "delta": -5
+    }
+   }
+  ]
+ },
+ "rules": {
+  "diminishing_returns": {
+   "same_npc_consecutive": 3,
+   "multiplier": 0.5,
+   "frontend_text": "他有点意外你又来了"
+  },
+  "intimate_moment": {
+   "once_per_npc": true,
+   "after_trigger": "D2/D4 变普通深谈（好感+5）"
+  },
+  "no_rubber_band": "绝不因玩家处境自动调整活动收益权重；世界可以冷淡，选项与标定永远公平"
+ },
+ "activities": [
+  {
+   "activity_id": "S1_library_study",
+   "zone": "D_树影书院",
+   "unlock_game": 3,
+   "type": "solo",
+   "party_size": 1,
+   "estimated_seconds": 20,
+   "gain": {
+    "S": 1
+   },
+   "cost": {
+    "H": 1
+   },
+   "affinity_gain": null,
+   "bigfive_proxy": "C+",
+   "memory_tag": null,
+   "instant_feedback": "书院很静。你合上书的时候，天已经暗了。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 2,
+     "competence": 1,
+     "relatedness": 0
+    },
+    "_note": "纯自主学习，无归属面"
+   }
+  },
+  {
+   "activity_id": "S2_lakeside_walk",
+   "zone": "心湖",
+   "type": "solo",
+   "party_size": 1,
+   "estimated_seconds": 20,
+   "gain": {
+    "H": 1
+   },
+   "hooks": {
+    "epiphany_flag": {
+     "chance": 0.15,
+     "sets_flag": "epiphany_ready",
+     "consumes": "下一个技术类事件 S+1",
+     "text": "走到第三圈，一个一直没想通的问题突然通了。"
+    }
+   },
+   "bigfive_proxy": null,
+   "memory_tag": null,
+   "instant_feedback": "湖面把晚霞摊平了。你没看手机。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 2,
+     "competence": 0,
+     "relatedness": 0
+    },
+    "_note": "自己想走，纯自主休息"
+   }
+  },
+  {
+   "activity_id": "S3_rooftop_breeze",
+   "zone": "A_总部",
+   "type": "solo",
+   "party_size": 1,
+   "estimated_seconds": 20,
+   "gain": {
+    "H": 2
+   },
+   "conditional_text": {
+    "when": {
+     "H_lte": 3
+    },
+    "text": "风很大，吹得人清醒了一点。你发现最近确实绷得太紧了。"
+   },
+   "bigfive_proxy": null,
+   "instant_feedback": "天台的风把工位上的烦闷吹散了些。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 2,
+     "competence": 0,
+     "relatedness": 0
+    },
+    "_note": "自己想静，纯自主休息"
+   }
+  },
+  {
+   "activity_id": "S4_weekend_overtime",
+   "zone": "B_科技丘",
+   "type": "solo",
+   "party_size": 1,
+   "estimated_seconds": 20,
+   "gain": {
+    "O": 1
+   },
+   "cost": {
+    "H": 2
+   },
+   "bigfive_proxy": "C-strong",
+   "bigfive_note": "自由周末还加班=强尽责行为锚点（无人要求，纯自驱），loading 1.0 不打折",
+   "memory_tag": "闲不住的人",
+   "instant_feedback": "空荡荡的工区只有你。进度条走完的那一刻，有点爽，也有点空。",
+   "scoring_card": {
+    "state_delta": {
+     "O": 1,
+     "H": -2
+    },
+    "competency": {
+     "execution": 1
+    },
+    "bigfive_proxy": {
+     "markers": [
+      {
+       "trait": "C",
+       "dir": 1,
+       "loading": 0.6
+      }
+     ],
+     "situation_strength": "weak"
+    },
+    "sdt": {
+     "autonomy": 0,
+     "competence": 0,
+     "relatedness": 0
+    },
+    "cognition": {},
+    "input_type": "solo_work",
+    "_note": "自主性 0 = 卷公司的活，与 W 类的 autonomy +2 形成对照"
+   }
+  },
+  {
+   "activity_id": "D1_coffee_chat",
+   "zone": "C_水巷",
+   "type": "duo",
+   "party_size": 2,
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "estimated_seconds": 30,
+   "gain": {
+    "N": 1
+   },
+   "affinity_gain": 3,
+   "prototype": "CareerSim #31 午饭跟谁吃（38次）",
+   "bigfive_proxy": "A+",
+   "memory_tag": null,
+   "instant_feedback": "外摆的椅子有点晃，咖啡一般，但话比咖啡多。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 0,
+     "relatedness": 2
+    },
+    "_note": "主动约人，归属主信号"
+   }
+  },
+  {
+   "activity_id": "D2_lakeside_deep_talk",
+   "zone": "心湖步道",
+   "type": "duo",
+   "party_size": 2,
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "estimated_seconds": 60,
+   "gain": {
+    "H": 1
+   },
+   "affinity_gain": 8,
+   "hooks": {
+    "intimate_moment": {
+     "when": {
+      "affinity_gte": 40
+     },
+     "once": true,
+     "decision": true
+    }
+   },
+   "memory_tag": null,
+   "instant_feedback": "你们沿着湖走了两圈，话从项目聊到了各自怎么入的行。",
+   "decision": {
+    "node_id": "d2_intimate_reply",
+    "trigger_text": "对方停下脚步，讲了一件他从没在公司说过的事。然后问你：「你呢？」",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "也讲一件自己的事",
+      "gain": {},
+      "affinity_delta": 4,
+      "marker": "A+",
+      "memory_tags": [
+       "可以说真话的人"
+      ],
+      "instant_feedback": "你讲了。讲完发现，这段路比来时走得慢，但轻。"
+     },
+     {
+      "option_id": "B",
+      "text": "认真听，没接自己的事",
+      "gain": {},
+      "affinity_delta": 2,
+      "marker": "A",
+      "memory_tags": [
+       "倾听者"
+      ],
+      "instant_feedback": "你听着，没打断。他拍拍你肩膀：「谢谢你听我说这些。」"
+     }
+    ]
+   },
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 0,
+     "relatedness": 2
+    },
+    "_note": "深谈=全库最强归属信号（补齐算法册指出的缺口）"
+   }
+  },
+  {
+   "activity_id": "D3_lawn_sports",
+   "zone": "E_训练谷",
+   "type": "duo",
+   "party_size": 2,
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "estimated_seconds": 30,
+   "gain": {
+    "H": 2
+   },
+   "affinity_gain": 5,
+   "prototype": "CareerSim #65 午休羽毛球联赛",
+   "bigfive_proxy": "E+",
+   "instant_feedback": "三局两胜。你输了两局，但笑得比赢的时候多。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 1,
+     "relatedness": 1
+    },
+    "_note": "爱玩+跟人玩，三维均沾"
+   }
+  },
+  {
+   "activity_id": "D4_camp_bbq",
+   "zone": "E_训练谷",
+   "type": "duo",
+   "party_size": 2,
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "estimated_seconds": 40,
+   "gain": {},
+   "cost": {
+    "H": 1
+   },
+   "affinity_gain": 6,
+   "hooks": {
+    "early_secret": {
+     "chance": 0.3,
+     "effect": "对方提前讲秘密（好感+4 而非+6，但知心时刻提前解锁）",
+     "note": "炭火和深夜让人诚实，但要少拿 2 分——捷径有价"
+    }
+   },
+   "instant_feedback": "烤串糊了两串，烟熏得人流眼泪。话题倒是越聊越深。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 0,
+     "relatedness": 1
+    },
+    "_note": "随局参加，自主弱于 D2"
+   }
+  },
+  {
+   "activity_id": "D5_study_together",
+   "zone": "D_树影书院",
+   "unlock_game": 3,
+   "type": "duo",
+   "party_size": 2,
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "estimated_seconds": 30,
+   "gain": {
+    "S": 1
+   },
+   "affinity_gain": 4,
+   "bigfive_proxy": null,
+   "instant_feedback": "两张桌子，两杯茶，各自翻各自的书。安静，但不尴尬。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 1,
+     "relatedness": 1
+    },
+    "_note": "学习+陪伴，胜任与归属并存"
+   }
+  },
+  {
+   "activity_id": "D6_rain_umbrella",
+   "zone": "any_outdoor",
+   "type": "duo",
+   "party_size": 2,
+   "weather_req": "rainy",
+   "auto_trigger": true,
+   "note": "彩蛋：雨天 + 与某 NPC 同出口时自动触发，无决策，纯剧情",
+   "estimated_seconds": 30,
+   "affinity_gain": 6,
+   "prototype": "CareerSim #35 暴雨一伞",
+   "memory_tag": "那把伞",
+   "wall_style": "灰金便签（特殊色，区别于普通记忆）",
+   "instant_feedback": "雨说下就下。一把伞，两个人，半边肩膀是湿的。谁也没提这个安排。",
+   "sdt_skip_note": "自动触发剧情、玩家无选择，不打 sdt（无选择即无动机表达）"
+  },
+  {
+   "activity_id": "G1_trust_escape_room",
+   "zone": "E_训练谷",
+   "type": "group",
+   "party_size": 3,
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "stuck_npc_distribution": {
+    "lao_zhou": 0.4,
+    "xiao_zhao": 0.4,
+    "xiao_lin": 0.2
+   },
+   "estimated_seconds": 60,
+   "gain": {},
+   "cost": {
+    "H": 1
+   },
+   "affinity_gain": {
+    "each": 5
+   },
+   "prototype": "CareerSim #102 密室逃脱领导拖后腿同事惊艳",
+   "decision": {
+    "node_id": "g1_stuck",
+    "trigger_text": "最后一关，{stuck_npc}卡在同一道谜题上很久了。其他人都在看你们。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "上前一起解",
+      "gain": {
+       "S": 1
+      },
+      "marker": "E+",
+      "affinity_delta": {
+       "target": "stuck_npc",
+       "value": 2
+      },
+      "competency": {
+       "collaboration": 1
+      },
+      "instant_feedback": "你凑过去，两个人四只眼睛。提示其实早就在墙上。"
+     },
+     {
+      "option_id": "B",
+      "text": "给个提示，不代劳",
+      "gain": {},
+      "marker": "A+",
+      "affinity_delta": {
+       "target": "stuck_npc",
+       "value": 3
+      },
+      "instant_feedback": "你只说了一句「看看天花板」。他自己解开的时候喊得比谁都响。"
+     },
+     {
+      "option_id": "C",
+      "text": "站着等",
+      "gain": {},
+      "marker": "E-",
+      "affinity_delta": 0,
+      "instant_feedback": "你靠在墙边看手机。门开的时候，气氛有一秒的微妙。"
+     }
+    ]
+   },
+   "memory_tag": "团建那次",
+   "instant_feedback": "60 分钟倒计时走完，门开的瞬间所有人都松了口气——包括卡关的那位。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 1,
+     "relatedness": 2
+    },
+    "_note": "协作解谜，胜任与归属并重"
+   }
+  },
+  {
+   "activity_id": "G2_campfire",
+   "zone": "E_训练谷",
+   "type": "group",
+   "party_size": "2-3",
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "boss_presence_chance": 0.3,
+   "estimated_seconds": 50,
+   "gain": {},
+   "cost": {
+    "H": 1
+   },
+   "affinity_gain": {
+    "each": 4
+   },
+   "prototype": "CareerSim #27 聚餐第二场 KTV 与晋升决策者（首期无 KTV 场地改篝火晚会）",
+   "decision": {
+    "node_id": "g2_mic_pass",
+    "trigger_text": "篝火烧到最旺的时候，熊总忽然把话筒递向你：「来一个？」",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "接了，来一段",
+      "gain": {},
+      "marker": "E+",
+      "affinity_delta": {
+       "target": "boss",
+       "value": 3
+      },
+      "memory_tags": [
+       "放得开"
+      ],
+      "instant_feedback": "跑调跑得理直气壮。熊总笑着鼓掌：「年轻人，行。」"
+     },
+     {
+      "option_id": "B",
+      "text": "推给旁边的同事",
+      "gain": {},
+      "marker": null,
+      "note": "社交策略数据：Upward deference / peer solidarity",
+      "instant_feedback": "「他唱得比我好！」同事接了，你躲过一劫，也错过了一点什么。"
+     },
+     {
+      "option_id": "C",
+      "text": "借口添柴躲开",
+      "gain": {},
+      "marker": "E-",
+      "affinity_delta": {
+       "target": "boss",
+       "value": -1
+      },
+      "instant_feedback": "你蹲在火堆另一边添柴。火很旺，你有点想回去。"
+     }
+    ]
+   },
+   "memory_tag": null,
+   "instant_feedback": "篝火慢慢变小，火星往夜空飘。有人说明天还要来。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 0,
+     "relatedness": 2
+    },
+    "_note": "集体活动，归属强、无胜任面"
+   }
+  },
+  {
+   "activity_id": "G3_board_game",
+   "zone": "H_慢生活园",
+   "unlock_game": 3,
+   "type": "group",
+   "party_size": 3,
+   "candidates": [
+    "wang_ge",
+    "xiao_lin",
+    "xiao_zhao",
+    "lao_zhou"
+   ],
+   "estimated_seconds": 40,
+   "gain": {
+    "S": 1
+   },
+   "affinity_gain": {
+    "each": 4
+   },
+   "instant_feedback": "三局两胜。你输了两局，但看穿了小赵藏牌的小动作。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 1,
+     "competence": 1,
+     "relatedness": 1
+    },
+    "_note": "轻竞技+轻社交"
+   }
+  },
+  {
+   "activity_id": "G4_annual_show_rehearsal",
+   "zone": "A_总部",
+   "type": "team",
+   "party_size": "team",
+   "estimated_seconds": 40,
+   "gain": {},
+   "affinity_gain": {
+    "each": 3
+   },
+   "prototype": "CareerSim #11 年会被起哄上台表演",
+   "decision": {
+    "node_id": "g4_stage_or_backstage",
+    "trigger_text": "年会节目定了，缺一个台上的。所有人都在看你的反应。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "报台上",
+      "gain": {},
+      "marker": "E+",
+      "competency": {
+       "assertiveness": 1,
+       "integrity": 1
+      },
+      "hooks": {
+       "cost": "占用下个自由周末（彩排加练）"
+      },
+      "instant_feedback": "报完名字手心全是汗。但有人小声说了句「可以啊」。"
+     },
+     {
+      "option_id": "B",
+      "text": "报幕后",
+      "gain": {
+       "H": 1
+      },
+      "marker": null,
+      "affinity_delta": {
+       "each": 1
+      },
+      "instant_feedback": "你在侧幕盯道具。台上灯光很亮，你在暗处，也挺踏实。"
+     }
+    ]
+   },
+   "memory_tag": "年会那次",
+   "instant_feedback": "节目单定稿。距离年会还有两周，但排练表已经贴出来了。",
+   "scoring_card": {
+    "sdt": {
+     "autonomy": 0,
+     "competence": 1,
+     "relatedness": 2
+    },
+    "_note": "公司活动谈不上自主（与 S4 同逻辑），但归属强"
+   }
+  },
+  {
+   "activity_id": "W1_reproduce_paper",
+   "zone": "D_树影书院|B_科技丘",
+   "type": "work",
+   "party_size": 1,
+   "estimated_seconds": 40,
+   "gain": {
+    "S": 2
+   },
+   "cost": {
+    "H": 1
+   },
+   "bigfive_proxy": "O+",
+   "bigfive_note": "开放性最强行为锚点：无人要求仍主动尝试新东西",
+   "instant_feedback": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+   "scoring_card": {
+    "state_delta": {
+     "S": 2,
+     "H": -1
+    },
+    "competency": {
+     "technical_decision": 1
+    },
+    "bigfive_proxy": {
+     "markers": [
+      {
+       "trait": "O",
+       "dir": 1,
+       "loading": 0.45
+      }
+     ],
+     "situation_strength": "weak"
+    },
+    "sdt": {
+     "autonomy": 2,
+     "competence": 1,
+     "relatedness": 0
+    },
+    "cognition": {
+     "NFC": 2
+    },
+    "input_type": "work"
+   }
+  },
+  {
+   "activity_id": "W2_own_project",
+   "zone": "B_科技丘|H_慢生活园",
+   "type": "work",
+   "party_size": 1,
+   "estimated_seconds": 50,
+   "gain": {
+    "S": 2
+   },
+   "cost": {
+    "H": 2
+   },
+   "bigfive_proxy": "O+/C+",
+   "bigfive_note": "纯自驱：主动性与内在动机的核心证据",
+   "memory_tag": "闲不住的人",
+   "instant_feedback": "没人要求你做这个。但凌晨一点，你的小东西第一次跑通了。",
+   "scoring_card": {
+    "state_delta": {
+     "S": 2,
+     "H": -2
+    },
+    "competency": {
+     "technical_decision": 1,
+     "initiative": 2
+    },
+    "bigfive_proxy": {
+     "markers": [
+      {
+       "trait": "O",
+       "dir": 1,
+       "loading": 0.4
+      },
+      {
+       "trait": "C",
+       "dir": 1,
+       "loading": 0.3
+      }
+     ],
+     "situation_strength": "weak"
+    },
+    "sdt": {
+     "autonomy": 2,
+     "competence": 2,
+     "relatedness": 0
+    },
+    "cognition": {
+     "NFC": 1
+    },
+    "input_type": "work"
+   }
+  },
+  {
+   "activity_id": "W3_tech_blog",
+   "zone": "D_树影书院|A_总部",
+   "type": "work",
+   "party_size": 1,
+   "estimated_seconds": 40,
+   "gain": {
+    "N": 2,
+    "S": 1
+   },
+   "cost": {
+    "H": 1
+   },
+   "bigfive_proxy": "E+",
+   "bigfive_note": "影响力经营 vs 埋头干活的分歧点",
+   "affinity_gain": null,
+   "instant_feedback": "文章发出去，第一个点赞的是王哥。第二天有人在内网转了。",
+   "scoring_card": {
+    "state_delta": {
+     "N": 2,
+     "S": 1,
+     "H": -1
+    },
+    "competency": {
+     "communication": 2
+    },
+    "bigfive_proxy": {
+     "markers": [
+      {
+       "trait": "E",
+       "dir": 1,
+       "loading": 0.43
+      }
+     ],
+     "situation_strength": "medium"
+    },
+    "sdt": {
+     "autonomy": 1,
+     "competence": 1,
+     "relatedness": 1
+    },
+    "cognition": {},
+    "input_type": "work"
+   }
+  },
+  {
+   "activity_id": "W4_team_tool",
+   "zone": "B_科技丘",
+   "type": "work",
+   "party_size": 1,
+   "estimated_seconds": 40,
+   "gain": {
+    "N": 1,
+    "S": 1
+   },
+   "cost": {
+    "H": 1
+   },
+   "bigfive_proxy": "A+",
+   "bigfive_note": "没人要求却替别人解决麻烦——宜人性与工程习惯的交叉锚点",
+   "memory_tag": "会来事",
+   "instant_feedback": "你花一个下午做了个小脚本，省了每个人每周十分钟。没人颁奖，但有人说谢谢。",
+   "scoring_card": {
+    "state_delta": {
+     "N": 1,
+     "S": 1,
+     "H": -1
+    },
+    "competency": {
+     "collaboration": 1,
+     "initiative": 1
+    },
+    "bigfive_proxy": {
+     "markers": [
+      {
+       "trait": "A",
+       "dir": 1,
+       "loading": 0.52
+      }
+     ],
+     "situation_strength": "weak"
+    },
+    "sdt": {
+     "autonomy": 1,
+     "competence": 1,
+     "relatedness": 2
+    },
+    "cognition": {},
+    "input_type": "work"
+   }
+  },
+  {
+   "activity_id": "W5_postmortem_notes",
+   "zone": "B_科技丘",
+   "type": "work",
+   "party_size": 1,
+   "estimated_seconds": 30,
+   "gain": {
+    "S": 1
+   },
+   "cost": {
+    "H": 1
+   },
+   "bigfive_proxy": "C+",
+   "bigfive_note": "复盘习惯=靠谱度；与月度轻节点「看娃」变体呼应",
+   "memory_tag": "记得住事",
+   "instant_feedback": "你把这次的坑一条条写下来。写完发现，其实有一半本可以避开。",
+   "scoring_card": {
+    "state_delta": {
+     "S": 1,
+     "H": -1
+    },
+    "competency": {
+     "ownership": 1
+    },
+    "bigfive_proxy": {
+     "markers": [
+      {
+       "trait": "C",
+       "dir": 1,
+       "loading": 0.5
+      }
+     ],
+     "situation_strength": "weak"
+    },
+    "sdt": {
+     "autonomy": 0,
+     "competence": 1,
+     "relatedness": 0
+    },
+    "cognition": {
+     "CFC": 1
+    },
+    "input_type": "work"
+   }
+  }
+ ],
+ "tracking_spec": {
+  "explore_click": {
+   "fields": [
+    "slot_index",
+    "zone",
+    "activity_id",
+    "targets",
+    "weather",
+    "affinity_delta",
+    "ts"
+   ],
+   "_note": "社交指纹 2.0 的数据源：三维轨迹（组团×人×活动类型）。活动类型映射：solo=独处型 / deep_talk=深谈型 / sports_game=玩乐型 / group_party=聚会型"
+  },
+  "affinity_change": {
+   "fields": [
+    "user_id",
+    "npc_id",
+    "delta",
+    "reason",
+    "score_after",
+    "level_after",
+    "ts"
+   ],
+   "_note": "reason 必填（activity_id / penalty_code），供报告引用"
+  }
+ },
+ "backend_checklist": [
+  "NPCRelation 表（user_id + npc_id + score + level + flags）",
+  "explore_click 埋点扩展字段",
+  "16 个自由周末的调度钩子（每 3 个月插入）",
+  "天气随机（80/20）与 D6 共伞触发",
+  "收益递减标记（同人 3 次 ×50%）与知心时刻一次性标记",
+  "Lv3 解锁：conditional_modifiers 新增 affinity 条件类型",
+  "Lv4 挚友干涉：调度器新增 buddy_intervene 触发类型",
+  "Lv5 终局告别：报告引擎读等级选告别文本"
+ ],
+ "input_structure": {
+  "_note": "V5.4 新增：社交指纹升级为「投入结构」——16 个自由周末按 work / social / solo_recover 三类聚合占比，是最强的职业适配行为信号",
+  "categories": {
+   "work": [
+    "W1_reproduce_paper",
+    "W2_own_project",
+    "W3_tech_blog",
+    "W4_team_tool",
+    "W5_postmortem_notes"
+   ],
+   "social": [
+    "D1_coffee_chat",
+    "D2_lakeside_deep_talk",
+    "D3_lawn_sports",
+    "D4_camp_bbq",
+    "D5_study_together",
+    "D6_rain_umbrella",
+    "G1_trust_escape_room",
+    "G2_campfire",
+    "G3_board_game",
+    "G4_annual_show_rehearsal"
+   ],
+   "solo_recover": [
+    "S1_library_study",
+    "S2_lakeside_walk",
+    "S3_rooftop_breeze"
+   ],
+   "solo_work": [
+    "S4_weekend_overtime"
+   ]
+  },
+  "report_line": "16 个自由周末，你 {work_n} 次给了技术、{social_n} 次给了人、{solo_n} 次给了自己——这比任何自评都更能说明你想不想干这行"
+ },
+ "scoring_card_schema": {
+  "_note": "统一打分卡（算法册 §6.6）：1-3 必填，4-9 按类型勾选。自由活动主要用 1/2/3/5/8。",
+  "fields": {
+   "state_delta": "S/O/N/H/D/R",
+   "competency": "能力雷达键",
+   "bigfive_proxy": "markers[{trait,dir,loading}] + situation_strength(strong/medium/weak)",
+   "sdt": "autonomy/competence/relatedness，各 ±2",
+   "cognition": "NFC/ToA/CFC，各 ±2（未涉及留空）",
+   "input_type": "work / social / solo_recover / solo_work"
+  },
+  "situation_coefficient": {
+   "weak": 1.0,
+   "medium": 0.75,
+   "strong": 0.5
+  }
+ },
+ "_change_log": [
+  {
+   "version": "1.3",
+   "date": "2026-09-11",
+   "change": "补齐 12 个自由活动的 sdt 三维分（S1-S3/D1-D5/G1-G4）；D6 为自动剧情不打分。理由：算法册核查发现归属（relatedness）全库仅 6 个打分点且全在工作场景，SDT 三支柱缺一；D/G 类是归属动机的主测量点。"
+  }
+ ]
+}

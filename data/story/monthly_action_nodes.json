@@ -1,0 +1,57 @@
+{
+ "version": "1.0",
+ "_readme": "月度精力分配节点（monthly_action）：4 套模板 × 4 选项 = 16 组数值，运行时按月份展开为 48 个节点（event_id=agent_monthly_{month}，template_id 随职级阶段切换，选项文本可换皮）。规格（主册 V1.8 §5.2/§11 已敲定）：每月 3 点精力、不可结转；分配组合式选项；收益映射 1 点精力 = 对应方向 1 点（skill→S / output→O / network→N / recovery→生命与 H 恢复）——四个选项总收益自动相等，玩家只能按「最缺什么」选。休息点效果走「花精力休息」递减（当月第 1 次 生命+2/H+1、第 2 次 生命+1/H+0、第 3 次 0），按月重置，与自由活动的休息共用同一计数器。C 类「全砸」选项附 H−1（身体先欠着）：这是激进偏好的测量点，不是疏漏——O+3 对 H−1 是玩家要自己掂量的交换。本类节点不进 competency / bigfive 标定（雷达只来自剧情事件），只进「投入结构 vs 实际短板」与价值排序分析；埋点 option_click + allocation_vector。红线：收益数字不得下发前端、不得进入 prompt，前端只显示选项文案。",
+ "monthly_rule": {
+  "points_per_month": 3,
+  "carryover": false,
+  "rest_point_effect_by_order_in_month": [
+   {"life": 2, "h": 1},
+   {"life": 1, "h": 0},
+   {"life": 0, "h": 0}
+  ],
+  "rest_counter_reset": "monthly（与自由活动休息共用计数器）",
+  "state_modifiers": [
+   {"if": "life <= 3", "effect": "休息选项恢复量上浮 +1（默认值，机制层内测可调）"}
+  ]
+ },
+ "templates": {
+  "monthly_L1": {
+   "stage": "L1 新人期（第 1-12 月）",
+   "options": {
+    "A": {"text": "2 点学技术 + 1 点休息", "allocation_vector": {"skill": 2, "output": 0, "network": 0, "recovery": 1}, "state_delta": {"S": 2, "life_rest": 1}},
+    "B": {"text": "2 点冲产出 + 1 点认人", "allocation_vector": {"skill": 0, "output": 2, "network": 1, "recovery": 0}, "state_delta": {"O": 2, "N": 1}},
+    "C": {"text": "3 点全砸产出，身体先欠着", "allocation_vector": {"skill": 0, "output": 3, "network": 0, "recovery": 0}, "state_delta": {"O": 3, "H": -1}, "risk_preference": "aggressive"},
+    "D": {"text": "技能 / 认人 / 休息 各 1 点", "allocation_vector": {"skill": 1, "output": 0, "network": 1, "recovery": 1}, "state_delta": {"S": 1, "N": 1, "life_rest": 1}}
+   }
+  },
+  "monthly_L2": {
+   "stage": "L2 独立期（第 13-24 月）",
+   "options": {
+    "A": {"text": "2 点啃难点 + 1 点休息", "allocation_vector": {"skill": 2, "output": 0, "network": 0, "recovery": 1}, "state_delta": {"S": 2, "life_rest": 1}},
+    "B": {"text": "2 点冲交付 + 1 点帮同事", "allocation_vector": {"skill": 0, "output": 2, "network": 1, "recovery": 0}, "state_delta": {"O": 2, "N": 1}},
+    "C": {"text": "3 点全砸交付，身体先欠着", "allocation_vector": {"skill": 0, "output": 3, "network": 0, "recovery": 0}, "state_delta": {"O": 3, "H": -1}, "risk_preference": "aggressive"},
+    "D": {"text": "难点 / 同事 / 休息 各 1 点", "allocation_vector": {"skill": 1, "output": 0, "network": 1, "recovery": 1}, "state_delta": {"S": 1, "N": 1, "life_rest": 1}}
+   }
+  },
+  "monthly_L3": {
+   "stage": "L3 骨干期（第 25-36 月）",
+   "options": {
+    "A": {"text": "2 点技术影响力 + 1 点休息", "allocation_vector": {"skill": 2, "output": 0, "network": 0, "recovery": 1}, "state_delta": {"S": 2, "life_rest": 1}},
+    "B": {"text": "2 点保交付 + 1 点带新人", "allocation_vector": {"skill": 0, "output": 2, "network": 1, "recovery": 0}, "state_delta": {"O": 2, "N": 1}},
+    "C": {"text": "3 点全砸交付，身体先欠着", "allocation_vector": {"skill": 0, "output": 3, "network": 0, "recovery": 0}, "state_delta": {"O": 3, "H": -1}, "risk_preference": "aggressive"},
+    "D": {"text": "影响力 / 新人 / 休息 各 1 点", "allocation_vector": {"skill": 1, "output": 0, "network": 1, "recovery": 1}, "state_delta": {"S": 1, "N": 1, "life_rest": 1}}
+   }
+  },
+  "monthly_L4": {
+   "stage": "L4+ 负责期（第 37-48 月）",
+   "options": {
+    "A": {"text": "2 点架构投入 + 1 点休息", "allocation_vector": {"skill": 2, "output": 0, "network": 0, "recovery": 1}, "state_delta": {"S": 2, "life_rest": 1}},
+    "B": {"text": "2 点团队产出 + 1 点跨组经营", "allocation_vector": {"skill": 0, "output": 2, "network": 1, "recovery": 0}, "state_delta": {"O": 2, "N": 1}},
+    "C": {"text": "3 点全砸产出，身体先欠着", "allocation_vector": {"skill": 0, "output": 3, "network": 0, "recovery": 0}, "state_delta": {"O": 3, "H": -1}, "risk_preference": "aggressive"},
+    "D": {"text": "架构 / 跨组 / 休息 各 1 点", "allocation_vector": {"skill": 1, "output": 0, "network": 1, "recovery": 1}, "state_delta": {"S": 1, "N": 1, "life_rest": 1}}
+   }
+  }
+ },
+ "_life_rest_note": "state_delta 中 life_rest 表示该选项含 1 个休息点：实际恢复量按 monthly_rule 的当月休息序号查表（默认第 1 次 生命+2/H+1），不写死在选项里。",
+ "_expansion": "生成 48 节点：第 m 月 → template_id = monthly_L1(m<=12) / monthly_L2(13-24) / monthly_L3(25-36) / monthly_L4(37-48)；剧情事件所在月照常生成（月度节点与剧情节点同月并存，先后按时间轴）。"
+}

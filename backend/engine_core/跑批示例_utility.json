@@ -1,0 +1,6949 @@
+{
+ "summary": {
+  "决策点数": 108,
+  "按来源": {
+   "mainline": 39,
+   "monthly": 48,
+   "free_time": 16,
+   "crisis": 3,
+   "achievement": 2
+  },
+  "核心选择数_算法册口径": 103,
+  "月份": 48,
+  "强制休息月": [],
+  "六维": {
+   "S": 59,
+   "O": 76,
+   "N": 56,
+   "H": 0,
+   "D": 32,
+   "risk": -27
+  },
+  "pending_dignity": 0,
+  "职级": 4,
+  "考核窗": [
+   [
+    6,
+    true,
+    2
+   ],
+   [
+    12,
+    true,
+    3
+   ],
+   [
+    18,
+    true,
+    4
+   ],
+   [
+    24,
+    false,
+    4
+   ],
+   [
+    30,
+    false,
+    4
+   ],
+   [
+    36,
+    false,
+    4
+   ],
+   [
+    42,
+    false,
+    4
+   ]
+  ],
+  "连续未达标": 4,
+  "危机对话次数": 3,
+  "生存轨": "stable",
+  "失误数_当前streak": 0,
+  "失误数_累计": 0,
+  "事故清单": [],
+  "倦怠事件次数": 1,
+  "危险区决策次数": 74,
+  "公开账本": {
+   "生命": 10,
+   "专业能力": 18,
+   "钱": 15000,
+   "欠款": 0
+  },
+  "flags": [
+   "honest_report"
+  ],
+  "大五证据条数": {
+   "C": 31,
+   "A": 4,
+   "O": 22,
+   "E": 3,
+   "N": 1
+  },
+  "大五加权和": {
+   "C": 13.35,
+   "A": 1.69,
+   "O": 8.325,
+   "E": 0.86,
+   "N": 0.5
+  },
+  "能力": {
+   "pragmatism": 4,
+   "collaboration": 7,
+   "integrity": 33,
+   "technical_decision": 26,
+   "initiative": 12,
+   "architecture": 13,
+   "assertiveness": 7,
+   "communication": 10,
+   "resilience": 4,
+   "ownership": 5,
+   "execution": 1
+  },
+  "SDT条数": 24,
+  "道德条数": 18,
+  "调节焦点条数": 8,
+  "归因条数": 4,
+  "CFC/NFC条数": 27,
+  "psych_drive": [],
+  "守界者计数器": {
+   "甩锅场合": [
+    3,
+    2
+   ],
+   "无人监督场合": [
+    3,
+    3
+   ]
+  },
+  "好感度": {
+   "xiao_lin": 0,
+   "xiao_zhao": 8
+  },
+  "记忆标签数": 35,
+  "终局": {
+   "grade": "中坚者",
+   "label": "中途卡过",
+   "level": 4,
+   "frames": {
+    "甩锅场合": 3,
+    "甩锅场合守住": 2,
+    "无人监督场合": 3,
+    "无人监督场合守住": 3
+   },
+   "window_count": 7
+  }
+ },
+ "state": {
+  "user_id": "sim",
+  "seed": 0,
+  "month": 48,
+  "seq": 108,
+  "rest_months": [],
+  "in_rest_month": false,
+  "S": 59,
+  "O": 76,
+  "N": 56,
+  "H": 0,
+  "D": 32,
+  "pending_dignity": 0,
+  "risk_cumulative": -27,
+  "competency": {
+   "pragmatism": 4,
+   "collaboration": 7,
+   "integrity": 33,
+   "technical_decision": 26,
+   "initiative": 12,
+   "architecture": 13,
+   "assertiveness": 7,
+   "communication": 10,
+   "resilience": 4,
+   "ownership": 5,
+   "execution": 1
+  },
+  "bigfive_evidence": {
+   "C": [
+    {
+     "seq": 1,
+     "month": 1,
+     "node": "E01",
+     "option": "C",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 5,
+     "month": 3,
+     "node": "E03",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 8,
+     "month": 4,
+     "node": "E04",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 10,
+     "month": 5,
+     "node": "E05",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 12,
+     "month": 6,
+     "node": "E06",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 15,
+     "month": 7,
+     "node": "E07",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 21,
+     "month": 10,
+     "node": "E09",
+     "option": "B",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 23,
+     "month": 11,
+     "node": "E10",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 25,
+     "month": 12,
+     "node": "E11",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 28,
+     "month": 13,
+     "node": "E12",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 38,
+     "month": 18,
+     "node": "E36",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 41,
+     "month": 19,
+     "node": "E37",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 43,
+     "month": 20,
+     "node": "E16",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 45,
+     "month": 21,
+     "node": "E17",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 48,
+     "month": 22,
+     "node": "E18",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 50,
+     "month": 23,
+     "node": "E19",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 52,
+     "month": 24,
+     "node": "E20",
+     "option": "B",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 55,
+     "month": 25,
+     "node": "E21",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 57,
+     "month": 26,
+     "node": "E22",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 61,
+     "month": 28,
+     "node": "E23",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 63,
+     "month": 29,
+     "node": "E24",
+     "option": "B",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 65,
+     "month": 30,
+     "node": "E25",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 69,
+     "month": 31,
+     "node": "E26",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 71,
+     "month": 32,
+     "node": "E27",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 73,
+     "month": 33,
+     "node": "E28",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 76,
+     "month": 34,
+     "node": "E29",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 84,
+     "month": 37,
+     "node": "E38",
+     "option": "A",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    },
+    {
+     "seq": 86,
+     "month": 38,
+     "node": "E39",
+     "option": "B",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 88,
+     "month": 39,
+     "node": "E31",
+     "option": "C",
+     "loading": 0.6,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 97,
+     "month": 43,
+     "node": "E33",
+     "option": "B",
+     "loading": 0.6,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.6
+    },
+    {
+     "seq": 103,
+     "month": 46,
+     "node": "E35",
+     "option": "B",
+     "loading": 0.6,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.3
+    }
+   ],
+   "A": [
+    {
+     "seq": 3,
+     "month": 2,
+     "node": "E02",
+     "option": "B",
+     "loading": 0.52,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.39
+    },
+    {
+     "seq": 76,
+     "month": 34,
+     "node": "E29",
+     "option": "A",
+     "loading": 0.52,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.52
+    },
+    {
+     "seq": 80,
+     "month": 36,
+     "node": "C4",
+     "option": "A",
+     "loading": 0.52,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.39
+    },
+    {
+     "seq": 106,
+     "month": 48,
+     "node": "C5",
+     "option": "A",
+     "loading": 0.52,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.39
+    }
+   ],
+   "O": [
+    {
+     "seq": 7,
+     "month": 3,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 12,
+     "month": 6,
+     "node": "E06",
+     "option": "A",
+     "loading": 0.45,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.3375
+    },
+    {
+     "seq": 14,
+     "month": 6,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 20,
+     "month": 9,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 21,
+     "month": 10,
+     "node": "E09",
+     "option": "B",
+     "loading": 0.45,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.225
+    },
+    {
+     "seq": 27,
+     "month": 12,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 34,
+     "month": 15,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 40,
+     "month": 18,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 47,
+     "month": 21,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 54,
+     "month": 24,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 60,
+     "month": 27,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 67,
+     "month": 30,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 71,
+     "month": 32,
+     "node": "E27",
+     "option": "A",
+     "loading": 0.45,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.225
+    },
+    {
+     "seq": 75,
+     "month": 33,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 78,
+     "month": 35,
+     "node": "E30",
+     "option": "B",
+     "loading": 0.45,
+     "coef": 0.75,
+     "dir": -1,
+     "weighted": -0.3375
+    },
+    {
+     "seq": 82,
+     "month": 36,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 90,
+     "month": 39,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 92,
+     "month": 41,
+     "node": "E32",
+     "option": "A",
+     "loading": 0.45,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.3375
+    },
+    {
+     "seq": 95,
+     "month": 42,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 99,
+     "month": 44,
+     "node": "E34",
+     "option": "A",
+     "loading": 0.45,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.3375
+    },
+    {
+     "seq": 102,
+     "month": 45,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    },
+    {
+     "seq": 108,
+     "month": 48,
+     "node": "W1_reproduce_paper",
+     "option": "-",
+     "loading": 0.45,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.45
+    }
+   ],
+   "E": [
+    {
+     "seq": 17,
+     "month": 8,
+     "node": "E08",
+     "option": "B",
+     "loading": 0.43,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.3225
+    },
+    {
+     "seq": 30,
+     "month": 14,
+     "node": "E13",
+     "option": "A",
+     "loading": 0.43,
+     "coef": 0.75,
+     "dir": 1,
+     "weighted": 0.3225
+    },
+    {
+     "seq": 35,
+     "month": 16,
+     "node": "E15",
+     "option": "A",
+     "loading": 0.43,
+     "coef": 0.5,
+     "dir": 1,
+     "weighted": 0.215
+    }
+   ],
+   "N": [
+    {
+     "seq": 32,
+     "month": 15,
+     "node": "E14",
+     "option": "A",
+     "loading": 0.5,
+     "coef": 1.0,
+     "dir": 1,
+     "weighted": 0.5
+    }
+   ]
+  },
+  "sdt": [
+   {
+    "seq": 7,
+    "month": 3,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 14,
+    "month": 6,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 20,
+    "month": 9,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 27,
+    "month": 12,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 32,
+    "month": 15,
+    "node": "E14",
+    "option": "A",
+    "autonomy": 1
+   },
+   {
+    "seq": 34,
+    "month": 15,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 40,
+    "month": 18,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 41,
+    "month": 19,
+    "node": "E37",
+    "option": "A",
+    "autonomy": 1
+   },
+   {
+    "seq": 43,
+    "month": 20,
+    "node": "E16",
+    "option": "A",
+    "autonomy": 1
+   },
+   {
+    "seq": 47,
+    "month": 21,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 54,
+    "month": 24,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 60,
+    "month": 27,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 67,
+    "month": 30,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 69,
+    "month": 31,
+    "node": "E26",
+    "option": "A",
+    "autonomy": 1
+   },
+   {
+    "seq": 75,
+    "month": 33,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 76,
+    "month": 34,
+    "node": "E29",
+    "option": "A",
+    "relatedness": 1
+   },
+   {
+    "seq": 82,
+    "month": 36,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 86,
+    "month": 38,
+    "node": "E39",
+    "option": "B",
+    "autonomy": 2,
+    "competence": 1
+   },
+   {
+    "seq": 90,
+    "month": 39,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 95,
+    "month": 42,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 99,
+    "month": 44,
+    "node": "E34",
+    "option": "A",
+    "autonomy": 2,
+    "relatedness": 1
+   },
+   {
+    "seq": 102,
+    "month": 45,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   },
+   {
+    "seq": 106,
+    "month": 48,
+    "node": "C5",
+    "option": "A",
+    "relatedness": 1
+   },
+   {
+    "seq": 108,
+    "month": 48,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "autonomy": 2,
+    "competence": 1,
+    "relatedness": 0
+   }
+  ],
+  "regulatory_focus": [
+   {
+    "seq": 12,
+    "month": 6,
+    "node": "E06",
+    "option": "A",
+    "focus": "prevention"
+   },
+   {
+    "seq": 21,
+    "month": 10,
+    "node": "E09",
+    "option": "B",
+    "focus": "promotion"
+   },
+   {
+    "seq": 43,
+    "month": 20,
+    "node": "E16",
+    "option": "A",
+    "focus": "prevention"
+   },
+   {
+    "seq": 61,
+    "month": 28,
+    "node": "E23",
+    "option": "A",
+    "focus": "promotion"
+   },
+   {
+    "seq": 63,
+    "month": 29,
+    "node": "E24",
+    "option": "B",
+    "focus": "prevention"
+   },
+   {
+    "seq": 69,
+    "month": 31,
+    "node": "E26",
+    "option": "A",
+    "focus": "prevention"
+   },
+   {
+    "seq": 71,
+    "month": 32,
+    "node": "E27",
+    "option": "A",
+    "focus": "prevention"
+   },
+   {
+    "seq": 78,
+    "month": 35,
+    "node": "E30",
+    "option": "B",
+    "focus": "prevention"
+   }
+  ],
+  "moral_foundation": [
+   {
+    "seq": 5,
+    "month": 3,
+    "node": "E03",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 15,
+    "month": 7,
+    "node": "E07",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 17,
+    "month": 8,
+    "node": "E08",
+    "option": "B",
+    "fairness": 1
+   },
+   {
+    "seq": 23,
+    "month": 11,
+    "node": "E10",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 38,
+    "month": 18,
+    "node": "E36",
+    "option": "A",
+    "fairness": 2,
+    "care": 1
+   },
+   {
+    "seq": 41,
+    "month": 19,
+    "node": "E37",
+    "option": "A",
+    "care": 1
+   },
+   {
+    "seq": 45,
+    "month": 21,
+    "node": "E17",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 48,
+    "month": 22,
+    "node": "E18",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 50,
+    "month": 23,
+    "node": "E19",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 55,
+    "month": 25,
+    "node": "E21",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 57,
+    "month": 26,
+    "node": "E22",
+    "option": "A",
+    "care": 1
+   },
+   {
+    "seq": 63,
+    "month": 29,
+    "node": "E24",
+    "option": "B",
+    "care": 1
+   },
+   {
+    "seq": 65,
+    "month": 30,
+    "node": "E25",
+    "option": "A",
+    "care": 2,
+    "fairness": 1
+   },
+   {
+    "seq": 71,
+    "month": 32,
+    "node": "E27",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 73,
+    "month": 33,
+    "node": "E28",
+    "option": "A",
+    "fairness": 2
+   },
+   {
+    "seq": 84,
+    "month": 37,
+    "node": "E38",
+    "option": "A",
+    "fairness": 1
+   },
+   {
+    "seq": 92,
+    "month": 41,
+    "node": "E32",
+    "option": "A",
+    "care": 1,
+    "fairness": 1
+   },
+   {
+    "seq": 97,
+    "month": 43,
+    "node": "E33",
+    "option": "B",
+    "fairness": 1,
+    "authority": -1
+   }
+  ],
+  "cognition": [
+   {
+    "seq": 1,
+    "month": 1,
+    "node": "E01",
+    "option": "C",
+    "CFC": 1
+   },
+   {
+    "seq": 7,
+    "month": 3,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 8,
+    "month": 4,
+    "node": "E04",
+    "option": "A",
+    "NFC": 2
+   },
+   {
+    "seq": 10,
+    "month": 5,
+    "node": "E05",
+    "option": "A",
+    "CFC": 2
+   },
+   {
+    "seq": 14,
+    "month": 6,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 20,
+    "month": 9,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 21,
+    "month": 10,
+    "node": "E09",
+    "option": "B",
+    "CFC": 2
+   },
+   {
+    "seq": 25,
+    "month": 12,
+    "node": "E11",
+    "option": "A",
+    "CFC": 2
+   },
+   {
+    "seq": 27,
+    "month": 12,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 28,
+    "month": 13,
+    "node": "E12",
+    "option": "A",
+    "CFC": 2,
+    "NFC": 1
+   },
+   {
+    "seq": 34,
+    "month": 15,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 40,
+    "month": 18,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 47,
+    "month": 21,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 52,
+    "month": 24,
+    "node": "E20",
+    "option": "B",
+    "NFC": 1
+   },
+   {
+    "seq": 54,
+    "month": 24,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 57,
+    "month": 26,
+    "node": "E22",
+    "option": "A",
+    "CFC": 1
+   },
+   {
+    "seq": 60,
+    "month": 27,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 61,
+    "month": 28,
+    "node": "E23",
+    "option": "A",
+    "CFC": 2
+   },
+   {
+    "seq": 67,
+    "month": 30,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 71,
+    "month": 32,
+    "node": "E27",
+    "option": "A",
+    "CFC": 2
+   },
+   {
+    "seq": 75,
+    "month": 33,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 76,
+    "month": 34,
+    "node": "E29",
+    "option": "A",
+    "CFC": 1
+   },
+   {
+    "seq": 82,
+    "month": 36,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 90,
+    "month": 39,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 95,
+    "month": 42,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 102,
+    "month": 45,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   },
+   {
+    "seq": 108,
+    "month": 48,
+    "node": "W1_reproduce_paper",
+    "option": "-",
+    "NFC": 2
+   }
+  ],
+  "attribution": [
+   {
+    "seq": 50,
+    "month": 23,
+    "node": "E19",
+    "option": "A",
+    "locus": "external",
+    "stability": "unstable",
+    "controllable": false,
+    "type": "external",
+    "_note": "外归因但有据：拿日志定位到产品侧规则，属根因定位而非推责"
+   },
+   {
+    "seq": 68,
+    "month": 30,
+    "node": "crisis_talk_01",
+    "option": "C",
+    "locus": "internal",
+    "stability": "unstable",
+    "controllable": true,
+    "type": "internal-behavior"
+   },
+   {
+    "seq": 83,
+    "month": 36,
+    "node": "crisis_talk_01",
+    "option": "C",
+    "locus": "internal",
+    "stability": "unstable",
+    "controllable": true,
+    "type": "internal-behavior"
+   },
+   {
+    "seq": 96,
+    "month": 42,
+    "node": "crisis_talk_01",
+    "option": "C",
+    "locus": "internal",
+    "stability": "unstable",
+    "controllable": true,
+    "type": "internal-behavior"
+   }
+  ],
+  "psych_drive": [],
+  "flags": [
+   "honest_report"
+  ],
+  "memory_tags": [
+   {
+    "seq": 1,
+    "month": 1,
+    "tag": "目标导向",
+    "node": "E01"
+   },
+   {
+    "seq": 5,
+    "month": 3,
+    "tag": "主动标注了 AI 代码",
+    "node": "E03"
+   },
+   {
+    "seq": 8,
+    "month": 4,
+    "tag": "动手实测过才决定",
+    "node": "E04"
+   },
+   {
+    "seq": 10,
+    "month": 5,
+    "tag": "为看不见的基建买过单",
+    "node": "E05"
+   },
+   {
+    "seq": 12,
+    "month": 6,
+    "tag": "选了 RAG 路线",
+    "node": "E06"
+   },
+   {
+    "seq": 15,
+    "month": 7,
+    "tag": "当场澄清过",
+    "node": "E07"
+   },
+   {
+    "seq": 17,
+    "month": 8,
+    "tag": "用数据顶过客户",
+    "node": "E08"
+   },
+   {
+    "seq": 21,
+    "month": 10,
+    "tag": "顶住压力要了工期",
+    "node": "E09"
+   },
+   {
+    "seq": 23,
+    "month": 11,
+    "tag": "当面讲了 AI 的边界",
+    "node": "E10"
+   },
+   {
+    "seq": 25,
+    "month": 12,
+    "tag": "提前通知过客户",
+    "node": "E11"
+   },
+   {
+    "seq": 28,
+    "month": 13,
+    "tag": "把散落的约定捞出来过",
+    "node": "E12"
+   },
+   {
+    "seq": 38,
+    "month": 18,
+    "tag": "按事实给朋友打过分",
+    "node": "E36"
+   },
+   {
+    "seq": 41,
+    "month": 19,
+    "tag": "没人要求也做对了",
+    "node": "E37"
+   },
+   {
+    "seq": 43,
+    "month": 20,
+    "tag": "紧急通道也留了记录",
+    "node": "E16"
+   },
+   {
+    "seq": 45,
+    "month": 21,
+    "tag": "翻车时当场承认过",
+    "node": "E17"
+   },
+   {
+    "seq": 48,
+    "month": 22,
+    "tag": "压测如实报过",
+    "node": "E18"
+   },
+   {
+    "seq": 50,
+    "month": 23,
+    "tag": "用日志说清过责任",
+    "node": "E19"
+   },
+   {
+    "seq": 52,
+    "month": 24,
+    "tag": "熬夜标过 200 条",
+    "node": "E20"
+   },
+   {
+    "seq": 55,
+    "month": 25,
+    "tag": "当面指出过前辈的坑",
+    "node": "E21"
+   },
+   {
+    "seq": 57,
+    "month": 26,
+    "tag": "没人知道也上报了",
+    "node": "E22"
+   },
+   {
+    "seq": 61,
+    "month": 28,
+    "tag": "推动过大重构",
+    "node": "E23"
+   },
+   {
+    "seq": 63,
+    "month": 29,
+    "tag": "拒绝过全自动",
+    "node": "E24"
+   },
+   {
+    "seq": 65,
+    "month": 30,
+    "tag": "上报过技术被滥用",
+    "node": "E25"
+   },
+   {
+    "seq": 68,
+    "month": 30,
+    "tag": "能自我修正",
+    "node": "crisis_talk_01"
+   },
+   {
+    "seq": 71,
+    "month": 32,
+    "tag": "劝住了想做专属模型的老板",
+    "node": "E27"
+   },
+   {
+    "seq": 73,
+    "month": 33,
+    "tag": "替我出过头",
+    "node": "E28"
+   },
+   {
+    "seq": 76,
+    "month": 34,
+    "tag": "把踩过的坑全写下来了",
+    "node": "E29"
+   },
+   {
+    "seq": 78,
+    "month": 35,
+    "tag": "选了稳的",
+    "node": "E30"
+   },
+   {
+    "seq": 80,
+    "month": 36,
+    "tag": "认领了功劳还带上团队",
+    "node": "C4"
+   },
+   {
+    "seq": 83,
+    "month": 36,
+    "tag": "能自我修正",
+    "node": "crisis_talk_01"
+   },
+   {
+    "seq": 84,
+    "month": 37,
+    "tag": "汇报时如实说了延期",
+    "node": "E38"
+   },
+   {
+    "seq": 92,
+    "month": 41,
+    "tag": "主动推了身份声明规范",
+    "node": "E32"
+   },
+   {
+    "seq": 96,
+    "month": 42,
+    "tag": "能自我修正",
+    "node": "crisis_talk_01"
+   },
+   {
+    "seq": 99,
+    "month": 44,
+    "tag": "主动推过 AI 工具",
+    "node": "E34"
+   },
+   {
+    "seq": 106,
+    "month": 48,
+    "tag": "把东西讲清楚了",
+    "node": "C5"
+   }
+  ],
+  "counter_blame_scenes": 3,
+  "counter_blame_held": 2,
+  "counter_nosupervision": 3,
+  "counter_nosupervision_held": 3,
+  "life": 10,
+  "prof": 18,
+  "money": 15000,
+  "debt": 0,
+  "level": 4,
+  "bonus_total": 0,
+  "npc_affinity": {
+   "xiao_lin": 0,
+   "xiao_zhao": 8
+  },
+  "npc_level": {
+   "xiao_lin": 1,
+   "xiao_zhao": 1
+  },
+  "npc_last_slots": {
+   "wang_ge": [],
+   "xiao_lin": []
+  },
+  "intimate_done": [],
+  "npc_tags": {},
+  "events_done": [
+   "E01",
+   "E02",
+   "E03",
+   "E04",
+   "E05",
+   "E06",
+   "E07",
+   "E08",
+   "E09",
+   "E10",
+   "E11",
+   "E12",
+   "E13",
+   "E14",
+   "E15",
+   "E36",
+   "E37",
+   "E16",
+   "E17",
+   "E18",
+   "E19",
+   "E20",
+   "E21",
+   "E22",
+   "E23",
+   "E24",
+   "E25",
+   "E26",
+   "E27",
+   "E28",
+   "E29",
+   "E30",
+   "C4",
+   "E38",
+   "E39",
+   "E31",
+   "E32",
+   "E33",
+   "E34",
+   "E35",
+   "C5"
+  ],
+  "decisions": [
+   {
+    "seq": 1,
+    "month": 1,
+    "source": "mainline",
+    "node_id": "E01",
+    "option_id": "C",
+    "option_text": "先看晋升通道",
+    "rest_month": false,
+    "hesitation_ms": 15623,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 0,
+     "O": 0,
+     "N": 0,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 0,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": -1,
+     "O": 1,
+     "N": 0,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "目标导向"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 2,
+    "month": 1,
+    "source": "monthly",
+    "node_id": "monthly_L1",
+    "option_id": "B",
+    "option_text": "2 点冲产出 + 1 点认人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": -1,
+     "O": 1,
+     "N": 0,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": -1,
+     "O": 3,
+     "N": 1,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 3,
+    "month": 2,
+    "source": "mainline",
+    "node_id": "E02",
+    "option_id": "B",
+    "option_text": "会后单独聊清楚",
+    "rest_month": false,
+    "hesitation_ms": 4326,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": -1,
+     "O": 3,
+     "N": 1,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 0,
+     "O": 2,
+     "N": 2,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 4,
+    "month": 2,
+    "source": "monthly",
+    "node_id": "monthly_L1",
+    "option_id": "B",
+    "option_text": "2 点冲产出 + 1 点认人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 0,
+     "O": 2,
+     "N": 2,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 0,
+     "O": 4,
+     "N": 3,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 5,
+    "month": 3,
+    "source": "mainline",
+    "node_id": "E03",
+    "option_id": "A",
+    "option_text": "标注并说明改动",
+    "rest_month": false,
+    "hesitation_ms": 19753,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 0,
+     "O": 4,
+     "N": 3,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 1,
+     "O": 3,
+     "N": 4,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 1,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "主动标注了 AI 代码"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 6,
+    "month": 3,
+    "source": "monthly",
+    "node_id": "monthly_L1",
+    "option_id": "B",
+    "option_text": "2 点冲产出 + 1 点认人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 1,
+     "O": 3,
+     "N": 4,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 1,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 1,
+     "O": 5,
+     "N": 5,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 1,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 7,
+    "month": 3,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 1,
+     "O": 5,
+     "N": 5,
+     "H": 10,
+     "D": 0,
+     "pending_dignity": 1,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 3,
+     "O": 5,
+     "N": 5,
+     "H": 9,
+     "D": 0,
+     "pending_dignity": 1,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 8,
+    "month": 4,
+    "source": "mainline",
+    "node_id": "E04",
+    "option_id": "A",
+    "option_text": "自己搭两套 demo 实测",
+    "rest_month": false,
+    "hesitation_ms": 12938,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 3,
+     "O": 5,
+     "N": 5,
+     "H": 9,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 0,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 5,
+     "O": 5,
+     "N": 5,
+     "H": 8,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 2,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "动手实测过才决定"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 9,
+    "month": 4,
+    "source": "monthly",
+    "node_id": "monthly_L1",
+    "option_id": "B",
+    "option_text": "2 点冲产出 + 1 点认人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 5,
+     "O": 5,
+     "N": 5,
+     "H": 8,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 2,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 5,
+     "O": 7,
+     "N": 6,
+     "H": 8,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 2,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 10,
+    "month": 5,
+    "source": "mainline",
+    "node_id": "E05",
+    "option_id": "A",
+    "option_text": "建，砍一个非核心需求",
+    "rest_month": false,
+    "hesitation_ms": 14732,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 5,
+     "O": 7,
+     "N": 6,
+     "H": 8,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": 0,
+     "life": 10,
+     "prof": 2,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 7,
+     "O": 6,
+     "N": 6,
+     "H": 7,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -2,
+     "life": 9,
+     "prof": 4,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "为看不见的基建买过单"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 11,
+    "month": 5,
+    "source": "monthly",
+    "node_id": "monthly_L1",
+    "option_id": "B",
+    "option_text": "2 点冲产出 + 1 点认人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 7,
+     "O": 6,
+     "N": 6,
+     "H": 7,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -2,
+     "life": 9,
+     "prof": 4,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 7,
+     "O": 8,
+     "N": 7,
+     "H": 7,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -2,
+     "life": 9,
+     "prof": 4,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 12,
+    "month": 6,
+    "source": "mainline",
+    "node_id": "E06",
+    "option_id": "A",
+    "option_text": "押 RAG + 混合检索",
+    "rest_month": false,
+    "hesitation_ms": 10157,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 7,
+     "O": 8,
+     "N": 7,
+     "H": 7,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -2,
+     "life": 10,
+     "prof": 4,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 7,
+     "O": 7,
+     "N": 7,
+     "H": 6,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "选了 RAG 路线"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 13,
+    "month": 6,
+    "source": "monthly",
+    "node_id": "monthly_L1",
+    "option_id": "B",
+    "option_text": "2 点冲产出 + 1 点认人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 7,
+     "O": 7,
+     "N": 7,
+     "H": 6,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 7,
+     "O": 9,
+     "N": 8,
+     "H": 6,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 14,
+    "month": 6,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 7,
+     "O": 9,
+     "N": 8,
+     "H": 6,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 1
+    },
+    "snapshot_after": {
+     "S": 9,
+     "O": 9,
+     "N": 8,
+     "H": 5,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 1
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 15,
+    "month": 7,
+    "source": "mainline",
+    "node_id": "E07",
+    "option_id": "A",
+    "option_text": "拿监控数据当场澄清",
+    "rest_month": false,
+    "hesitation_ms": 6107,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 9,
+     "O": 9,
+     "N": 8,
+     "H": 5,
+     "D": 1,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 9,
+     "O": 9,
+     "N": 7,
+     "H": 5,
+     "D": 1,
+     "pending_dignity": 2,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "当场澄清过"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 16,
+    "month": 7,
+    "source": "monthly",
+    "node_id": "monthly_L2",
+    "option_id": "B",
+    "option_text": "2 点冲交付 + 1 点帮同事",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 9,
+     "O": 9,
+     "N": 7,
+     "H": 5,
+     "D": 1,
+     "pending_dignity": 2,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 9,
+     "O": 11,
+     "N": 8,
+     "H": 5,
+     "D": 1,
+     "pending_dignity": 2,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 17,
+    "month": 8,
+    "source": "mainline",
+    "node_id": "E08",
+    "option_id": "B",
+    "option_text": "拿数据谈优先级",
+    "rest_month": false,
+    "hesitation_ms": 11208,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 9,
+     "O": 11,
+     "N": 8,
+     "H": 5,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 1000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 9,
+     "O": 12,
+     "N": 7,
+     "H": 5,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "用数据顶过客户"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 18,
+    "month": 8,
+    "source": "monthly",
+    "node_id": "monthly_L2",
+    "option_id": "B",
+    "option_text": "2 点冲交付 + 1 点帮同事",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 9,
+     "O": 12,
+     "N": 7,
+     "H": 5,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 9,
+     "O": 14,
+     "N": 8,
+     "H": 5,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 19,
+    "month": 9,
+    "source": "monthly",
+    "node_id": "monthly_L2",
+    "option_id": "B",
+    "option_text": "2 点冲交付 + 1 点帮同事",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 9,
+     "O": 14,
+     "N": 8,
+     "H": 5,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 9,
+     "O": 16,
+     "N": 9,
+     "H": 5,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 20,
+    "month": 9,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 9,
+     "O": 16,
+     "N": 9,
+     "H": 5,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 11,
+     "O": 16,
+     "N": 9,
+     "H": 4,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 21,
+    "month": 10,
+    "source": "mainline",
+    "node_id": "E09",
+    "option_id": "B",
+    "option_text": "缓存管线，顶压力要工期",
+    "rest_month": false,
+    "hesitation_ms": 7815,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": 11,
+     "O": 16,
+     "N": 9,
+     "H": 4,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -3,
+     "life": 10,
+     "prof": 6,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 13,
+     "O": 15,
+     "N": 9,
+     "H": 3,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -5,
+     "life": 9,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "顶住压力要了工期"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 22,
+    "month": 10,
+    "source": "monthly",
+    "node_id": "monthly_L2",
+    "option_id": "B",
+    "option_text": "2 点冲交付 + 1 点帮同事",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 13,
+     "O": 15,
+     "N": 9,
+     "H": 3,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -5,
+     "life": 9,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 13,
+     "O": 17,
+     "N": 10,
+     "H": 3,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -5,
+     "life": 9,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 23,
+    "month": 11,
+    "source": "mainline",
+    "node_id": "E10",
+    "option_id": "A",
+    "option_text": "如实讲边界，给兜底组合",
+    "rest_month": false,
+    "hesitation_ms": 6236,
+    "switch_count": 0,
+    "snapshot_before": {
+     "S": 13,
+     "O": 17,
+     "N": 10,
+     "H": 3,
+     "D": 3,
+     "pending_dignity": 0,
+     "risk_cumulative": -5,
+     "life": 10,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 13,
+     "O": 16,
+     "N": 10,
+     "H": 3,
+     "D": 3,
+     "pending_dignity": 2,
+     "risk_cumulative": -7,
+     "life": 10,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "当面讲了 AI 的边界"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 24,
+    "month": 11,
+    "source": "monthly",
+    "node_id": "monthly_L2",
+    "option_id": "B",
+    "option_text": "2 点冲交付 + 1 点帮同事",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 13,
+     "O": 16,
+     "N": 10,
+     "H": 3,
+     "D": 3,
+     "pending_dignity": 2,
+     "risk_cumulative": -7,
+     "life": 10,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 13,
+     "O": 18,
+     "N": 11,
+     "H": 3,
+     "D": 3,
+     "pending_dignity": 2,
+     "risk_cumulative": -7,
+     "life": 10,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 25,
+    "month": 12,
+    "source": "mainline",
+    "node_id": "E11",
+    "option_id": "A",
+    "option_text": "提前通知+双版本并行",
+    "rest_month": false,
+    "hesitation_ms": 13819,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 13,
+     "O": 18,
+     "N": 11,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -7,
+     "life": 10,
+     "prof": 8,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 14,
+     "O": 16,
+     "N": 12,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -9,
+     "life": 10,
+     "prof": 10,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "提前通知过客户"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 26,
+    "month": 12,
+    "source": "monthly",
+    "node_id": "monthly_L2",
+    "option_id": "B",
+    "option_text": "2 点冲交付 + 1 点帮同事",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 14,
+     "O": 16,
+     "N": 12,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -9,
+     "life": 10,
+     "prof": 10,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 14,
+     "O": 18,
+     "N": 13,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -9,
+     "life": 10,
+     "prof": 10,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 27,
+    "month": 12,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 14,
+     "O": 18,
+     "N": 13,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -9,
+     "life": 10,
+     "prof": 10,
+     "money": 2000,
+     "level": 2
+    },
+    "snapshot_after": {
+     "S": 16,
+     "O": 18,
+     "N": 13,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -9,
+     "life": 10,
+     "prof": 10,
+     "money": 2000,
+     "level": 2
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 28,
+    "month": 13,
+    "source": "mainline",
+    "node_id": "E12",
+    "option_id": "A",
+    "option_text": "建团队知识库统一维护",
+    "rest_month": false,
+    "hesitation_ms": 13361,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 16,
+     "O": 18,
+     "N": 13,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -9,
+     "life": 10,
+     "prof": 10,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 18,
+     "O": 16,
+     "N": 12,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "把散落的约定捞出来过"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 29,
+    "month": 13,
+    "source": "monthly",
+    "node_id": "monthly_L3",
+    "option_id": "B",
+    "option_text": "2 点保交付 + 1 点带新人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 18,
+     "O": 16,
+     "N": 12,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 18,
+     "O": 18,
+     "N": 13,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 30,
+    "month": 14,
+    "source": "mainline",
+    "node_id": "E13",
+    "option_id": "A",
+    "option_text": "会上提，附数据",
+    "rest_month": false,
+    "hesitation_ms": 23985,
+    "switch_count": 1,
+    "snapshot_before": {
+     "S": 18,
+     "O": 18,
+     "N": 13,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 19,
+     "O": 17,
+     "N": 14,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 31,
+    "month": 14,
+    "source": "monthly",
+    "node_id": "monthly_L3",
+    "option_id": "B",
+    "option_text": "2 点保交付 + 1 点带新人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 19,
+     "O": 17,
+     "N": 14,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 19,
+     "O": 19,
+     "N": 15,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 32,
+    "month": 15,
+    "source": "mainline",
+    "node_id": "E14",
+    "option_id": "A",
+    "option_text": "去医院+同步王哥",
+    "rest_month": false,
+    "hesitation_ms": 21105,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 19,
+     "O": 19,
+     "N": 15,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 19,
+     "O": 18,
+     "N": 15,
+     "H": 4,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 33,
+    "month": 15,
+    "source": "monthly",
+    "node_id": "monthly_L3",
+    "option_id": "B",
+    "option_text": "2 点保交付 + 1 点带新人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 19,
+     "O": 18,
+     "N": 15,
+     "H": 4,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 19,
+     "O": 20,
+     "N": 16,
+     "H": 4,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 34,
+    "month": 15,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 19,
+     "O": 20,
+     "N": 16,
+     "H": 4,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 21,
+     "O": 20,
+     "N": 16,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 35,
+    "month": 16,
+    "source": "mainline",
+    "node_id": "E15",
+    "option_id": "A",
+    "option_text": "当场温和认领+补充",
+    "rest_month": false,
+    "hesitation_ms": 5040,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 21,
+     "O": 20,
+     "N": 16,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 22,
+     "O": 19,
+     "N": 17,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 36,
+    "month": 16,
+    "source": "monthly",
+    "node_id": "monthly_L3",
+    "option_id": "B",
+    "option_text": "2 点保交付 + 1 点带新人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 22,
+     "O": 19,
+     "N": 17,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 22,
+     "O": 21,
+     "N": 18,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 37,
+    "month": 17,
+    "source": "monthly",
+    "node_id": "monthly_L3",
+    "option_id": "B",
+    "option_text": "2 点保交付 + 1 点带新人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 22,
+     "O": 21,
+     "N": 18,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 22,
+     "O": 23,
+     "N": 19,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 38,
+    "month": 18,
+    "source": "mainline",
+    "node_id": "E36",
+    "option_id": "A",
+    "option_text": "按事实打 B，附改进建议",
+    "rest_month": false,
+    "hesitation_ms": 3460,
+    "switch_count": 0,
+    "snapshot_before": {
+     "S": 22,
+     "O": 23,
+     "N": 19,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 22,
+     "O": 23,
+     "N": 18,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 2,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "按事实给朋友打过分"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 39,
+    "month": 18,
+    "source": "monthly",
+    "node_id": "monthly_L3",
+    "option_id": "B",
+    "option_text": "2 点保交付 + 1 点带新人",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 22,
+     "O": 23,
+     "N": 18,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 2,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 22,
+     "O": 25,
+     "N": 19,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 2,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 40,
+    "month": 18,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 22,
+     "O": 25,
+     "N": 19,
+     "H": 3,
+     "D": 5,
+     "pending_dignity": 2,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "snapshot_after": {
+     "S": 24,
+     "O": 25,
+     "N": 19,
+     "H": 2,
+     "D": 5,
+     "pending_dignity": 2,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 3
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 41,
+    "month": 19,
+    "source": "mainline",
+    "node_id": "E37",
+    "option_id": "A",
+    "option_text": "认真做，顺手做权限隔离",
+    "rest_month": false,
+    "hesitation_ms": 24894,
+    "switch_count": 0,
+    "snapshot_before": {
+     "S": 24,
+     "O": 25,
+     "N": 19,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 0,
+     "risk_cumulative": -11,
+     "life": 10,
+     "prof": 12,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 25,
+     "O": 24,
+     "N": 20,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 0,
+     "risk_cumulative": -12,
+     "life": 10,
+     "prof": 13,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "没人要求也做对了"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 42,
+    "month": 19,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 25,
+     "O": 24,
+     "N": 20,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 0,
+     "risk_cumulative": -12,
+     "life": 10,
+     "prof": 13,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 25,
+     "O": 26,
+     "N": 21,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 0,
+     "risk_cumulative": -12,
+     "life": 10,
+     "prof": 13,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 43,
+    "month": 20,
+    "source": "mainline",
+    "node_id": "E16",
+    "option_id": "A",
+    "option_text": "走紧急通道但留记录+同步 leader",
+    "rest_month": false,
+    "hesitation_ms": 23050,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 25,
+     "O": 26,
+     "N": 21,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 0,
+     "risk_cumulative": -12,
+     "life": 10,
+     "prof": 13,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 26,
+     "O": 25,
+     "N": 22,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 1,
+     "risk_cumulative": -13,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "紧急通道也留了记录"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 44,
+    "month": 20,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 26,
+     "O": 25,
+     "N": 22,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 1,
+     "risk_cumulative": -13,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 26,
+     "O": 27,
+     "N": 23,
+     "H": 2,
+     "D": 7,
+     "pending_dignity": 1,
+     "risk_cumulative": -13,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 45,
+    "month": 21,
+    "source": "mainline",
+    "node_id": "E17",
+    "option_id": "A",
+    "option_text": "当场承认幻觉，切备用流程",
+    "rest_month": false,
+    "hesitation_ms": 13916,
+    "switch_count": 1,
+    "snapshot_before": {
+     "S": 26,
+     "O": 27,
+     "N": 23,
+     "H": 2,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -13,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 27,
+     "O": 26,
+     "N": 24,
+     "H": 2,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -15,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "翻车时当场承认过"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 46,
+    "month": 21,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 27,
+     "O": 26,
+     "N": 24,
+     "H": 2,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -15,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 27,
+     "O": 28,
+     "N": 25,
+     "H": 2,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -15,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 47,
+    "month": 21,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 27,
+     "O": 28,
+     "N": 25,
+     "H": 2,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -15,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 29,
+     "O": 28,
+     "N": 25,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -15,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 48,
+    "month": 22,
+    "source": "mainline",
+    "node_id": "E18",
+    "option_id": "A",
+    "option_text": "如实报，要求下调承诺",
+    "rest_month": false,
+    "hesitation_ms": 5063,
+    "switch_count": 1,
+    "snapshot_before": {
+     "S": 29,
+     "O": 28,
+     "N": 25,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -15,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 30,
+     "O": 26,
+     "N": 26,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -16,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [
+     "honest_report"
+    ],
+    "memory_tags": [
+     "压测如实报过"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 49,
+    "month": 22,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 30,
+     "O": 26,
+     "N": 26,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -16,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 30,
+     "O": 28,
+     "N": 27,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -16,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 50,
+    "month": 23,
+    "source": "mainline",
+    "node_id": "E19",
+    "option_id": "A",
+    "option_text": "拿日志证明是产品侧规则导致",
+    "rest_month": false,
+    "hesitation_ms": 21596,
+    "switch_count": 1,
+    "snapshot_before": {
+     "S": 30,
+     "O": 28,
+     "N": 27,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 0,
+     "risk_cumulative": -16,
+     "life": 10,
+     "prof": 14,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 31,
+     "O": 28,
+     "N": 26,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 2,
+     "risk_cumulative": -17,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "用日志说清过责任"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 51,
+    "month": 23,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 31,
+     "O": 28,
+     "N": 26,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 2,
+     "risk_cumulative": -17,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 31,
+     "O": 30,
+     "N": 27,
+     "H": 1,
+     "D": 8,
+     "pending_dignity": 2,
+     "risk_cumulative": -17,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 52,
+    "month": 24,
+    "source": "mainline",
+    "node_id": "E20",
+    "option_id": "B",
+    "option_text": "熬夜标 200 条人工抽检",
+    "rest_month": false,
+    "hesitation_ms": 10818,
+    "switch_count": 1,
+    "snapshot_before": {
+     "S": 31,
+     "O": 30,
+     "N": 27,
+     "H": 1,
+     "D": 10,
+     "pending_dignity": 0,
+     "risk_cumulative": -17,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 32,
+     "O": 30,
+     "N": 27,
+     "H": 0,
+     "D": 10,
+     "pending_dignity": 1,
+     "risk_cumulative": -17,
+     "life": 8,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "熬夜标过 200 条"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 53,
+    "month": 24,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 32,
+     "O": 30,
+     "N": 27,
+     "H": 0,
+     "D": 10,
+     "pending_dignity": 1,
+     "risk_cumulative": -17,
+     "life": 8,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 32,
+     "O": 32,
+     "N": 28,
+     "H": 0,
+     "D": 10,
+     "pending_dignity": 1,
+     "risk_cumulative": -17,
+     "life": 8,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 54,
+    "month": 24,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 32,
+     "O": 32,
+     "N": 28,
+     "H": 0,
+     "D": 10,
+     "pending_dignity": 1,
+     "risk_cumulative": -17,
+     "life": 8,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 34,
+     "O": 32,
+     "N": 28,
+     "H": 0,
+     "D": 10,
+     "pending_dignity": 1,
+     "risk_cumulative": -17,
+     "life": 8,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 55,
+    "month": 25,
+    "source": "mainline",
+    "node_id": "E21",
+    "option_id": "A",
+    "option_text": "PR 里直接指出附复现",
+    "rest_month": false,
+    "hesitation_ms": 5636,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": 34,
+     "O": 32,
+     "N": 28,
+     "H": 0,
+     "D": 11,
+     "pending_dignity": 0,
+     "risk_cumulative": -17,
+     "life": 9,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 35,
+     "O": 31,
+     "N": 29,
+     "H": 0,
+     "D": 11,
+     "pending_dignity": 1,
+     "risk_cumulative": -18,
+     "life": 9,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "当面指出过前辈的坑"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 56,
+    "month": 25,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 35,
+     "O": 31,
+     "N": 29,
+     "H": 0,
+     "D": 11,
+     "pending_dignity": 1,
+     "risk_cumulative": -18,
+     "life": 9,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 35,
+     "O": 33,
+     "N": 30,
+     "H": 0,
+     "D": 11,
+     "pending_dignity": 1,
+     "risk_cumulative": -18,
+     "life": 9,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 57,
+    "month": 26,
+    "source": "mainline",
+    "node_id": "E22",
+    "option_id": "A",
+    "option_text": "立刻上报推动排期",
+    "rest_month": false,
+    "hesitation_ms": 19644,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 35,
+     "O": 33,
+     "N": 30,
+     "H": 0,
+     "D": 12,
+     "pending_dignity": 0,
+     "risk_cumulative": -18,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 36,
+     "O": 31,
+     "N": 31,
+     "H": 0,
+     "D": 12,
+     "pending_dignity": 2,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "没人知道也上报了"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 58,
+    "month": 26,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 36,
+     "O": 31,
+     "N": 31,
+     "H": 0,
+     "D": 12,
+     "pending_dignity": 2,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 36,
+     "O": 33,
+     "N": 32,
+     "H": 0,
+     "D": 12,
+     "pending_dignity": 2,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 59,
+    "month": 27,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 36,
+     "O": 33,
+     "N": 32,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 36,
+     "O": 35,
+     "N": 33,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 60,
+    "month": 27,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 36,
+     "O": 35,
+     "N": 33,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 38,
+     "O": 35,
+     "N": 33,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 61,
+    "month": 28,
+    "source": "mainline",
+    "node_id": "E23",
+    "option_id": "A",
+    "option_text": "推动大重构",
+    "rest_month": false,
+    "hesitation_ms": 7089,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 38,
+     "O": 35,
+     "N": 33,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -21,
+     "life": 10,
+     "prof": 15,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 40,
+     "O": 33,
+     "N": 34,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -23,
+     "life": 9,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "推动过大重构"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 62,
+    "month": 28,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 40,
+     "O": 33,
+     "N": 34,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -23,
+     "life": 9,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 40,
+     "O": 35,
+     "N": 35,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -23,
+     "life": 9,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 63,
+    "month": 29,
+    "source": "mainline",
+    "node_id": "E24",
+    "option_id": "B",
+    "option_text": "拒绝全自动",
+    "rest_month": false,
+    "hesitation_ms": 13903,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 40,
+     "O": 35,
+     "N": 35,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 0,
+     "risk_cumulative": -23,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 40,
+     "O": 34,
+     "N": 34,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 2,
+     "risk_cumulative": -25,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "拒绝过全自动"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 64,
+    "month": 29,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 40,
+     "O": 34,
+     "N": 34,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 2,
+     "risk_cumulative": -25,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 40,
+     "O": 36,
+     "N": 35,
+     "H": 0,
+     "D": 14,
+     "pending_dignity": 2,
+     "risk_cumulative": -25,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 65,
+    "month": 30,
+    "source": "mainline",
+    "node_id": "E25",
+    "option_id": "A",
+    "option_text": "立即上报+推动防护",
+    "rest_month": false,
+    "hesitation_ms": 9658,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 40,
+     "O": 36,
+     "N": 35,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 0,
+     "risk_cumulative": -25,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 40,
+     "O": 36,
+     "N": 34,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 3,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "上报过技术被滥用"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 66,
+    "month": 30,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 40,
+     "O": 36,
+     "N": 34,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 3,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 40,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 3,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 67,
+    "month": 30,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 40,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 3,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 42,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 3,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 68,
+    "month": 30,
+    "source": "crisis",
+    "node_id": "crisis_talk_01",
+    "option_id": "C",
+    "option_text": "「我该更主动去争取关键任务，而不是等安排」",
+    "rest_month": false,
+    "hesitation_ms": 7002,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 42,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 3,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 43,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 16,
+     "pending_dignity": 4,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "能自我修正"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 69,
+    "month": 31,
+    "source": "mainline",
+    "node_id": "E26",
+    "option_id": "A",
+    "option_text": "重新调优，申请延期",
+    "rest_month": false,
+    "hesitation_ms": 22539,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 43,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 20,
+     "pending_dignity": 0,
+     "risk_cumulative": -24,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 43,
+     "O": 37,
+     "N": 35,
+     "H": 0,
+     "D": 20,
+     "pending_dignity": 1,
+     "risk_cumulative": -25,
+     "life": 9,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 70,
+    "month": 31,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 43,
+     "O": 37,
+     "N": 35,
+     "H": 0,
+     "D": 20,
+     "pending_dignity": 1,
+     "risk_cumulative": -25,
+     "life": 9,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 43,
+     "O": 39,
+     "N": 36,
+     "H": 0,
+     "D": 20,
+     "pending_dignity": 1,
+     "risk_cumulative": -25,
+     "life": 9,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 71,
+    "month": 32,
+    "source": "mainline",
+    "node_id": "E27",
+    "option_id": "A",
+    "option_text": "拿数据讲清不建议，改做检索+缓存",
+    "rest_month": false,
+    "hesitation_ms": 13388,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 43,
+     "O": 39,
+     "N": 36,
+     "H": 0,
+     "D": 21,
+     "pending_dignity": 0,
+     "risk_cumulative": -25,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 44,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 21,
+     "pending_dignity": 2,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "劝住了想做专属模型的老板"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 72,
+    "month": 32,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 44,
+     "O": 38,
+     "N": 35,
+     "H": 0,
+     "D": 21,
+     "pending_dignity": 2,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 44,
+     "O": 40,
+     "N": 36,
+     "H": 0,
+     "D": 21,
+     "pending_dignity": 2,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 73,
+    "month": 33,
+    "source": "mainline",
+    "node_id": "E28",
+    "option_id": "A",
+    "option_text": "帮小赵整理 commit 记录发声",
+    "rest_month": false,
+    "hesitation_ms": 10933,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": 44,
+     "O": 40,
+     "N": 36,
+     "H": 0,
+     "D": 23,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 44,
+     "O": 40,
+     "N": 34,
+     "H": 0,
+     "D": 23,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "替我出过头"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 74,
+    "month": 33,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 44,
+     "O": 40,
+     "N": 34,
+     "H": 0,
+     "D": 23,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 44,
+     "O": 42,
+     "N": 35,
+     "H": 0,
+     "D": 23,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 75,
+    "month": 33,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 44,
+     "O": 42,
+     "N": 35,
+     "H": 0,
+     "D": 23,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 46,
+     "O": 42,
+     "N": 35,
+     "H": 0,
+     "D": 23,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 76,
+    "month": 34,
+    "source": "mainline",
+    "node_id": "E29",
+    "option_id": "A",
+    "option_text": "全写附踩坑记录",
+    "rest_month": false,
+    "hesitation_ms": 4080,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 46,
+     "O": 42,
+     "N": 35,
+     "H": 0,
+     "D": 25,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 47,
+     "O": 41,
+     "N": 37,
+     "H": 0,
+     "D": 25,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "把踩过的坑全写下来了"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 77,
+    "month": 34,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 47,
+     "O": 41,
+     "N": 37,
+     "H": 0,
+     "D": 25,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 47,
+     "O": 43,
+     "N": 38,
+     "H": 0,
+     "D": 25,
+     "pending_dignity": 2,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 78,
+    "month": 35,
+    "source": "mainline",
+    "node_id": "E30",
+    "option_id": "B",
+    "option_text": "用成熟方案",
+    "rest_month": false,
+    "hesitation_ms": 24517,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": 47,
+     "O": 43,
+     "N": 38,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 17,
+     "money": 2000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 46,
+     "O": 45,
+     "N": 38,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 5000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "选了稳的"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 79,
+    "month": 35,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 46,
+     "O": 45,
+     "N": 38,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 5000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 46,
+     "O": 47,
+     "N": 39,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 5000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 80,
+    "month": 36,
+    "source": "achievement",
+    "node_id": "C4",
+    "option_id": "A",
+    "option_text": "认领，顺带说明是团队的功劳",
+    "rest_month": false,
+    "hesitation_ms": 18614,
+    "switch_count": 0,
+    "snapshot_before": {
+     "S": 46,
+     "O": 47,
+     "N": 39,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 5000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 45,
+     "O": 48,
+     "N": 40,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "认领了功劳还带上团队"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 81,
+    "month": 36,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 45,
+     "O": 48,
+     "N": 40,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 45,
+     "O": 50,
+     "N": 41,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 82,
+    "month": 36,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 45,
+     "O": 50,
+     "N": 41,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 47,
+     "O": 50,
+     "N": 41,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 83,
+    "month": 36,
+    "source": "crisis",
+    "node_id": "crisis_talk_01",
+    "option_id": "C",
+    "option_text": "「我该更主动去争取关键任务，而不是等安排」",
+    "rest_month": false,
+    "hesitation_ms": 8900,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 47,
+     "O": 50,
+     "N": 41,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 48,
+     "O": 50,
+     "N": 41,
+     "H": 0,
+     "D": 27,
+     "pending_dignity": 1,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "能自我修正"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 84,
+    "month": 37,
+    "source": "mainline",
+    "node_id": "E38",
+    "option_id": "A",
+    "option_text": "如实说：延期两周，但技术超预期",
+    "rest_month": false,
+    "hesitation_ms": 4266,
+    "switch_count": 0,
+    "snapshot_before": {
+     "S": 48,
+     "O": 50,
+     "N": 41,
+     "H": 0,
+     "D": 28,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 49,
+     "O": 49,
+     "N": 41,
+     "H": 0,
+     "D": 28,
+     "pending_dignity": 1,
+     "risk_cumulative": -29,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "汇报时如实说了延期"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 85,
+    "month": 37,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 49,
+     "O": 49,
+     "N": 41,
+     "H": 0,
+     "D": 28,
+     "pending_dignity": 1,
+     "risk_cumulative": -29,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 49,
+     "O": 51,
+     "N": 42,
+     "H": 0,
+     "D": 28,
+     "pending_dignity": 1,
+     "risk_cumulative": -29,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 86,
+    "month": 38,
+    "source": "mainline",
+    "node_id": "E39",
+    "option_id": "B",
+    "option_text": "接，但严格避嫌",
+    "rest_month": false,
+    "hesitation_ms": 20714,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 49,
+     "O": 51,
+     "N": 42,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 0,
+     "risk_cumulative": -29,
+     "life": 10,
+     "prof": 17,
+     "money": 6000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 49,
+     "O": 53,
+     "N": 42,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 8,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 87,
+    "month": 38,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 49,
+     "O": 53,
+     "N": 42,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 8,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 49,
+     "O": 55,
+     "N": 43,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 8,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 88,
+    "month": 39,
+    "source": "mainline",
+    "node_id": "E31",
+    "option_id": "C",
+    "option_text": "私下跟 leader 说明",
+    "rest_month": false,
+    "hesitation_ms": 20189,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": 49,
+     "O": 55,
+     "N": 43,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 9,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 49,
+     "O": 54,
+     "N": 44,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 1,
+     "risk_cumulative": -28,
+     "life": 9,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 89,
+    "month": 39,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 49,
+     "O": 54,
+     "N": 44,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 1,
+     "risk_cumulative": -28,
+     "life": 9,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 49,
+     "O": 56,
+     "N": 45,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 1,
+     "risk_cumulative": -28,
+     "life": 9,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 90,
+    "month": 39,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 49,
+     "O": 56,
+     "N": 45,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 1,
+     "risk_cumulative": -28,
+     "life": 9,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 51,
+     "O": 56,
+     "N": 45,
+     "H": 0,
+     "D": 29,
+     "pending_dignity": 1,
+     "risk_cumulative": -28,
+     "life": 9,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 91,
+    "month": 40,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 51,
+     "O": 56,
+     "N": 45,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 51,
+     "O": 58,
+     "N": 46,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 92,
+    "month": 41,
+    "source": "mainline",
+    "node_id": "E32",
+    "option_id": "A",
+    "option_text": "支持但推动身份声明规范",
+    "rest_month": false,
+    "hesitation_ms": 10051,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 51,
+     "O": 58,
+     "N": 46,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 17,
+     "money": 9000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 51,
+     "O": 60,
+     "N": 45,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "主动推了身份声明规范"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 93,
+    "month": 41,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 51,
+     "O": 60,
+     "N": 45,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 51,
+     "O": 62,
+     "N": 46,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 94,
+    "month": 42,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 51,
+     "O": 62,
+     "N": 46,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 51,
+     "O": 64,
+     "N": 47,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 95,
+    "month": 42,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 51,
+     "O": 64,
+     "N": 47,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 53,
+     "O": 64,
+     "N": 47,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 96,
+    "month": 42,
+    "source": "crisis",
+    "node_id": "crisis_talk_01",
+    "option_id": "C",
+    "option_text": "「我该更主动去争取关键任务，而不是等安排」",
+    "rest_month": false,
+    "hesitation_ms": 13018,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 53,
+     "O": 64,
+     "N": 47,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 54,
+     "O": 64,
+     "N": 47,
+     "H": 0,
+     "D": 30,
+     "pending_dignity": 1,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "能自我修正"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 97,
+    "month": 43,
+    "source": "mainline",
+    "node_id": "E33",
+    "option_id": "B",
+    "option_text": "匿名反馈",
+    "rest_month": false,
+    "hesitation_ms": 17764,
+    "switch_count": 3,
+    "snapshot_before": {
+     "S": 54,
+     "O": 64,
+     "N": 47,
+     "H": 0,
+     "D": 31,
+     "pending_dignity": 0,
+     "risk_cumulative": -28,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 54,
+     "O": 63,
+     "N": 47,
+     "H": 0,
+     "D": 31,
+     "pending_dignity": 1,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 98,
+    "month": 43,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 54,
+     "O": 63,
+     "N": 47,
+     "H": 0,
+     "D": 31,
+     "pending_dignity": 1,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 54,
+     "O": 65,
+     "N": 48,
+     "H": 0,
+     "D": 31,
+     "pending_dignity": 1,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 99,
+    "month": 44,
+    "source": "mainline",
+    "node_id": "E34",
+    "option_id": "A",
+    "option_text": "主动做内部 AI 工具推广",
+    "rest_month": false,
+    "hesitation_ms": 24634,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": 54,
+     "O": 65,
+     "N": 48,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 55,
+     "O": 65,
+     "N": 50,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 9,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "主动推过 AI 工具"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 100,
+    "month": 44,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 55,
+     "O": 65,
+     "N": 50,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 9,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 55,
+     "O": 67,
+     "N": 51,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 9,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 101,
+    "month": 45,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 55,
+     "O": 67,
+     "N": 51,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 55,
+     "O": 69,
+     "N": 52,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 102,
+    "month": 45,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 55,
+     "O": 69,
+     "N": 52,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 57,
+     "O": 69,
+     "N": 52,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 103,
+    "month": 46,
+    "source": "mainline",
+    "node_id": "E35",
+    "option_id": "B",
+    "option_text": "讲数据和成果",
+    "rest_month": false,
+    "hesitation_ms": 18939,
+    "switch_count": 4,
+    "snapshot_before": {
+     "S": 57,
+     "O": 69,
+     "N": 52,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 12000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 56,
+     "O": 71,
+     "N": 52,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 104,
+    "month": 46,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 56,
+     "O": 71,
+     "N": 52,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 56,
+     "O": 73,
+     "N": 53,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 105,
+    "month": 47,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 56,
+     "O": 73,
+     "N": 53,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 56,
+     "O": 75,
+     "N": 54,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 106,
+    "month": 48,
+    "source": "achievement",
+    "node_id": "C5",
+    "option_id": "A",
+    "option_text": "从头讲清楚，包括当年踩过的坑",
+    "rest_month": false,
+    "hesitation_ms": 23648,
+    "switch_count": 2,
+    "snapshot_before": {
+     "S": 56,
+     "O": 75,
+     "N": 54,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 57,
+     "O": 74,
+     "N": 55,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [
+     "把东西讲清楚了"
+    ],
+    "note": ""
+   },
+   {
+    "seq": 107,
+    "month": 48,
+    "source": "monthly",
+    "node_id": "monthly_L4",
+    "option_id": "B",
+    "option_text": "2 点团队产出 + 1 点跨组经营",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 57,
+     "O": 74,
+     "N": 55,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 57,
+     "O": 76,
+     "N": 56,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   },
+   {
+    "seq": 108,
+    "month": 48,
+    "source": "free_time",
+    "node_id": "W1_reproduce_paper",
+    "option_id": "-",
+    "option_text": "复现到一半发现论文里省了两个关键细节。你骂了一句，然后继续调。",
+    "rest_month": false,
+    "hesitation_ms": null,
+    "switch_count": null,
+    "snapshot_before": {
+     "S": 57,
+     "O": 76,
+     "N": 56,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "snapshot_after": {
+     "S": 59,
+     "O": 76,
+     "N": 56,
+     "H": 0,
+     "D": 32,
+     "pending_dignity": 0,
+     "risk_cumulative": -27,
+     "life": 10,
+     "prof": 18,
+     "money": 15000,
+     "level": 4
+    },
+    "flags_set": [],
+    "memory_tags": [],
+    "note": ""
+   }
+  ],
+  "promotion_windows": [
+   {
+    "target_level": 2,
+    "cumulative": {
+     "value": 27,
+     "min": 8,
+     "pass": true,
+     "weight": 0.7
+    },
+    "behavior": {
+     "conceal_flags": [],
+     "max": 0,
+     "pass": true,
+     "weight": 0.2
+    },
+    "defense": {
+     "pass": true,
+     "weight": 0.1,
+     "has_defense": false
+    },
+    "promoted": true,
+    "thresholds_are_placeholder": true,
+    "month": 6,
+    "level_before": 1,
+    "level_after": 2
+   },
+   {
+    "target_level": 3,
+    "cumulative": {
+     "value": 25,
+     "min": 15,
+     "pass": true,
+     "weight": 0.7
+    },
+    "behavior": {
+     "conceal_flags": [],
+     "max": 0,
+     "pass": true,
+     "weight": 0.2
+    },
+    "defense": {
+     "pass": true,
+     "weight": 0.1,
+     "has_defense": false
+    },
+    "promoted": true,
+    "thresholds_are_placeholder": true,
+    "month": 12,
+    "level_before": 2,
+    "level_after": 3
+   },
+   {
+    "target_level": 4,
+    "cumulative": {
+     "value": 23,
+     "min": 23,
+     "pass": true,
+     "weight": 0.7
+    },
+    "behavior": {
+     "conceal_flags": [],
+     "max": 0,
+     "pass": true,
+     "weight": 0.2
+    },
+    "defense": {
+     "pass": true,
+     "weight": 0.1,
+     "has_defense": true
+    },
+    "promoted": true,
+    "thresholds_are_placeholder": true,
+    "month": 18,
+    "level_before": 3,
+    "level_after": 4
+   },
+   {
+    "target_level": 5,
+    "cumulative": {
+     "value": 30,
+     "min": 32,
+     "pass": false,
+     "weight": 0.7
+    },
+    "behavior": {
+     "conceal_flags": [],
+     "max": 0,
+     "pass": true,
+     "weight": 0.2
+    },
+    "defense": {
+     "pass": true,
+     "weight": 0.1,
+     "has_defense": true
+    },
+    "promoted": false,
+    "thresholds_are_placeholder": true,
+    "month": 24,
+    "level_before": 4,
+    "level_after": 4
+   },
+   {
+    "target_level": 5,
+    "cumulative": {
+     "value": 29,
+     "min": 32,
+     "pass": false,
+     "weight": 0.7
+    },
+    "behavior": {
+     "conceal_flags": [],
+     "max": 0,
+     "pass": true,
+     "weight": 0.2
+    },
+    "defense": {
+     "pass": true,
+     "weight": 0.1,
+     "has_defense": true
+    },
+    "promoted": false,
+    "thresholds_are_placeholder": true,
+    "month": 30,
+    "level_before": 4,
+    "level_after": 4
+   },
+   {
+    "target_level": 5,
+    "cumulative": {
+     "value": 31,
+     "min": 32,
+     "pass": false,
+     "weight": 0.7
+    },
+    "behavior": {
+     "conceal_flags": [],
+     "max": 0,
+     "pass": true,
+     "weight": 0.2
+    },
+    "defense": {
+     "pass": true,
+     "weight": 0.1,
+     "has_defense": true
+    },
+    "promoted": false,
+    "thresholds_are_placeholder": true,
+    "month": 36,
+    "level_before": 4,
+    "level_after": 4
+   },
+   {
+    "target_level": 5,
+    "cumulative": {
+     "value": 29,
+     "min": 32,
+     "pass": false,
+     "weight": 0.7
+    },
+    "behavior": {
+     "conceal_flags": [],
+     "max": 0,
+     "pass": true,
+     "weight": 0.2
+    },
+    "defense": {
+     "pass": true,
+     "weight": 0.1,
+     "has_defense": true
+    },
+    "promoted": false,
+    "thresholds_are_placeholder": true,
+    "month": 42,
+    "level_before": 4,
+    "level_after": 4
+   }
+  ],
+  "consecutive_promotion_failures": 4,
+  "crisis_talks": [
+   {
+    "month": 30,
+    "option_id": "C",
+    "attribution": {
+     "locus": "internal",
+     "stability": "unstable",
+     "controllable": true,
+     "type": "internal-behavior"
+    },
+    "consecutive": 2
+   },
+   {
+    "month": 36,
+    "option_id": "C",
+    "attribution": {
+     "locus": "internal",
+     "stability": "unstable",
+     "controllable": true,
+     "type": "internal-behavior"
+    },
+    "consecutive": 3
+   },
+   {
+    "month": 42,
+    "option_id": "C",
+    "attribution": {
+     "locus": "internal",
+     "stability": "unstable",
+     "controllable": true,
+     "type": "internal-behavior"
+    },
+    "consecutive": 4
+   }
+  ],
+  "survival_state": "stable",
+  "survival_strikes": 0,
+  "months_since_mistake": 48,
+  "incidents": [
+   {
+    "month": 24,
+    "reason": "倦怠事件（H 归零）",
+    "severity": 0,
+    "kind": "burnout"
+   }
+  ],
+  "rest_points_used_this_month": 0,
+  "window_cumulative": 29,
+  "window_flags": [],
+  "monthly_allocations": [
+   {
+    "month": 1,
+    "template_id": "monthly_L1",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 2,
+    "template_id": "monthly_L1",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 3,
+    "template_id": "monthly_L1",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 4,
+    "template_id": "monthly_L1",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 5,
+    "template_id": "monthly_L1",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 6,
+    "template_id": "monthly_L1",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 7,
+    "template_id": "monthly_L2",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 8,
+    "template_id": "monthly_L2",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 9,
+    "template_id": "monthly_L2",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 10,
+    "template_id": "monthly_L2",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 11,
+    "template_id": "monthly_L2",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 12,
+    "template_id": "monthly_L2",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 13,
+    "template_id": "monthly_L3",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 14,
+    "template_id": "monthly_L3",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 15,
+    "template_id": "monthly_L3",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 16,
+    "template_id": "monthly_L3",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 17,
+    "template_id": "monthly_L3",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 18,
+    "template_id": "monthly_L3",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 19,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 20,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 21,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 22,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 23,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 24,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 25,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 26,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 27,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 28,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 29,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 30,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 31,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 32,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 33,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 34,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 35,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 36,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 37,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 38,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 39,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 40,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 41,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 42,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 43,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 44,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 45,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 46,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 47,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   },
+   {
+    "month": 48,
+    "template_id": "monthly_L4",
+    "option_id": "B",
+    "allocation_vector": {
+     "skill": 0,
+     "output": 2,
+     "network": 1,
+     "recovery": 0
+    },
+    "rest_applied": [],
+    "rest_month": false
+   }
+  ],
+  "burnout_active": true
+ }
+}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>熊心壮职 · 标题页 · 概念稿（左侧版）</title>
+<style>
+  html,body{margin:0;padding:0;background:#efe9dd;overflow:hidden;}
+  .stage{
+    position:relative;width:1600px;height:900px;overflow:hidden;
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC","Hiragino Sans GB",sans-serif;
+    background-image:url("assets/map.jpg");
+    background-size:cover;background-position:center;
+  }
+  .vignette{
+    position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 80% at 62% 46%, rgba(30,20,10,0) 36%, rgba(30,20,10,0.36) 100%);
+  }
+  .shadeleft{
+    position:absolute;inset:0;
+    background:linear-gradient(90deg, rgba(40,26,14,0.42) 0%, rgba(40,26,14,0.18) 34%, rgba(40,26,14,0) 58%);
+  }
+
+  .topbar{position:absolute;top:26px;right:26px;display:flex;gap:14px;z-index:5;}
+  .sqbtn{
+    width:64px;height:64px;border-radius:16px;
+    background:#F6E7C7;border:3px solid #5B3A26;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 0 rgba(91,58,38,0.55), inset 0 3px 0 rgba(255,255,255,0.5);
+  }
+  .sqbtn .qmark{font-size:30px;font-weight:700;color:#5B3A26;line-height:1;}
+
+  .panelwrap{position:absolute;left:92px;top:158px;width:580px;z-index:6;}
+  .roof{position:absolute;left:50%;transform:translateX(-50%);top:-50px;}
+
+  .panel{
+    position:relative;background:#F6E7C7;
+    border:4px solid #5B3A26;border-radius:20px;
+    padding:34px 40px 32px;
+    box-shadow:0 12px 0 rgba(91,58,38,0.42), 0 22px 46px rgba(20,12,6,0.45);
+  }
+  .panel:before{
+    content:"";position:absolute;inset:9px;border:2px solid rgba(91,58,38,0.38);
+    border-radius:12px;pointer-events:none;
+  }
+  .title{
+    text-align:center;font-size:58px;font-weight:700;letter-spacing:10px;
+    line-height:1.12;color:#FBEBC8;padding-left:10px;
+    text-shadow:
+      -3px -3px 0 #5B3A26, 3px -3px 0 #5B3A26, -3px 3px 0 #5B3A26, 3px 3px 0 #5B3A26,
+      -3px 0 0 #5B3A26, 3px 0 0 #5B3A26, 0 -3px 0 #5B3A26, 0 3px 0 #5B3A26,
+      0 6px 0 rgba(91,58,38,0.55);
+  }
+  .subtitle{text-align:center;font-size:17px;color:#7A5533;letter-spacing:3px;margin-top:8px;font-weight:500;}
+  .divider{height:0;border-top:2px dashed rgba(91,58,38,0.42);margin:20px 0 18px;}
+  .savebar{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    height:44px;border-radius:999px;background:#FDF4DE;border:2px solid #5B3A26;
+    font-size:15px;color:#5B3A26;letter-spacing:1px;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,0.7);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:#7CBF4A;border:2px solid #5B3A26;}
+  .btn{
+    display:flex;align-items:center;justify-content:center;
+    height:54px;border-radius:14px;border:3px solid #5B3A26;
+    font-size:20px;font-weight:700;letter-spacing:3px;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,0.28), 0 5px 0 rgba(91,58,38,0.5);
+  }
+  .btn+.btn{margin-top:12px;}
+  .btn.main{background:#B94A32;color:#FBEBC8;text-shadow:0 2px 0 rgba(0,0,0,0.22);}
+  .btn.sub{background:#FDF4DE;color:#5B3A26;font-size:17px;}
+  .btn.exit{background:#2F7A33;color:#FBEBC8;text-shadow:0 2px 0 rgba(0,0,0,0.22);}
+  .row{display:flex;gap:12px;}
+  .row .btn{flex:1;}
+
+  .stamp{
+    position:absolute;right:28px;bottom:24px;z-index:5;
+    font-size:14px;color:#FBEBC8;letter-spacing:2px;
+    text-shadow:0 2px 0 rgba(60,38,20,0.85), 0 0 12px rgba(30,18,8,0.9);
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="shadeleft"></div>
+  <div class="vignette"></div>
+
+  <div class="topbar">
+    <div class="sqbtn" title="我的报告">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M7 4h12l6 6v18H7z" fill="#FDF4DE" stroke="#5B3A26" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M19 4v6h6" fill="none" stroke="#5B3A26" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M11 16h10M11 21h7" stroke="#5B3A26" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="sqbtn" title="游戏设置">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M6 11h20M6 21h20" stroke="#5B3A26" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="12" cy="11" r="4" fill="#FDF4DE" stroke="#5B3A26" stroke-width="2.6"/>
+        <circle cx="21" cy="21" r="4" fill="#FDF4DE" stroke="#5B3A26" stroke-width="2.6"/>
+      </svg>
+    </div>
+    <div class="sqbtn" title="帮助"><span class="qmark">?</span></div>
+  </div>
+
+  <div class="panelwrap">
+    <div class="roof">
+      <svg width="640" height="66" viewBox="0 0 660 66" fill="none">
+        <path d="M34 60 L626 60 L578 26 L330 2 L82 26 Z" fill="#E08A3C" stroke="#5B3A26" stroke-width="3.4" stroke-linejoin="round"/>
+        <path d="M52 48 L608 48 L584 38 L330 22 L76 38 Z" fill="#C96A2E" opacity="0.55"/>
+        <rect x="52" y="48" width="556" height="12" fill="#B94A32" stroke="#5B3A26" stroke-width="3"/>
+        <path d="M330 20 L344 34 L330 48 L316 34 Z" fill="#F2E3C2" stroke="#5B3A26" stroke-width="2.6" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <div class="panel">
+      <div class="title">熊心壮职</div>
+      <div class="subtitle">Agent 开发师 · 48 个月</div>
+      <div class="divider"></div>
+      <div class="savebar"><span class="dot"></span>小熊镇 · 第 1 年 第 1 月 · L1 新人</div>
+      <div style="height:18px"></div>
+      <div class="btn main">继续游戏</div>
+      <div class="btn main">开始新游戏</div>
+      <div class="btn main">加载游戏</div>
+      <div class="row" style="margin-top:12px;">
+        <div class="btn sub">我的报告</div>
+        <div class="btn sub">游戏设置</div>
+      </div>
+      <div class="btn exit">退出游戏</div>
+    </div>
+  </div>
+
+  <div class="stamp">小熊镇 v1.0 · 画风概念稿 · B 版构图</div>
+</div>
+</body>
+</html>

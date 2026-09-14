@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "_source": "《事件场景与人物对照表 V2》《剧情设计详细方案 V5.27》。开场三屏与地图内 NPC **共用这一份**，改演员只改这里。",
+  "_artNote": "角色设定是【熊】。当前 loadout 用的是 kun913 现成的人类纸娃娃图集（elder_man / skirt_woman / suit_man / neutral_hoodie / energetic_ponytail / street_creator），**只是临时占位**；等美术出熊的纸娃娃图集后整体替换，字段名不变。",
+  "_decisions": [
+    "角色形象：保留【熊】设定，美术出图；在此之前沿用人类纸娃娃占位（2026-09-13 定）",
+    "演员表：只用这 5 只熊，Godot 里原有的 8 个区域 NPC（艾米/陈工/林总/周岚/小莫/阿哲/宁宁/乐乐）作废（2026-09-13 定）",
+    "区域名：以 data/town/regions.json 为准",
+    "已删除的「选择初始同事」屏的残留字段（recommended / selectable）不再保留"
+  ],
+  "coordinateSpace": { "width": 1920, "height": 1080 },
+  "npcs": [
+    {
+      "id": "wange",
+      "zone": "B",
+      "name": "王哥",
+      "role": "技术 · 你的导师",
+      "place": "工位右侧走廊",
+      "line": "爱泼冷水，但认可扎实的调研。他说「别折腾」的时候，一般是真心话。",
+      "note": "",
+      "loadout": "neutral_hoodie",
+      "route": [[850, 325], [1070, 325], [1070, 370], [850, 370]],
+      "prompt": "方案我看过了，先别急着推。说说你为什么选这条路线。",
+      "relation": true
+    },
+    {
+      "id": "chengong",
+      "zone": "A",
+      "name": "陈工",
+      "role": "邻组 Leader",
+      "place": "长桌主位",
+      "line": "话少，只问结论和成本。不陪你聊天，但会记住你兑现过什么。",
+      "note": "不进关系系统",
+      "noteDetail": "事务型直属上级：无好感度、无熊友卡、不参与邀约",
+      "loadout": "suit_man",
+      "route": [[405, 345], [510, 345], [510, 390], [405, 390]],
+      "prompt": "结论是什么？预算和工期，一句话说完。",
+      "relation": false
+    },
+    {
+      "id": "xiaolin",
+      "zone": "C",
+      "name": "小林",
+      "role": "产品",
+      "place": "创意水巷",
+      "line": "被客户催得急，语速偏快。先把需求塞给你，再跟你一起想办法。",
+      "note": "",
+      "loadout": "energetic_ponytail",
+      "_loadoutNote": "造型待产品定；若定为女性形象，把 loadout 换成 skirt_woman 即可",
+      "route": [[1435, 335], [1650, 335], [1650, 380], [1435, 380]],
+      "prompt": "客户那边催得很急，先帮我把需求优先级定下来。",
+      "relation": true
+    },
+    {
+      "id": "laozhou",
+      "zone": "D",
+      "name": "老周",
+      "role": "资深",
+      "place": "会议室",
+      "line": "在听，等着看谁认领。年轻时也被侵占过署名——他知道那是什么滋味。",
+      "note": "",
+      "loadout": "elder_man",
+      "route": [[1205, 680], [1285, 680], [1285, 800], [1205, 800]],
+      "prompt": "复盘会上有不同说法。你觉得该由谁来牵头？",
+      "relation": true
+    },
+    {
+      "id": "xiaozhao",
+      "zone": "H",
+      "name": "小赵",
+      "role": "实习生",
+      "place": "走廊 · 看守记忆墙",
+      "line": "常在被帮助的位置。深夜路过会停一拍：「师兄还没走？」",
+      "note": "",
+      "loadout": "street_creator",
+      "route": [[365, 380], [405, 380], [405, 490], [365, 490]],
+      "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？",
+      "relation": true
+    }
+  ]
+}
