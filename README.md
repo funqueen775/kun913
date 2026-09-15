@@ -74,6 +74,10 @@ npm run dev        # http://localhost:5173
 
 底图：`assets/town/workplace_town_reference.png`。
 
+## 自己绘制碰撞
+
+在 Godot 中打开 `tools/CollisionEditor.tscn`，按 F6 运行。左键逐点勾轮廓，右键撤销最后一个点；选中已有轮廓后可重画或删除。点击“保存到 collision.json”后，运行主场景并按 F3 即可检查红色轮廓。
+
 ## NPC 演员表
 
 `data/town/npcs.json` 是**演员表的唯一来源：开场三屏和地图内 NPC 都读它**（`IntroSequence.gd` 与 `WorkplaceTown.gd` 各读一次）。改演员只改这个 JSON，不要改脚本——两份脚本里的同名数组都只是读不到 JSON 时的兜底。

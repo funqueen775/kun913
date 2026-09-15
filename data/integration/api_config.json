@@ -1,0 +1,6 @@
+{
+  "mode": "mock",
+  "baseUrl": "",
+	"contentVersion": "godot-demo-v1",
+	"note": "当前 Godot 剧情 ID 与后端 v1 剧情尚未统一，因此只允许 mock 队列。后端 M4 服务和唯一剧情版本确认后，再填写 baseUrl、改为 live，并将 contentVersion 改为一致版本；前端不计算分数。"
+}

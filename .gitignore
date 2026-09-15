@@ -10,6 +10,7 @@
 .godot/
 output/
 tmp-godot-templates/
+test_artifacts/
 *.hap
 .env
 .env.*

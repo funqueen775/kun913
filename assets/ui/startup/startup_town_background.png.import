@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jo1jolxl7uiu"
-path="res://.godot/imported/town_3.png-b7946d8449a492681c04cf43c72d3834.ctex"
+uid="uid://d3jh2pkdb23tw"
+path="res://.godot/imported/startup_town_background.png-7e369c0b3c7dae63da5901b68428293d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/intro/town_3.png"
-dest_files=["res://.godot/imported/town_3.png-b7946d8449a492681c04cf43c72d3834.ctex"]
+source_file="res://assets/ui/startup/startup_town_background.png"
+dest_files=["res://.godot/imported/startup_town_background.png-7e369c0b3c7dae63da5901b68428293d.ctex"]
 
 [params]
 

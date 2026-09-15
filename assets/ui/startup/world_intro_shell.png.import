@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jo1jolxl7uiu"
-path="res://.godot/imported/town_3.png-b7946d8449a492681c04cf43c72d3834.ctex"
+uid="uid://b5n7xeukvuhdu"
+path="res://.godot/imported/world_intro_shell.png-4b0304743c63493d9f07782fcc86bed4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/intro/town_3.png"
-dest_files=["res://.godot/imported/town_3.png-b7946d8449a492681c04cf43c72d3834.ctex"]
+source_file="res://assets/ui/startup/world_intro_shell.png"
+dest_files=["res://.godot/imported/world_intro_shell.png-4b0304743c63493d9f07782fcc86bed4.ctex"]
 
 [params]
 
