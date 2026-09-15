@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>熊心壮职 · Agent开发师 · 五模块结合设计 V1</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #f7f7f5; color: #2c2c2a;
+    font-size: 16px; line-height: 1.75;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 24px; line-height: 1.4; margin: 8px 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid #e4e2da; scroll-margin-top: 56px; }
+  h3 { font-size: 17px; margin: 24px 0 8px; color: #44423c; scroll-margin-top: 56px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: #55524a; scroll-margin-top: 56px; }
+  p { margin: 10px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; display: block; overflow-x: auto; white-space: normal; }
+  th, td { border: 1px solid #ddd9cf; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #efece3; font-weight: 600; }
+  tr:nth-child(even) td { background: #faf9f5; }
+  code { background: #efece3; padding: 1px 5px; border-radius: 4px; font-size: 13.5px; font-family: "SFMono-Regular", Consolas, monospace; }
+  pre { background: #2d2b29; color: #f3f1ec; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  blockquote { border-left: 3px solid #c9c3b4; margin: 12px 0; padding: 4px 14px; color: #66635b; background: #faf9f5; }
+  li { margin: 4px 0; }
+  .meta { color: #888780; font-size: 14px; margin-bottom: 18px; }
+  .toc { background: #fff; border: 1px solid #e4e2da; border-radius: 12px; padding: 14px 18px; margin: 18px 0 8px; }
+  .toc ol { margin: 8px 0 0; padding-left: 22px; }
+  .toc a { color: #185fa5; text-decoration: none; }
+  .toc li.t3 { list-style: none; margin-left: -16px; font-size: 14px; color: #666; }
+  .topbar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid #e4e2da; padding: 10px 18px; z-index: 10; display: flex; align-items: center; justify-content: space-between; }
+  .topbar a { color: #185fa5; text-decoration: none; font-size: 14px; }
+  .backtop { position: fixed; right: 16px; bottom: 20px; background: #185fa5; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span>熊心壮职 · Agent开发师 · 详细设计 V1.5</span>
+  <a href="#top">回到顶部</a>
+</div>
+<div class="wrap" id="top">
+  <h1>熊心壮职 · Agent 开发师<br>五模块结合设计 V1</h1>
+  <p class="meta">事件·机制·美术·埋点·记忆 的咬合设计 · 2026-09-08</p>
+  <div class="toc"><strong>目录</strong><ol><li class="t2"><a href="#sec-1">一、五者不是并列关系</a></li><li class="t2"><a href="#sec-2">二、模块接口契约（谁给谁什么）</a></li><li class="t2"><a href="#sec-3">三、六个结合接口</a></li><li class="t3"><a href="#sec-3-1">接口 1：事件 × 美术 —— 场景分区承接事件类型</a></li><li class="t3"><a href="#sec-3-2">接口 2：机制 × 美术 —— 主动探索 = "走到那个区域找那只熊" ★</a></li><li class="t3"><a href="#sec-3-3">接口 3：记忆系统 × 美术 —— memory_tags → 记忆墙三层</a></li><li class="t3"><a href="#sec-3-4">接口 4：机制 × 美术 —— "不透明性"的可视化 ★（最缺、也最有杀伤力）</a></li><li class="t3"><a href="#sec-3-5">接口 5：埋点 × 美术 —— 犹豫的可视化（观察者效应）</a></li><li class="t3"><a href="#sec-3-6">接口 6：报告 × 美术 —— 报告页三层重排</a></li><li class="t2"><a href="#sec-4">四、三张落地对照表</a></li><li class="t3"><a href="#sec-4-1">表 1：NPC 映射表（美术形象 ↔ 剧情人物）</a></li><li class="t3"><a href="#sec-4-2">表 2：事件类型 → 场景分区 / 常驻角色 / 空间语言</a></li><li class="t3"><a href="#sec-4-3">表 3：memory_tags → 记忆墙呈现</a></li><li class="t2"><a href="#sec-5">五、三个冲突及解决</a></li><li class="t3"><a href="#sec-5-1">冲突 1：NPC 名字对不上</a></li><li class="t3"><a href="#sec-5-2">冲突 2：职业选择页有五张职业卡，但已锁死一条线</a></li><li class="t3"><a href="#sec-5-3">冲突 3：报告页四层装不下新模块</a></li><li class="t2"><a href="#sec-6">六、完整链路演示：一次点击如何走完五个模块</a></li><li class="t2"><a href="#sec-7">七、待确认事项</a></li></ol></div>
+  <article id="content">
+<h1>熊心壮职 · 五模块结合设计 V1</h1>
+<p>配套：主册（引擎与机制）V1.5、剧情册 V2、算法册 V1、美术方案 V2.2。</p>
+<p>本文档只回答一个问题：<strong>事件系统、游戏机制、美术设计、数据埋点、记忆系统这五个，怎么咬合在一起。</strong></p>
+<hr />
+<h2 id="sec-1">一、五者不是并列关系</h2>
+<p>把这五个当成平级模块是最大的误解。实际结构是<strong>一条主链 + 一个横向层 + 一个并联层</strong>：</p>
+<pre><code>        事件系统  →  游戏机制  →  美术设计
+       （发生什么）  （怎么结算）  （看到什么）
+              ↘         ↓         ↙
+                记忆系统（横向贯穿：世界怎么记得你）
+                        ↓
+        数据埋点（并联全程：每一步都记，不是最后一环）
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>本质</th>
+<th>一句话职责</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>事件系统</strong></td>
+<td>内容源</td>
+<td>提供"发生什么"（剧本与题库）</td>
+</tr>
+<tr>
+<td><strong>游戏机制</strong></td>
+<td>规则引擎</td>
+<td>把内容变成状态变化（结算与推进）</td>
+</tr>
+<tr>
+<td><strong>记忆系统</strong></td>
+<td>连续性层</td>
+<td>让世界记住你，并反过来改变后续内容</td>
+</tr>
+<tr>
+<td><strong>美术设计</strong></td>
+<td>表达层</td>
+<td>上述三者全部变成看得见的东西</td>
+</tr>
+<tr>
+<td><strong>数据埋点</strong></td>
+<td>测量层</td>
+<td>全程记录，喂给报告算法</td>
+</tr>
+</tbody>
+</table>
+<p><strong>贯穿一切的原则</strong>：每个模块都要<strong>同时服务"体验"和"测量"</strong>。这是本项目与普通游戏最根本的区别——我们是测评产品伪装成游戏。</p>
+<hr />
+<h2 id="sec-2">二、模块接口契约（谁给谁什么）</h2>
+<table>
+<thead>
+<tr>
+<th>从</th>
+<th>到</th>
+<th>传递什么</th>
+<th>形式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>事件系统</td>
+<td>游戏机制</td>
+<td>选项的六维标定、flag、条件修饰符</td>
+<td>EventConfig JSON</td>
+</tr>
+<tr>
+<td>事件系统</td>
+<td>美术设计</td>
+<td>场景类型、出场 NPC、情境基调</td>
+<td>事件元数据 <code>scene_hint</code></td>
+</tr>
+<tr>
+<td>游戏机制</td>
+<td>记忆系统</td>
+<td>本次选择产生的 memory_tags</td>
+<td>字符串标签数组</td>
+</tr>
+<tr>
+<td>记忆系统</td>
+<td>事件系统</td>
+<td>当前记忆标签（供调度器加权）</td>
+<td>标签 → 事件权重</td>
+</tr>
+<tr>
+<td>记忆系统</td>
+<td>美术设计</td>
+<td>记忆墙更新内容（便签/照片/徽章）</td>
+<td>见第四章表 3</td>
+</tr>
+<tr>
+<td>机制 + 事件 + 记忆</td>
+<td>美术设计</td>
+<td>当前六维状态（S/O/N/H 可见、D 半可见、R 隐藏）</td>
+<td>状态快照（<strong>R 不下发</strong>）</td>
+</tr>
+<tr>
+<td>全部</td>
+<td>数据埋点</td>
+<td>每次行为的原始记录</td>
+<td>12 个埋点事件</td>
+</tr>
+<tr>
+<td>数据埋点</td>
+<td>报告系统</td>
+<td>特征 → 判定 → 报告映射</td>
+<td>见算法册</td>
+</tr>
+</tbody>
+</table>
+<p><strong>红线</strong>：R（隐藏风险）与晋升阈值<strong>永不下发前端</strong>，美术层也只能表现"有东西在累积"，不能显示数值（见接口 4）。</p>
+<hr />
+<h2 id="sec-3">三、六个结合接口</h2>
+<h3 id="sec-3-1">接口 1：事件 × 美术 —— 场景分区承接事件类型</h3>
+<p>美术已定义五块区域，正好对应我们的五大事件类别。事件触发时镜头与角色自动切到对应区域，玩家不看文字也知道"这是哪类事"。</p>
+<table>
+<thead>
+<tr>
+<th>区域</th>
+<th>常驻</th>
+<th>承接</th>
+<th>空间语言（沿用美术方案）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开放工位区（中心）</td>
+<td>熊技术（王哥）</td>
+<td><strong>技术决策类 T1-T6</strong></td>
+<td>最亮最暖，屏幕光常亮</td>
+</tr>
+<tr>
+<td>洽谈区（右侧）</td>
+<td>熊销售（小林）</td>
+<td><strong>客户与商业类 C1-C5</strong></td>
+<td>沙发茶几，第二亮，制造距离压迫</td>
+</tr>
+<tr>
+<td>休息区/咖啡角（左前）</td>
+<td>熊行政（小赵）</td>
+<td><strong>自我管理类 M1-M5</strong></td>
+<td>柔光绿植，失败后被接住的地方</td>
+</tr>
+<tr>
+<td>主管区（后景高位）</td>
+<td>熊总（老周）</td>
+<td>人际政治 P4/P6、汇报 C5、<strong>晋升考核</strong></td>
+<td>高两级台阶，权威但不遥远</td>
+</tr>
+<tr>
+<td>记忆墙（后墙正中+射灯）</td>
+<td>熊行政看守</td>
+<td>每次记忆更新的高潮时刻</td>
+<td>第二视觉焦点</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>补充：人际政治类（P1/P2/P3/P5/P7）多发生在<strong>工位区与洽谈区的交界</strong>——因为这类冲突本质上是"协作中的摩擦"，不固定区域，由事件元数据 <code>scene_hint</code> 指定。</p>
+</blockquote>
+<h3 id="sec-3-2">接口 2：机制 × 美术 —— 主动探索 = "走到那个区域找那只熊" ★</h3>
+<p><strong>这是五个模块咬合得最漂亮的一处。</strong></p>
+<p>我们在剧情册 V2 定了"每 3 个月 1 次主动探索：花体力找王哥/小林/陈工/小赵/独处"，但一直没定 UI 怎么呈现。美术的场景分区天然就是答案：</p>
+<blockquote>
+<p>探索月不弹菜单，而是<strong>玩家在等距地图上走到某个区域</strong>——
+去开放工位区找王哥（技术指导）／去洽谈区找小林（需求情报）／去咖啡角找小赵（带教）／去主管区找熊总（向上）／回自己工位独处（自己研究）。</p>
+</blockquote>
+<p><strong>为什么这比点菜单强</strong>：
+1. 有空间感和仪式感，"主动出击"名副其实；
+2. 走动轨迹本身可视化——<strong>某人 48 个月总往主管区跑，一眼看出来</strong>（社交指纹的视觉呈现，无需图表）；
+3. 与埋点天然对接：进入区域即上报 <code>explore_click</code>，区域 ID 就是 target。</p>
+<p><strong>成本</strong>：复用美术已有的四区域场景，只需增加"玩家角色在区域间移动"的简单位移动画 + 区域热区。</p>
+<h3 id="sec-3-3">接口 3：记忆系统 × 美术 —— memory_tags → 记忆墙三层</h3>
+<p>美术的记忆墙已有三层（手写便签 / 拍立得 / 金边徽章）与四条生成规则。需要和我们的 <code>memory_tags</code> 建立完整映射：</p>
+<table>
+<thead>
+<tr>
+<th>记忆标签（机制层产生）</th>
+<th>记忆墙呈现</th>
+<th>视觉规格</th>
+<th>触发条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>「值得信赖的倾听者」</td>
+<td>蓝便签</td>
+<td>手写体（站酷快乐体）</td>
+<td>连续两次选择"先倾听"类选项</td>
+</tr>
+<tr>
+<td>「那次伸手」</td>
+<td>拍立得照片</td>
+<td>关键场景自动截图</td>
+<td>帮助同事类选择</td>
+</tr>
+<tr>
+<td>「韧性」</td>
+<td>金边徽章</td>
+<td>记忆金 #EAC26B</td>
+<td>重试 ≥2 次后完成</td>
+</tr>
+<tr>
+<td>「表达者」</td>
+<td>黄便签</td>
+<td>手写体</td>
+<td>会议主动发言</td>
+</tr>
+<tr>
+<td><strong>「被他坑过一次」</strong></td>
+<td><strong>灰便签（倒贴）</strong></td>
+<td>去饱和、微微歪贴</td>
+<td>隐瞒/糊弄类 flag 产生</td>
+</tr>
+<tr>
+<td><strong>「好说话」</strong></td>
+<td><strong>浅灰便签（边缘卷曲）</strong></td>
+<td>手写体、褪色</td>
+<td>甩锅时选择"认了"</td>
+</tr>
+<tr>
+<td><strong>「替我出过头」</strong></td>
+<td><strong>双人拍立得</strong></td>
+<td>与 NPC 合影</td>
+<td>为弱者发声类选择</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键原则：负面记忆必须上墙。</strong> 只记好事的记忆墙是假的，玩家一眼看穿。那些灰便签才是"被记住"的完整含义，也是第 19 月 R2 合规事件里陈工点名的伏笔——<strong>墙上早就贴着证据了</strong>。</p>
+<p>动效沿用美术方案：新便签 0.3s 弹入 + 贴纸音效；负面便签的弹入改为"轻轻贴上、略微歪斜"，音效低半度。</p>
+<h3 id="sec-3-4">接口 4：机制 × 美术 —— "不透明性"的可视化 ★（最缺、也最有杀伤力）</h3>
+<p>我们的设计里有一批<strong>故意不让玩家看见</strong>的东西：R（隐藏风险）完全不可见、晋升阈值隐藏、D 半可见。</p>
+<p>美术方案目前没有对应表达。但这里恰恰是戏剧性最强的：</p>
+<blockquote>
+<p><strong>记忆墙旁设一个"上锁的抽屉"</strong>（或记忆墙背面）。玩家看得见它、知道它在变沉，但打不开。
+每次埋雷类选择 → 抽屉轻微震动 + 一声闷响（无视觉提示内容）。
+<strong>第 19 月事故引爆时抽屉弹开</strong>，里面全是他前 16 个月塞进去的灰便签——第 3 月的 PR、第 7 月的评测集、第 15 月的沉默。</p>
+</blockquote>
+<p><strong>为什么这是神来之笔</strong>：
+1. 把"隐藏机制"从数值隐藏升级为<strong>可视悬念</strong>，玩家全程知道有事要发生；
+2. 事故爆发时给玩家"原来如此"的冲击，而不是莫名其妙的惩罚；
+3. 完全符合"阈值不下发"的安全红线（抽屉不显示任何数字）。</p>
+<p>同理，<strong>晋升阈值的隐藏</strong>可用"主管区门上的进度刻度条"表达——条在动，但不标数字、不标满格在哪。</p>
+<h3 id="sec-3-5">接口 5：埋点 × 美术 —— 犹豫的可视化（观察者效应）</h3>
+<p>美术已有"注视跟随"（悬停选项时，眼球先动 80ms、头部随后、身体最后）。与我们的核心埋点 <code>hesitation_ms</code> 结合：</p>
+<table>
+<thead>
+<tr>
+<th>悬停时长</th>
+<th>熊的反应</th>
+<th>埋点含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-2 秒</td>
+<td>正常注视</td>
+<td>直觉型</td>
+</tr>
+<tr>
+<td>3-8 秒</td>
+<td>微微歪头等待</td>
+<td>正常思考</td>
+</tr>
+<tr>
+<td>8-15 秒</td>
+<td>眉毛轻抬，目光审视</td>
+<td><strong>高犹豫信号</strong></td>
+</tr>
+<tr>
+<td>15 秒以上</td>
+<td>轻敲桌面 / 熊技术摘下耳机</td>
+<td><strong>极高犹豫，标记可能伪装</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>意义</strong>：把犹豫变成可见的社交压力——NPC 在看着你纠结，你更难"演"出一个完美答案。这正是我们要的<strong>观察者效应</strong>（测量行为本身让被测更真实），也是"伪装者挑战"的体验基础。</p>
+<p>报告里的"犹豫地图"沿用同一套视觉语言（同一只熊的同一套表情），玩家瞬间看懂。</p>
+<h3 id="sec-3-6">接口 6：报告 × 美术 —— 报告页三层重排</h3>
+<p>美术的报告页原为四层（人格印象 → 能力雷达 → 行为证据 → 岗位建议）。按算法册 §7 的<strong>三层结构</strong>重排，并补呈现红线：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>内容</th>
+<th>免费/订阅</th>
+<th>美术要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>一句话人格印象</td>
+<td>免费</td>
+<td>大字 + 熊总立绘</td>
+</tr>
+<tr>
+<td>2</td>
+<td>能力雷达（六维，<strong>不标数值</strong>）</td>
+<td>简版免费</td>
+<td>沿用美术方案，去掉数字标签</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>大五近似剖面</strong>（自评 vs 行为<strong>双条对照</strong>）</td>
+<td>概览免费</td>
+<td>双色条形、<strong>不标点值</strong>、矛盾处高亮记忆金</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>行为证据链</strong>（可点开，精确到毫秒/次数）</td>
+<td>免费 1 条</td>
+<td>卡片式，点开显示原始记录</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>岗位市场参考</strong>（真实薪资与要求占比，<strong>给数字</strong>）</td>
+<td>免费第 1</td>
+<td>数字卡片 + 标注「来自 5000 条在招 JD」</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>交叉提示：差在哪</strong>（行为语言，非数值）</td>
+<td>免费</td>
+<td>引回具体行为事件编号</td>
+</tr>
+<tr>
+<td>7</td>
+<td>社交指纹 / 犹豫地图 / 晋升轨迹</td>
+<td>订阅</td>
+<td>地图轨迹图复用场景美术</td>
+</tr>
+</tbody>
+</table>
+<p><strong>视觉红线（V3 新增，美术必须遵守）</strong>：
+1. 特质条形<strong>一律不标数字</strong>——只用长短 + 五档词（很低/偏低/中等/偏高/很高）；
+2. 雷达图<strong>不标数值</strong>；
+3. 差距区标注用<strong>行为语言</strong>（「没人监督时」），不标「−2.2」；
+4. 晋升/风险<strong>永不出现阈值或「还差多少」</strong>；
+5. 市场数据区<strong>必须给真实数字</strong>并标注来源——这是整份报告可信度的锚。</p>
+<hr />
+<h2 id="sec-4">四、三张落地对照表</h2>
+<h3 id="sec-4-1">表 1：NPC 映射表（美术形象 ↔ 剧情人物）</h3>
+<p>美术四熊，剧情册五个人物 + 大领导。<strong>映射方案</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>美术形象</th>
+<th>剧情人物</th>
+<th>关系定位</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>熊技术</strong>（开放工位区）</td>
+<td><strong>王哥</strong></td>
+<td>导师，带你入门</td>
+<td>主线导师，技术类事件主要对手戏</td>
+</tr>
+<tr>
+<td><strong>熊技术·邻组变体</strong></td>
+<td><strong>陈工</strong></td>
+<td>邻组同事，跨组情报源</td>
+<td>复用熊技术骨架 + 差异化配饰（深灰毛、无叶形胸针、圆框眼镜），成本约 +0.3</td>
+</tr>
+<tr>
+<td><strong>熊销售</strong>（洽谈区）</td>
+<td><strong>小林</strong></td>
+<td>产品/对外，甩锅那位</td>
+<td>商业与需求类事件</td>
+</tr>
+<tr>
+<td><strong>熊行政</strong>（休息区/记忆墙）</td>
+<td><strong>小赵</strong></td>
+<td>实习生，后来看守记忆墙</td>
+<td>被你帮助过的人见证你的历史，情感锚点</td>
+</tr>
+<tr>
+<td><strong>熊总</strong>（主管区）</td>
+<td><strong>老周</strong> + 大领导</td>
+<td>资深权威；晋升答辩评委</td>
+<td>侵占署名事件用老周身份，答辩用"熊总"权威形象</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么这样映射</strong>：
+- 王哥=熊技术（技术导师）最自然；
+- 小赵看守记忆墙有情感意义——<strong>你带过的人，守着你的历史</strong>；
+- 陈工复用变体而不是新增第五只熊，成本可控（美术方案：四熊共享骨骼，只做头/服/配饰差异，成本约 1+0.3×3，故加一个变体 ≈ +0.3）。</p>
+<h3 id="sec-4-2">表 2：事件类型 → 场景分区 / 常驻角色 / 空间语言</h3>
+<p>见接口 1 表格（即该表）。实现时作为事件 JSON 的 <code>scene_hint</code> 字段下发。</p>
+<h3 id="sec-4-3">表 3：memory_tags → 记忆墙呈现</h3>
+<p>见接口 3 表格（含负面记忆）。</p>
+<hr />
+<h2 id="sec-5">五、三个冲突及解决</h2>
+<h3 id="sec-5-1">冲突 1：NPC 名字对不上</h3>
+<p>美术「熊总/熊销售/熊行政/熊技术」vs 剧情「王哥/陈工/小林/老周/小赵」——<strong>已解决</strong>，见表 1。需同步给美术与策划双方。</p>
+<h3 id="sec-5-2">冲突 2：职业选择页有五张职业卡，但已锁死一条线</h3>
+<p>我们在 V1.1 已锁死 Agent 开发师一条体验线（其他线不做剧情）。美术方案仍设计"五张职业卡：主题色带+代表物件+职业印象+挑战标签"。</p>
+<p><strong>解决方案：改成「入职 Offer 页」</strong>——
+- 保留美术的全部视觉元素（主题色带、代表物件、职业印象、挑战标签）；
+- 但只展示 <strong>Agent 开发师一张卡的放大版</strong>，作为"你收到的入职通知"，而非五选一；
+- 其余四张的美术素材不浪费：降级为<strong>页面背景中的虚化卡片</strong>（暗示世界上还有其他职业），视觉丰富度保留，但不构成可点选项，也不构成承诺。</p>
+<p>这样既不违背"锁死一条线"的产品决策，又不推翻美术同学已完成的设计工作量。</p>
+<h3 id="sec-5-3">冲突 3：报告页四层装不下新模块</h3>
+<p>已解决，见接口 6 的六层重排。</p>
+<hr />
+<h2 id="sec-6">六、完整链路演示：一次点击如何走完五个模块</h2>
+<p>用真实案例串起来（第 7 月，评测集事件 T2）：</p>
+<ol>
+<li><strong>事件系统</strong>：调度器判定 L2 阶段、前置 T1 已完成 → 触发 T2（月度主线），<code>scene_hint = 开放工位区</code>，出场熊技术（王哥）。玩家看到时间卡片「第 7 月 · 你已经能独立负责一个模块了」。</li>
+<li><strong>美术设计</strong>：镜头切到开放工位区，屏幕光常亮，王哥挂着耳机偶尔抖腿（待机动作）；三个选项浮出。</li>
+<li><strong>玩家犹豫</strong>：鼠标悬停"B 先不建"上 —— 王哥眼球先动 → 转头注视 → 8 秒后眉毛轻抬（接口 5）。<strong>埋点记录</strong> <code>option_hover</code> 与停留时长。</li>
+<li><strong>玩家点击</strong>：<code>option_click</code> 上报（含 <code>snapshot_before</code>）。</li>
+<li><strong>游戏机制</strong>：服务端 &lt;50ms 结算——O+2、S−1、<strong>风险 +3</strong>；判定当前情境为"中"（工期紧），记入行为序列。</li>
+<li><strong>记忆系统</strong>：产生 memory_tag「求快」，写入王哥的记忆列表；<strong>记忆墙新增一张浅灰便签</strong>（接口 3）；同时<strong>上锁抽屉轻微震动一声</strong>（接口 4）。</li>
+<li><strong>美术反馈</strong>：王哥"收起热情，说再来一次"（负向反馈），<strong>无红叉、无扣分提示</strong>（美术铁律）；日夜状态若触发加班则 10s 渐变入夜，熊技术打哈欠配合。</li>
+<li><strong>埋点归档</strong>：<code>task_complete</code> 汇总月度数据；风险累积 +3 进入晋升行为层。</li>
+<li><strong>后续兑现</strong>：第 22 月 C4 客户 Demo 事件，因 T2 未建评测集，<strong>翻车概率上浮</strong>——五个模块的因果闭环在这里合拢。</li>
+</ol>
+<p><strong>这条链路的意义</strong>：五个模块不是各做各的，而是同一次点击在五个层面同时发生。任何一环缺失，体验或测量就会断。</p>
+<hr />
+<h2 id="sec-7">七、待确认事项</h2>
+<ol>
+<li><strong>陈工是否接受"熊技术变体"方案</strong>（+0.3 成本），还是坚持做第五只独立形象（+1 成本）？</li>
+<li><strong>上锁抽屉</strong>的美术实现成本（需美术同学评估：震动 + 弹开动效约 1.5-3s）。</li>
+<li><strong>主动探索的移动交互</strong>：是自由行走（成本高）还是点击区域热区直接切镜（成本低）？建议先用后者，决赛版本够用。</li>
+<li>「入职 Offer 页」改造需与美术同学确认工作量。</li>
+</ol>
+  </article>
+</div>
+<a class="backtop" href="#top" title="回到顶部">↑</a>
+</body>
+</html>

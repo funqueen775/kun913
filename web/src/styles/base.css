@@ -1,0 +1,88 @@
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  background: #efe9dd;
+  font-family: var(--xz-font);
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 画布只在自己的容器里铺满，绝不外溢。
+   #root 定位成 relative 是为 .stage-viewport 的 absolute 提供参照 ——
+   用 absolute 而不是 fixed：万一页面被嵌在带工具条的容器里预览，
+   fixed 会盖住容器自己的导航栏。 */
+#root {
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-viewport {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* 设计稿基准 1600×900，正好是地图原生分辨率；由 Stage 组件等比缩放适配任何窗口 */
+.stage {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  transform-origin: center center;
+  background-color: #6B8F3E;
+}
+
+.stage__map {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform-origin: center center;
+}
+
+/* 底图缓慢推近：静态画面有呼吸感，也让标题页不像一张贴图 */
+@keyframes xz-drift {
+  from { transform: scale(1); }
+  to   { transform: scale(1.07); }
+}
+
+.stage__map--drift { animation: xz-drift 30s ease-in-out infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage__map--drift { animation: none; }
+  .xz-rise { animation: none !important; opacity: 1 !important; }
+}
+
+.stage__shade-left {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(40, 26, 14, 0.32) 0%, rgba(40, 26, 14, 0.13) 34%, rgba(40, 26, 14, 0) 58%);
+}
+
+.stage__vignette { position: absolute; inset: 0; }
+
+/* 分层入场：标题页的元素自上而下依次升起，比整屏硬切有仪式感 */
+@keyframes xz-rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.xz-rise { animation: xz-rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.stage__stamp {
+  position: absolute;
+  right: 24px;
+  bottom: 20px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(26, 16, 8, 0.44);
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--xz-title);
+  text-shadow: 0 2px 0 rgba(20, 12, 6, 0.9);
+}

@@ -1,0 +1,229 @@
+{
+  "_readme": "熊心壮职 · Agent开发师 · 任务1事件配置。六维口径对齐CareerSim附录：S技能/O产出/N人脉/H健康/D尊严/风险(隐藏)。标定原则：每个选项至少两个维度有变化、无全正选项；D只记pending月末结算；risk玩家不可见，累积超阈值触发现场事故事件。",
+  "event_id": "agent_l1_task1_tech_stack",
+  "position": "agent_dev",
+  "level": 1,
+  "title": "入职第一天：技术选型",
+  "estimated_minutes": 6,
+  "_time_budget_note": "实测估算：每决策点1.5-2.5分钟（阅读300-400字约1分钟+思考犹豫20-60秒，犹豫是数据不能催）。文本硬预算：描述≤80字/选项≤25字/反馈+AI反应≤60字。完整版=任务1-3一局(18-22分钟)+任务4-5第二局，对应免费/订阅分层。",
+  "decision_point_count": 3,
+  "trigger": {
+    "user_level": 1,
+    "prerequisite_events": ["tutorial_complete"],
+    "probability": 1.0,
+    "cooldown_months": 0
+  },
+  "npcs": {
+    "leader_chen": {
+      "name": "陈工",
+      "role": "直属Leader",
+      "personality_tags": ["结果导向", "讨厌惊喜", "时间敏感"],
+      "ai_prompt_hint": "说话短、直接问进度和结论，对回避表态的答案会追问一句"
+    },
+    "wang_ge": {
+      "name": "王哥",
+      "role": "三年老员工",
+      "personality_tags": ["求稳", "护团队", "对新人体贴但固执"],
+      "ai_prompt_hint": "口头禅『别折腾』，对新人的自研冲动会善意泼冷水，但如果新人拿出扎实调研会改口认可"
+    }
+  },
+  "nodes": [
+    {
+      "node_id": "start",
+      "type": "narrative",
+      "description": "入职第一周。陈工把你叫到工位：『团队Agent后端的编排底座要定方案，给你三天：自研框架还是基于开源框架封装，出个结论，周四评审会上讲。』王哥路过补了一句：『别折腾，跟大部队走，之前有人自研踩了半年坑。』",
+      "next_node": "d1_research"
+    },
+    {
+      "node_id": "d1_research",
+      "type": "decision",
+      "description": "三天调研期，你从哪切入？",
+      "settle_timing": "immediate",
+      "options": [
+        {
+          "option_id": "A",
+          "text": "自己搭两套demo实测对比，用数据说话",
+          "gain": { "S": 2 },
+          "cost": { "H": 1 },
+          "risk_delta": 0,
+          "competency": { "technical_decision": 2, "initiative": 2 },
+          "memory_tags": ["技术理想主义", "肯下功夫"],
+          "instant_feedback": "周三凌晨你的对比表终于成型。陈工扫了一眼没说好坏：『周四讲讲。』",
+          "ai_reaction": "wang_ge看到你熬夜，递了杯咖啡：『够拼的，不过明天会上悠着点说。』",
+          "next_node": "d2_meeting"
+        },
+        {
+          "option_id": "B",
+          "text": "先用开源框架把业务跑通，边用边评估",
+          "gain": { "O": 2 },
+          "cost": { "S": 1 },
+          "risk_delta": 1,
+          "competency": { "execution": 2, "pragmatism": 2 },
+          "memory_tags": ["务实派", "快速交付"],
+          "instant_feedback": "第二天下午流程已经能跑。陈工点头：『速度可以。』",
+          "ai_reaction": "王哥很满意：『这就对了，能用先用。』",
+          "next_node": "d2_meeting"
+        },
+        {
+          "option_id": "C",
+          "text": "先找王哥和老员工聊，把团队历史踩坑摸清",
+          "gain": { "N": 2, "S": 1 },
+          "cost": { "O": 1 },
+          "risk_delta": 0,
+          "competency": { "collaboration": 2, "communication": 1 },
+          "memory_tags": ["先建关系", "善用他人经验"],
+          "instant_feedback": "两杯咖啡的功夫，你摸清了团队三年里三次技术选型的前因后果。",
+          "ai_reaction": "王哥打开话匣子：『总算有人肯听历史了。那年自研框架的事，我给你说道说道……』",
+          "next_node": "d2_meeting"
+        }
+      ]
+    },
+    {
+      "node_id": "d2_meeting",
+      "type": "decision",
+      "description": "周四评审会，陈工点名：『新人先说，你的建议是？』",
+      "settle_timing": "mixed",
+      "options": [
+        {
+          "option_id": "A",
+          "text": "主推自研框架：这是长期技术资产",
+          "gain": { "S": 1 },
+          "cost": { "N": 1 },
+          "risk_delta": -1,
+          "pending_dignity": { "D": 1 },
+          "competency": { "technical_decision": 2, "assertiveness": 2 },
+          "memory_tags": ["敢表态", "长期主义"],
+          "conditional_modifiers": [
+            { "when": { "d1_research": "A" }, "apply": { "gain": { "S": 1 }, "risk_delta": -1 } },
+            { "when": { "d1_research": "C" }, "apply": { "cost": { "N": 1 } }, "_note": "没听王哥历史教训还硬推自研，王哥好感再降" }
+          ],
+          "instant_feedback": "陈工敲了敲桌子：『理由？维护成本谁背？』王哥在对面没说话。",
+          "ai_reaction": "陈工连续追问三层：迁移成本、人力排期、回退方案。答不上来的部分他记在了本子上。",
+          "next_node": "d3_crisis"
+        },
+        {
+          "option_id": "B",
+          "text": "推荐开源+封装隔离层：先跑起来，留替换余地",
+          "gain": { "O": 1, "N": 1 },
+          "cost": { "S": 1 },
+          "risk_delta": 0,
+          "pending_dignity": { "D": 1 },
+          "competency": { "pragmatism": 2, "architecture": 1 },
+          "memory_tags": ["折中务实", "有方案意识"],
+          "instant_feedback": "陈工难得笑了：『隔离层这个词我爱听，细化一下。』王哥也点了头。",
+          "ai_reaction": "王哥主动接话：『隔离层我来带他做，这块我熟。』",
+          "next_node": "d3_crisis"
+        },
+        {
+          "option_id": "C",
+          "text": "顺水推舟：听王哥的，先用开源，不主动表态",
+          "gain": { "N": 1 },
+          "cost": { "S": 1, "O": 1 },
+          "risk_delta": 1,
+          "pending_dignity": { "D": -1 },
+          "competency": { "collaboration": 1 },
+          "memory_tags": ["低调", "回避表态"],
+          "instant_feedback": "会开完了，陈工在结论里写下『按王哥意见』。你的名字没出现。",
+          "ai_reaction": "散会后陈工叫住你：『下周评审你总得有自己的判断吧？』",
+          "next_node": "d3_crisis"
+        }
+      ]
+    },
+    {
+      "node_id": "d3_crisis",
+      "type": "decision",
+      "settle_timing": "immediate",
+      "description_variants": [
+        { "when": { "d2_meeting": "A" }, "description": "自研按你方案启动，但周三你发现核心调度模块的进度落后计划两周。周四就要向上同步排期了。" },
+        { "when": { "d2_meeting": "B" }, "description": "开源框架深夜发了新版本，breaking change把你封装层冲了，周五演示前流水线全红。" },
+        { "when": { "d2_meeting": "C" }, "description": "王哥接手的开源接入出了性能问题，压测QPS只有预期三分之一，而他这两天请假。锅在流程上，但你是方案记录人。" }
+      ],
+      "options": [
+        {
+          "option_id": "A",
+          "text": "立即上报风险，申请调整排期和资源",
+          "gain": { "N": 1, "S": 1 },
+          "cost": { "O": 1 },
+          "risk_delta": -2,
+          "pending_dignity": { "D": 1 },
+          "competency": { "integrity": 2, "communication": 2 },
+          "memory_tags": ["坦诚", "风险敏感"],
+          "instant_feedback": "陈工听完脸色不好看，但只说了一句：『早说就对了。』排期改了两周。",
+          "ai_reaction": "王哥私下发消息：『第一次见新人这么早开口要资源的，是好事。』",
+          "next_node": "task1_end"
+        },
+        {
+          "option_id": "B",
+          "text": "自己扛：加班加周末，把进度追回来",
+          "gain": { "S": 1, "O": 1 },
+          "cost": { "H": 2 },
+          "risk_delta": 2,
+          "pending_dignity": { "D": 0 },
+          "competency": { "ownership": 2, "resilience": 1 },
+          "memory_tags": ["硬扛", "报喜不报忧"],
+          "instant_feedback": "演示那天总算跑通了，没人知道你这两个周末是怎么过的。",
+          "ai_reaction": "陈工很满意：『效率不错。』但他不知道你压掉了多少问题。",
+          "next_node": "task1_end"
+        },
+        {
+          "option_id": "C",
+          "text": "淡化问题，演示时避开没做完的部分先糊过验收",
+          "gain": { "O": 1 },
+          "cost": { "S": 1 },
+          "risk_delta": 4,
+          "pending_dignity": { "D": -2 },
+          "competency": { "integrity": -2 },
+          "memory_tags": ["侥幸", "掩盖问题"],
+          "sets_flags": ["concealed_issue_task1"],
+          "instant_feedback": "演示顺利结束，掌声里你后背有点凉。",
+          "ai_reaction": "王哥隐隐觉得哪里不对，但说不上来：『演示倒是挺顺……』",
+          "next_node": "task1_end"
+        }
+      ]
+    },
+    {
+      "node_id": "task1_end",
+      "type": "narrative",
+      "description": "任务1结束。你在团队里留下的第一印象正在成形——它会影响后续每个事件里NPC对你的反应。",
+      "memory_wall_summary": "由引擎根据三个决策点的memory_tags自动生成，贴到记忆墙上"
+    }
+  ],
+  "hooks": {
+    "risk_threshold_event": {
+      "when": { "risk_cumulative_gte": 5 },
+      "trigger_event_id": "agent_l1_incident_online",
+      "_note": "任务4线上事故不硬编码触发，由隐藏风险累积自动引爆；选项C的风险+4就是往这根引线上走"
+    },
+    "flag_consumers": [
+      { "flag": "concealed_issue_task1", "consumed_by": "agent_l1_incident_online", "effect": "事故更严重，D惩罚翻倍，陈工记忆标签追加『被他坑过一次』" }
+    ]
+  },
+  "radar_mapping": {
+    "_note": "competency分数累加进雷达图；负分为反向证据，报告阶段与正分对冲后映射",
+    "technical_decision": "技术决策力",
+    "initiative": "主动担当",
+    "execution": "执行力",
+    "pragmatism": "务实权衡",
+    "collaboration": "协作沟通",
+    "communication": "表达沟通",
+    "architecture": "架构意识",
+    "assertiveness": "表达自信",
+    "integrity": "原则底线",
+    "ownership": "责任担当",
+    "resilience": "抗压韧性"
+  },
+  "tracking_spec": {
+    "event_trigger": { "fields": ["event_id", "trigger_hit", "ts"] },
+    "node_enter": { "fields": ["node_id", "ts"] },
+    "option_click": {
+      "fields": ["node_id", "option_id", "hesitation_ms", "state_snapshot_before", "ts"],
+      "_note": "hesitation_ms = option_click.ts - node_enter.ts；state_snapshot_before存六维当前值，结算后另存after，差值即实测增量，用于上线后校准本标定表"
+    },
+    "option_hover": {
+      "fields": ["node_id", "switch_count", "hovered_options", "ts"],
+      "_note": "选项间横跳次数（hover切换）：switch_count高=犹豫度高，与hesitation_ms交叉验证伪装行为；delta计算在服务端做，前端只上报原始行为"
+    },
+    "ai_reaction_view": { "fields": ["node_id", "reply_len", "read_ms"] },
+    "task_complete": { "fields": ["duration_ms", "option_path", "risk_cumulative", "pending_dignity_total"] }
+  }
+}

@@ -12,6 +12,7 @@ const CHINESE_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const TOWN_MAP_PATH := "res://assets/town/workplace_town_reference.png"
 const WALKABILITY_MASK_PATH := "res://assets/town/walkability_mask.png"
 const REGIONS_PATH := "res://data/town/regions.json"
+const NPCS_PATH := "res://data/town/npcs.json"
 const COLLISION_DATA_PATH := "res://data/town/collision.json"
 const NAVIGATION_DATA_PATH := "res://data/town/navigation.json"
 const WORLD_SIZE := Vector2(1920, 1080)
@@ -51,20 +52,22 @@ var ZONES := [
 	{"id": "h", "code": "H", "name": "慢生活园·宿舍与桌游馆", "rect": Rect2(760, 760, 390, 250), "center": Vector2(955, 885), "door": "top"},
 ]
 var NPCS := [
-	{"zone": "a", "name": "艾米", "role": "总部接待", "loadout": "skirt_woman", "route": PackedVector2Array([Vector2(405, 345), Vector2(510, 345), Vector2(510, 390), Vector2(405, 390)]), "prompt": "今天的入职任务很多，先帮我判断哪些事情最重要。"},
-	{"zone": "b", "name": "陈工", "role": "技术协作", "loadout": "neutral_hoodie", "route": PackedVector2Array([Vector2(850, 325), Vector2(1070, 325), Vector2(1070, 370), Vector2(850, 370)]), "prompt": "AI 产品的技术方案有两个取舍，想听听你的判断。"},
-	{"zone": "c", "name": "林总", "role": "品牌顾问", "loadout": "suit_man", "route": PackedVector2Array([Vector2(1435, 335), Vector2(1650, 335), Vector2(1650, 380), Vector2(1435, 380)]), "prompt": "市场调研结果出来了，先决定客户沟通的重点。"},
-	{"zone": "d", "name": "周岚", "role": "培训导师", "loadout": "elder_man", "route": PackedVector2Array([Vector2(1205, 680), Vector2(1285, 680), Vector2(1285, 800), Vector2(1205, 800)]), "prompt": "复盘会上有不同观点，试着组织一次跨部门讨论。"},
-	{"zone": "e", "name": "小莫", "role": "训练教练", "loadout": "street_creator", "route": PackedVector2Array([Vector2(805, 875), Vector2(1105, 875), Vector2(1105, 1015), Vector2(810, 1015)]), "prompt": "团队压力测试开始了，来安排一下分工和节奏。"},
-	{"zone": "f", "name": "阿哲", "role": "会展统筹", "loadout": "suit_man", "route": PackedVector2Array([Vector2(670, 805), Vector2(705, 805), Vector2(705, 925), Vector2(670, 925)]), "prompt": "发布会临时改期，选择一个最稳妥的协作方案。"},
-	{"zone": "g", "name": "宁宁", "role": "员工关怀", "loadout": "energetic_ponytail", "route": PackedVector2Array([Vector2(570, 610), Vector2(605, 610), Vector2(605, 720), Vector2(570, 720)]), "prompt": "有位同事需要支持，先判断怎样回应最合适。"},
-	{"zone": "h", "name": "乐乐", "role": "生活运营", "loadout": "neutral_hoodie", "route": PackedVector2Array([Vector2(365, 380), Vector2(405, 380), Vector2(405, 490), Vector2(365, 490)]), "prompt": "晚间活动需要安排，来设计一个让大家都参与的方案。"},
+	{"zone": "a", "name": "陈工", "role": "邻组 Leader", "loadout": "suit_man", "route": PackedVector2Array([Vector2(405, 345), Vector2(510, 345), Vector2(510, 390), Vector2(405, 390)]), "prompt": "结论是什么？预算和工期，一句话说完。"},
+	{"zone": "b", "name": "王哥", "role": "技术 · 你的导师", "loadout": "neutral_hoodie", "route": PackedVector2Array([Vector2(850, 325), Vector2(1070, 325), Vector2(1070, 370), Vector2(850, 370)]), "prompt": "方案我看过了，先别急着推。说说你为什么选这条路线。"},
+	{"zone": "c", "name": "小林", "role": "产品", "loadout": "energetic_ponytail", "route": PackedVector2Array([Vector2(1435, 335), Vector2(1650, 335), Vector2(1650, 380), Vector2(1435, 380)]), "prompt": "客户那边催得很急，先帮我把需求优先级定下来。"},
+	{"zone": "d", "name": "老周", "role": "资深", "loadout": "elder_man", "route": PackedVector2Array([Vector2(1205, 680), Vector2(1285, 680), Vector2(1285, 800), Vector2(1205, 800)]), "prompt": "复盘会上有不同说法。你觉得该由谁来牵头？"},
+	{"zone": "h", "name": "小赵", "role": "实习生", "loadout": "street_creator", "route": PackedVector2Array([Vector2(365, 380), Vector2(405, 380), Vector2(405, 490), Vector2(365, 490)]), "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？"},
 ]
 
 var _office: OfficeSet
 var _player: CharacterBody2D
 var _player_sprite: Sprite2D
 var _camera: Camera2D
+## 相机铺满系数：视口比例 ≠ 16:9 时 > 1，让世界铺满视野（见 _apply_camera_cover）。
+## _update_camera 的目标 zoom 都要乘它，否则会被 lerp 回 1.0，画面外又露出灰底。
+var _cover_zoom := 1.0
+## 上一帧的视口尺寸：变了才重算相机铺满（size_changed 信号时机不稳，会拿到过期尺寸）
+var _last_viewport_size := Vector2.ZERO
 var _touch_vector := Vector2.ZERO
 var _touch_active := false
 var _active_zone: Dictionary = {}
@@ -139,6 +142,8 @@ func _physics_process(delta: float) -> void:
 	_update_camera(delta)
 
 func _process(_delta: float) -> void:
+	if get_viewport_rect().size != _last_viewport_size:
+		_apply_camera_cover()
 	# 任务目标和入口采用低频呼吸动画，手机端无需额外粒子开销。
 	var pulse := (sin(Time.get_ticks_msec() * 0.006) + 1.0) * 0.5
 	for index in _entrance_markers.size():
@@ -282,6 +287,29 @@ func _build_camera() -> void:
 	_camera.limit_bottom = int(WORLD_SIZE.y)
 	add_child(_camera)
 	_camera.make_current()
+	_apply_camera_cover()
+	# 平滑是从 (0,0) 滑向世界中心的，头一两秒画面会带着偏移（左侧露灰底），
+	# 开局直接落位，不参与平滑
+	_camera.reset_smoothing()
+	# 窗口尺寸变了（拖拽/转屏）都要重算铺满
+	get_viewport().size_changed.connect(_apply_camera_cover)
+
+
+## 窗口比例和世界（16:9）不一致时，project.godot 的 stretch aspect=expand 会把视口
+## 撑到比世界更宽/更高，相机视野超出 0..1920 / 0..1080 的限制范围，
+## 画面外就露出灰底（左侧那条灰就是它）。
+## 解法：把相机 zoom 拉到「世界铺满视野」（等比 cover，多出的部分裁掉），
+## 世界坐标、区域触发、NPC 全都不动 —— 只动相机。
+func _apply_camera_cover() -> void:
+	if _camera == null:
+		return
+	var vp := get_viewport_rect().size
+	if vp.x <= 0.0 or vp.y <= 0.0:
+		return
+	_last_viewport_size = vp
+	# view_in_world = vp / zoom，要两个方向都 <= 世界尺寸，zoom 取较大者
+	_cover_zoom = maxf(vp.x / WORLD_SIZE.x, vp.y / WORLD_SIZE.y)
+	_camera.zoom = Vector2(_cover_zoom, _cover_zoom)
 
 
 func _build_walls() -> void:
@@ -372,6 +400,21 @@ func _load_map_data() -> void:
 		})
 	if loaded_zones.size() == 8:
 		ZONES = loaded_zones
+	var npc_payload := _read_json(NPCS_PATH)
+	var loaded_npcs: Array = []
+	for item in npc_payload.get("npcs", []):
+		var route_points := PackedVector2Array()
+		for point in item.get("route", []):
+			if point is Array and (point as Array).size() >= 2:
+				route_points.append(Vector2(float(point[0]), float(point[1])))
+		loaded_npcs.append({
+			"zone": String(item.get("zone", "")).to_lower(), "name": String(item.get("name", "")),
+			"role": String(item.get("role", "")), "loadout": String(item.get("loadout", "")),
+			"route": route_points, "prompt": String(item.get("prompt", ""))
+		})
+	if loaded_npcs.size() > 0:
+		NPCS = loaded_npcs
+	print("[WorkplaceTown] 载入区域 %d 个、NPC %d 位（来源 %s）" % [ZONES.size(), NPCS.size(), NPCS_PATH])
 	var navigation_payload := _read_json(NAVIGATION_DATA_PATH)
 	var loaded_areas: Array = []
 	for item in navigation_payload.get("walkableRegions", []):
@@ -702,10 +745,10 @@ func _update_camera(delta: float) -> void:
 	if _camera == null or _player == null:
 		return
 	var target_position := _player.position
-	var target_zoom := Vector2.ONE * OUTDOOR_EXPLORATION_ZOOM
+	var target_zoom := Vector2.ONE * OUTDOOR_EXPLORATION_ZOOM * _cover_zoom
 	if not _active_zone.is_empty():
 		target_position = _active_zone["center"]
-		target_zoom = Vector2.ONE * ZONE_ZOOM
+		target_zoom = Vector2.ONE * ZONE_ZOOM * _cover_zoom
 	_camera.position = _camera.position.lerp(target_position, minf(delta * CAMERA_FOLLOW_SPEED, 1.0))
 	_camera.zoom = _camera.zoom.lerp(target_zoom, minf(delta * 4.2, 1.0))
 

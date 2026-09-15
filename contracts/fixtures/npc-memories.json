@@ -1,0 +1,42 @@
+{
+  "npcId": "wang_ge",
+  "relationStage": "Lv2",
+  "items": [
+    {
+      "npcId": "wang_ge",
+      "layer": "fact",
+      "kind": "promise",
+      "month": 3,
+      "fact": "你在技术选型时答应王哥，两周内补一份自研编排层的评测报告。",
+      "eventRef": "0b20c768-8fe9-4554-9e15-a0ee70e01d87",
+      "seq": 4
+    },
+    {
+      "npcId": "wang_ge",
+      "layer": "fact",
+      "kind": "help",
+      "month": 7,
+      "fact": "token 成本爆掉那晚，是你帮王哥把缓存管线压回预算内。",
+      "eventRef": "3f1a9b2c-5d64-4a77-9c21-8be0f2a4d910",
+      "seq": 11
+    },
+    {
+      "npcId": "wang_ge",
+      "layer": "relation",
+      "kind": "stage_up",
+      "month": 9,
+      "fact": "你们在湖边深谈过一次，关系从初识进入熟人阶段。",
+      "eventRef": "9c22d1e0-71ab-4f30-b5a6-2c7d8e4f1a55",
+      "seq": 19
+    },
+    {
+      "npcId": "wang_ge",
+      "layer": "social",
+      "kind": "stance",
+      "month": 14,
+      "fact": "压测结果冲突时，你选择如实上报，王哥当时站在你这边。",
+      "eventRef": "b4d8f6a1-2e93-4c05-8a77-6f01c9d3e2b8",
+      "seq": 26
+    }
+  ]
+}

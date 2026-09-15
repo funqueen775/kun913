@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>熊心壮职 · Agent开发师 · 事件场景与人物对照表 V1</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #f7f7f5; color: #2c2c2a;
+    font-size: 16px; line-height: 1.75;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 18px 80px; }
+  h1 { font-size: 24px; line-height: 1.4; margin: 8px 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid #e4e2da; scroll-margin-top: 56px; }
+  h3 { font-size: 17px; margin: 24px 0 8px; color: #44423c; scroll-margin-top: 56px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: #55524a; scroll-margin-top: 56px; }
+  p { margin: 10px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; display: block; overflow-x: auto; white-space: normal; }
+  th, td { border: 1px solid #ddd9cf; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #efece3; font-weight: 600; }
+  tr:nth-child(even) td { background: #faf9f5; }
+  code { background: #efece3; padding: 1px 5px; border-radius: 4px; font-size: 13.5px; font-family: "SFMono-Regular", Consolas, monospace; }
+  pre { background: #2d2b29; color: #f3f1ec; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  blockquote { border-left: 3px solid #c9c3b4; margin: 12px 0; padding: 4px 14px; color: #66635b; background: #faf9f5; }
+  li { margin: 4px 0; }
+  .meta { color: #888780; font-size: 14px; margin-bottom: 18px; }
+  .toc { background: #fff; border: 1px solid #e4e2da; border-radius: 12px; padding: 14px 18px; margin: 18px 0 8px; }
+  .toc ol { margin: 8px 0 0; padding-left: 22px; }
+  .toc a { color: #185fa5; text-decoration: none; }
+  .toc li.t3 { list-style: none; margin-left: -16px; font-size: 14px; color: #666; }
+  .topbar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid #e4e2da; padding: 10px 18px; z-index: 10; display: flex; align-items: center; justify-content: space-between; }
+  .topbar a { color: #185fa5; text-decoration: none; font-size: 14px; }
+  .backtop { position: fixed; right: 16px; bottom: 20px; background: #185fa5; color: #fff; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span>熊心壮职 · Agent开发师 · 详细设计 V1.5</span>
+  <a href="#top">回到顶部</a>
+</div>
+<div class="wrap" id="top">
+  <h1>熊心壮职 · Agent 开发师<br>事件场景与人物对照表 V1</h1>
+  <p class="meta">剧情内容专册 · 2026-09-07 · 离线阅读版</p>
+  <div class="toc"><strong>目录</strong><ol><li class="t2"><a href="#sec-1">一、通用规则（美术与前端必读）</a></li><li class="t3"><a href="#sec-1-1">1.1 四条通用规则</a></li><li class="t3"><a href="#sec-1-2">1.2 NPC 映射与形象</a></li><li class="t3"><a href="#sec-1-3">1.3 时间与光线速查</a></li><li class="t2"><a href="#sec-2">二、第一幕 0→1（E01-E08，L1-L2）</a></li><li class="t2"><a href="#sec-3">三、第二幕 上线（E09-E15 + C1）</a></li><li class="t2"><a href="#sec-4">四、第三幕 出事·救火（E16-E22）</a></li><li class="t2"><a href="#sec-5">五、第四幕 重构·平台化（E23-E30 + C2）</a></li><li class="t2"><a href="#sec-6">六、第五幕 传承与终局（E31-E35）</a></li><li class="t2"><a href="#sec-7">七、支线池与成就节点</a></li><li class="t2"><a href="#sec-8">八、给美术的工作量提示（按优先级）</a></li><li class="t2"><a href="#sec-9">九、给前端的交互清单</a></li></ol></div>
+  <article id="content">
+<h1>熊心壮职 · 事件场景与人物对照表 V1</h1>
+<p><strong>给谁看</strong>：美术（场景、道具、角色状态、场景残留）+ 前端（镜头切换、UI 特殊界面、微互动点）+ 策划（对表核对）。
+<strong>依据</strong>：剧情册 V5.4（事件与标定）、美术《小熊镇世界观与场景设计说明 V1.1》（八组团与空间线）。
+<strong>本表只定“这场戏怎么落地”，不改任何剧情数值。</strong></p>
+<hr />
+<h2 id="sec-1">一、通用规则（美术与前端必读）</h2>
+<h3 id="sec-1-1">1.1 四条通用规则</h3>
+<ol>
+<li><strong>角色按事件流动，不按楼栋驻守</strong>：同一地点可以有不同组合，避免地图变成“部门标签墙”。</li>
+<li><strong>每场戏结束后，场景里必须留下点什么</strong>（美术 V1.1 的要求）：贴图、灯光、摆件、NPC 状态之一发生变化，让“你做过什么”在空间里可见。</li>
+<li><strong>镜头语言</strong>：跨组团走<strong>小火车转场</strong>（1.5 秒，有仪式感）；同组团内换位置直接<strong>切镜</strong>（0.3 秒）。</li>
+<li><strong>不透明机制的表达</strong>：隐藏风险不显示为血条——每次埋雷，<strong>心湖熊石雕塑区的「上锁抽屉」震动一声</strong>（音效+1 帧位移），玩家看得见“多了一样东西”但打不开。</li>
+</ol>
+<h3 id="sec-1-2">1.2 NPC 映射与形象</h3>
+<table>
+<thead>
+<tr>
+<th>美术形象</th>
+<th>剧情人物</th>
+<th>角色</th>
+<th>常出没</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>熊技术</td>
+<td><strong>王哥</strong></td>
+<td>导师（口头禅「别折腾」，会泼冷水也认可扎实调研）</td>
+<td>B 云栖科技丘、A 总部评审室</td>
+</tr>
+<tr>
+<td>熊技术变体（深灰毛+圆框眼镜）</td>
+<td><strong>陈工</strong></td>
+<td>邻组/直属 Leader（话少直接，只问进度和结论）</td>
+<td>A 总部、B 科技丘边界</td>
+</tr>
+<tr>
+<td>熊销售</td>
+<td><strong>小林</strong></td>
+<td>产品（对外、有 KPI 恐惧）</td>
+<td>C 创意水巷、A 总部</td>
+</tr>
+<tr>
+<td>熊行政</td>
+<td><strong>小赵</strong></td>
+<td>实习生（看守记忆墙，安静）</td>
+<td>心湖记忆墙、G 康护院</td>
+</tr>
+<tr>
+<td>熊总</td>
+<td><strong>老周 / 大领导</strong></td>
+<td>资深同事 / 终局评委</td>
+<td>A 总部主管区、E35 答辩室</td>
+</tr>
+</tbody>
+</table>
+<p><strong>玩家身份：Agent 开发师</strong>（美术文档中“产品经理”为笔误，须更正）。</p>
+<h3 id="sec-1-3">1.3 时间与光线速查</h3>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>光线</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>白天·正常工作</td>
+<td>冷白 + 大窗自然光</td>
+</tr>
+<tr>
+<td>组会/评审</td>
+<td>中性光，会议桌局部聚光</td>
+</tr>
+<tr>
+<td>深夜·独自加班</td>
+<td>只剩屏幕光，工位周围压暗</td>
+</tr>
+<tr>
+<td>凌晨·事故</td>
+<td>屏幕冷光 + 告警红橙（受控，非玩家失败色）</td>
+</tr>
+<tr>
+<td>心湖·黄昏</td>
+<td>暖橙，记忆墙射灯开启</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-2">二、第一幕 0→1（E01-E08，L1-L2）</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>组团·场景位</th>
+<th>时间/光线</th>
+<th>在场人物（主/次）</th>
+<th>关键视觉与道具</th>
+<th>场景残留</th>
+<th>前端提示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E01 新员工手册</td>
+<td>B 科技丘·你的工位</td>
+<td>白天</td>
+<td>主：无（小熊引导）／次：王哥路过</td>
+<td>新员工手册三章、空工位</td>
+<td>工位出现第一件私人物品（贴纸/杯子）</td>
+<td>教学关：UI 分步高亮，不弹系统弹窗</td>
+</tr>
+<tr>
+<td>E02 第一次被轻视</td>
+<td>A 总部·小会议室</td>
+<td>白天·组会</td>
+<td>主：陈工／次：王哥、小林在座</td>
+<td>投影上的 demo 界面</td>
+<td>白板留着当天的架构草图</td>
+<td>镜头环绕会议桌一圈后停在陈工</td>
+</tr>
+<tr>
+<td>E03 AI 代码标注</td>
+<td>B 科技丘·工位</td>
+<td>深夜·屏幕光</td>
+<td>主：无（独处）／次：无</td>
+<td>PR 提交界面、AI 生成的代码块</td>
+<td><strong>上锁抽屉震动一声</strong>（若选 B/C）</td>
+<td>PR 界面做成可点击微互动点</td>
+</tr>
+<tr>
+<td>E04 技术选型</td>
+<td>A 总部·评审室</td>
+<td>白天·中性</td>
+<td>主：王哥／次：陈工</td>
+<td>白板上两套方案对比</td>
+<td>白板对比图长期挂着</td>
+<td>评审室固定机位，双人中景</td>
+</tr>
+<tr>
+<td>E05 评测集</td>
+<td>B 科技丘·工位</td>
+<td>白天</td>
+<td>主：王哥／次：无</td>
+<td>工期看板、测试脚本</td>
+<td>选 A → 工位旁多一块“评测看板”小屏</td>
+<td>看板为可点击微互动（显示进度）</td>
+</tr>
+<tr>
+<td>E06 RAG/微调/长上下文</td>
+<td>B 科技丘·技术评审角</td>
+<td>白天</td>
+<td>主：王哥、陈工</td>
+<td>三套架构草图</td>
+<td>架构图贴墙（选哪套贴哪套）</td>
+<td>三图并列，可点选查看</td>
+</tr>
+<tr>
+<td>E07 甩锅</td>
+<td>A 总部·复盘会议室</td>
+<td>冷白·会议光</td>
+<td>主：小林／次：陈工、王哥</td>
+<td>复盘 PPT、监控截图</td>
+<td>会议纪要贴墙（选 A → 贴在显眼处）</td>
+<td>会议桌长镜头，发言者高亮</td>
+</tr>
+<tr>
+<td>E08 客户临时加需求</td>
+<td>C 创意水巷·咖啡外摆</td>
+<td>午后</td>
+<td>主：小林／次：客户（画外音/剪影）</td>
+<td>咖啡杯、需求文档</td>
+<td>桌面留着那张需求单</td>
+<td>客户以剪影或对话框呈现，不做立绘</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-3">三、第二幕 上线（E09-E15 + C1）</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>组团·场景位</th>
+<th>时间/光线</th>
+<th>在场人物</th>
+<th>关键视觉与道具</th>
+<th>场景残留</th>
+<th>前端提示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E09 token 成本爆了</td>
+<td>B 科技丘·工位</td>
+<td>月底·屏幕光</td>
+<td>主：无／次：王哥</td>
+<td>账单弹窗、成本曲线</td>
+<td>选 A → 工位多一块成本监控小屏</td>
+<td>账单弹窗做成真实 UI 弹层</td>
+</tr>
+<tr>
+<td>E10 「保证不胡说」</td>
+<td>C 创意水巷·客户现场</td>
+<td>白天·展厅</td>
+<td>主：客户／次：小林</td>
+<td>演示大屏、客户表情</td>
+<td>无（对话场景）</td>
+<td>客户立绘仅用销售熊变体，不新增角色</td>
+</tr>
+<tr>
+<td>E11 API 破坏性变更</td>
+<td>B 工位 → C 水巷</td>
+<td>白天</td>
+<td>主：陈工／次：小林</td>
+<td>接口文档、报错日志</td>
+<td>工位贴一张“迁移倒计时”便签</td>
+<td>跨组团走小火车转场</td>
+</tr>
+<tr>
+<td>E12 它记不住中间那段</td>
+<td>B 科技丘·工位</td>
+<td>深夜·日志屏</td>
+<td>主：无／次：小赵路过</td>
+<td>几千行日志、半年前的群聊截图</td>
+<td>选 A → 出现“团队知识库”门牌</td>
+<td>日志界面可滚动，截图为关键线索道具</td>
+</tr>
+<tr>
+<td>E13 跨组接口异议</td>
+<td>A 总部·技术评审会</td>
+<td>白天</td>
+<td>主：陈工／次：王哥</td>
+<td>接口性能图</td>
+<td>白板留着争议点</td>
+<td>会议机位，双方对立构图</td>
+</tr>
+<tr>
+<td>E14 连续加班后心悸</td>
+<td>B 工位 → A 天台 / G 康护院</td>
+<td>深夜</td>
+<td>主：无／次：小赵（若好感高）</td>
+<td>心跳、药盒、夜景</td>
+<td>桌上出现药盒（长期摆件）</td>
+<td>状态触发：仅 H 消耗达标时出现</td>
+</tr>
+<tr>
+<td>E15 点子被抢先</td>
+<td>A 总部·会议室</td>
+<td>白天</td>
+<td>主：老周／次：众同事</td>
+<td>投影、你的笔记</td>
+<td>笔记本上那页被撕下/留下</td>
+<td>镜头给笔记特写</td>
+</tr>
+<tr>
+<td><strong>C1 第一通自己解决的电话</strong></td>
+<td>B 科技丘·工位</td>
+<td>白天</td>
+<td>主：无／次：无</td>
+<td>后台对话日志、客户满意度弹窗</td>
+<td><strong>心湖记忆墙贴一张金色便签</strong></td>
+<td>无决策纯演出，配 3 秒静默</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-4">四、第三幕 出事·救火（E16-E22）</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>组团·场景位</th>
+<th>时间/光线</th>
+<th>在场人物</th>
+<th>关键视觉与道具</th>
+<th>场景残留</th>
+<th>前端提示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E16 紧急热修复</td>
+<td>B 科技丘·工位</td>
+<td>凌晨·告警红橙</td>
+<td>主：小赵（值班）／次：无</td>
+<td>告警灯、审批流程弹窗</td>
+<td>告警灯保留（后续可见）</td>
+<td>告警红橙为<strong>系统故障</strong>色，非玩家失败色</td>
+</tr>
+<tr>
+<td>E17 客户现场 Demo 翻车</td>
+<td>F 观澜会展码头·路演台</td>
+<td>白天·大屏</td>
+<td>主：客户、小林／次：老周</td>
+<td>演示大屏、黑屏事故</td>
+<td>选 C → 展台留着一块黑掉的屏</td>
+<td>第二局解锁 F 组团；大场面镜头</td>
+</tr>
+<tr>
+<td>E18 压测冲突</td>
+<td>B 工位 → A 汇报室</td>
+<td>白天</td>
+<td>主：小林／次：陈工</td>
+<td>压测曲线、汇报材料</td>
+<td>汇报材料留在桌上</td>
+<td>跨组团转场</td>
+</tr>
+<tr>
+<td>E19 Agent 出错了算谁的</td>
+<td>A 总部·追责会议室</td>
+<td>冷光·严肃</td>
+<td>主：陈工（主持）／次：小林、老周</td>
+<td>事故报告、监控时间线</td>
+<td>事故报告贴在会议室墙上</td>
+<td>长桌构图，主持人居中</td>
+</tr>
+<tr>
+<td>E20 怎么证明变好了</td>
+<td>A 总部·小办公室</td>
+<td>白天</td>
+<td>主：老周（要数字）／次：无</td>
+<td>评测分数、人工抽检表</td>
+<td>抽检表留在工位</td>
+<td>老板视角略俯拍</td>
+</tr>
+<tr>
+<td>E21 Review 好友代码</td>
+<td>B 科技丘·工位</td>
+<td>白天</td>
+<td>主：小赵／次：无</td>
+<td>PR 界面、缺陷标记</td>
+<td>选 A → 小赵工位多一张合影便签</td>
+<td>PR 界面微互动</td>
+</tr>
+<tr>
+<td>E22 安全漏洞</td>
+<td>B 科技丘·工位</td>
+<td>深夜</td>
+<td>主：无／次：无</td>
+<td>漏洞报告、工单系统</td>
+<td><strong>上锁抽屉明显变重（视觉晃动）</strong></td>
+<td>抽屉动效加强，为后续引爆埋伏笔</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-5">五、第四幕 重构·平台化（E23-E30 + C2）</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>组团·场景位</th>
+<th>时间/光线</th>
+<th>在场人物</th>
+<th>关键视觉与道具</th>
+<th>场景残留</th>
+<th>前端提示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E23 重构路线</td>
+<td>A 总部·白板室</td>
+<td>白天</td>
+<td>主：王哥、老周</td>
+<td>重构图、技术债清单</td>
+<td>白板图长期挂着</td>
+<td>白板可点击查看债项</td>
+</tr>
+<tr>
+<td>E24 要不要全自动</td>
+<td>A 总部·评审室</td>
+<td>白天</td>
+<td>主：小林、老周</td>
+<td>控制台“人工通道”开关</td>
+<td>开关状态保留（开/关可见）</td>
+<td>开关做成可交互物件</td>
+</tr>
+<tr>
+<td>E25 有人拿它干坏事</td>
+<td>B 工位 → A 合规办公室</td>
+<td>白天</td>
+<td>主：安全团队（陈工代）／次：无</td>
+<td>违规对话截图</td>
+<td>无（涉密，不上墙）</td>
+<td>涉密场景用暗色调</td>
+</tr>
+<tr>
+<td>E26 基座升级 prompt 全废</td>
+<td>B 科技丘·工位</td>
+<td>深夜</td>
+<td>主：无／次：小赵</td>
+<td>版本更新公告、失效的 prompt</td>
+<td>打印出的一叠废 prompt</td>
+<td>公告做成系统消息</td>
+</tr>
+<tr>
+<td>E27 人家有专属模型</td>
+<td>C 创意水巷·咖啡座</td>
+<td>午后</td>
+<td>主：小林／次：无</td>
+<td>竞品新闻、成本测算表</td>
+<td>测算表留在桌上</td>
+<td>咖啡座固定机位</td>
+</tr>
+<tr>
+<td>E28 侵占实习生署名</td>
+<td>B 科技丘·工位</td>
+<td>白天</td>
+<td>主：小赵／次：老周（不在场被议论）</td>
+<td>申报材料、commit 记录</td>
+<td>选 A → 小赵工位多一张合影</td>
+<td>commit 记录做滚动列表</td>
+</tr>
+<tr>
+<td>E29 文档化 vs 留一手</td>
+<td>B 工位 / D 树影书院</td>
+<td>白天</td>
+<td>主：无／次：小赵</td>
+<td>文档编辑器、知识库</td>
+<td>文档库多/少一篇（可见篇数）</td>
+<td>第三局可用 D 组团</td>
+</tr>
+<tr>
+<td>E30 新模块技术栈</td>
+<td>A 总部·白板室</td>
+<td>白天</td>
+<td>主：王哥（Lv3 时出背书选项）／次：团队众人</td>
+<td>新旧框架对比</td>
+<td>白板留最终选择</td>
+<td><strong>好感 Lv3 解锁王哥背书台词</strong></td>
+</tr>
+<tr>
+<td><strong>C2 曲线被贴到部门大群</strong></td>
+<td>B 科技丘·工位</td>
+<td>白天</td>
+<td>主：无／次：群内头像</td>
+<td>指标回升曲线、群聊界面</td>
+<td>无</td>
+<td>群聊界面 UI，轻决策三选一</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-6">六、第五幕 传承与终局（E31-E35）</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>组团·场景位</th>
+<th>时间/光线</th>
+<th>在场人物</th>
+<th>关键视觉与道具</th>
+<th>场景残留</th>
+<th>前端提示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E31 挂名申奖</td>
+<td>A 总部·公告栏前</td>
+<td>白天</td>
+<td>主：老周／次：同事若干</td>
+<td>申报名单公告</td>
+<td>公告栏留着那份名单</td>
+<td>公告可点击放大</td>
+</tr>
+<tr>
+<td>E32 Agent 该有人设吗</td>
+<td>C 创意水巷·产品讨论区</td>
+<td>白天</td>
+<td>主：小林／次：无</td>
+<td>用户闲聊数据、人设草图</td>
+<td>无</td>
+<td>数据做成图表</td>
+</tr>
+<tr>
+<td>E33 吹哨两难</td>
+<td>A 总部·走廊/楼梯间</td>
+<td>昏暗·无人处</td>
+<td>主：无／次：老周（远处身影）</td>
+<td>被夸大的数据报表</td>
+<td><strong>上锁抽屉</strong>（与 E25 联动）</td>
+<td>无人场景，压低环境音</td>
+</tr>
+<tr>
+<td>E34 全员推 AI 工具</td>
+<td>B 科技丘·工位</td>
+<td>白天</td>
+<td>主：无／次：同事们</td>
+<td>内部推广海报、工具界面</td>
+<td>工位多出 AI 工具图标</td>
+<td>全场景 NPC 状态变化</td>
+</tr>
+<tr>
+<td>E35 晋升终局答辩</td>
+<td>A 总部·大会议室</td>
+<td>聚光灯</td>
+<td>主：老周+大领导（评委）／次：四只熊在门外</td>
+<td>答辩台、投影、48 个月时间线</td>
+<td><strong>终局后心湖记忆墙全亮</strong></td>
+<td>终局演出：时间线回放 + 按好感等级的告别台词</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-7">七、支线池与成就节点</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>组团·场景位</th>
+<th>在场人物</th>
+<th>前端提示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B01 强制排序给好友打分</td>
+<td>B 工位·绩效系统界面</td>
+<td>主：小赵（被打分对象）</td>
+<td>绩效界面 UI，滑动条</td>
+</tr>
+<tr>
+<td>B02 向高管里程碑汇报</td>
+<td>A 总部·大会议室</td>
+<td>主：老周／次：大领导</td>
+<td>汇报材料可翻页</td>
+</tr>
+<tr>
+<td>B03 匿名满意度调查</td>
+<td>B 工位</td>
+<td>主：无</td>
+<td>问卷 UI（是否填实名）</td>
+</tr>
+<tr>
+<td>B04 举报数据造假</td>
+<td>A 总部·走廊</td>
+<td>主：无／次：老周远处</td>
+<td>匿名/实名选择界面</td>
+</tr>
+<tr>
+<td>B05 副业边界</td>
+<td>H 慢生活园·宿舍</td>
+<td>主：朋友（画外音）</td>
+<td>夜间场景，第三局解锁</td>
+</tr>
+<tr>
+<td>B06 给内部同事做助手</td>
+<td>B 工位 / C 水巷</td>
+<td>主：行政 NPC（熊行政变体）</td>
+<td>内部需求单</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sec-8">八、给美术的工作量提示（按优先级）</h2>
+<table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>内容</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>P0（第一局必须）</strong></td>
+<td>A 总部（含天台、小会议室、大会议室、走廊）、B 科技丘工位、C 水巷咖啡外摆、心湖（含记忆墙+上锁抽屉）、E 训练谷</td>
+<td>第一局 16 个月全部落在这五个组团</td>
+</tr>
+<tr>
+<td><strong>P1（第二局）</strong></td>
+<td>F 会展码头路演台、G 康护院</td>
+<td>E17 Demo 翻车需要“大场面”</td>
+</tr>
+<tr>
+<td><strong>P2（第三局）</strong></td>
+<td>D 树影书院、H 慢生活园宿舍</td>
+<td>第三局解锁，工作量可后置</td>
+</tr>
+<tr>
+<td><strong>场景残留资产</strong></td>
+<td>白板图、评测看板、成本监控屏、告警灯、药盒、合影便签、公告名单、上锁抽屉</td>
+<td>每个约 1 张贴图/一个小摆件，数量约 12 个</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sec-9">九、给前端的交互清单</h2>
+<ol>
+<li><strong>镜头调度</strong>：跨组团 = 小火车转场（1.5s）；同组团 = 直切（0.3s）；事故类 = 快速推近。</li>
+<li><strong>特殊 UI 界面</strong>（非对话框，需单独做）：PR 提交界面、成本账单弹窗、日志滚动界面、群聊界面、绩效打分滑动条、问卷界面。</li>
+<li><strong>微互动点三态</strong>：未触发（灰）/ 可点击（呼吸光）/ 已完成（置灰+勾选）——美术 V1.1 已定义。</li>
+<li><strong>上锁抽屉</strong>：埋雷时震动 + 音效，永不显示数量；第 22 月后若引爆则弹开（露出灰便签）。</li>
+<li><strong>状态页</strong>：「你的处境」（稳定/观察/危急）常驻入口，文字不用数字。</li>
+<li><strong>记忆墙</strong>：可随时打开，便签按 NPC 蓝→黄→金渐进；负面记忆用灰便签/倒贴。</li>
+</ol>
+<hr />
+<p><strong>维护</strong>：本表随剧情册同步更新；事件增删时，务必同步给美术（场景与残留）和前端（镜头与 UI）。</p>
+  </article>
+</div>
+<a class="backtop" href="#top" title="回到顶部">↑</a>
+</body>
+</html>

@@ -1,0 +1,26 @@
+配置版本：{'scoring_cards': '2.9', 'free_time': '1.3', 'monthly_action_nodes': '1.0', 'crisis_dialogue': '1.0'}
+排期：44 个节点排进 1–48 月（E01 … C5）
+策略：utility    seed=0
+──────────────────────────────────────────────────────────────
+决策点数 108（{'mainline': 39, 'monthly': 48, 'free_time': 16, 'crisis': 3, 'achievement': 2}）
+核心选择数 103（算法册 §1 口径 =39 主线 +48 月度 +16 自由周末=103）
+月份推进到第 48 月    职级 L4
+六维（隐藏账本）：{'S': 59, 'O': 76, 'N': 56, 'H': 0, 'D': 32, 'risk': -27}   月末待结算 D=0
+公开账本：{'生命': 10, '专业能力': 18, '钱': 15000, '欠款': 0}
+强制休息月：无
+考核窗：M6:升→L2 | M12:升→L3 | M18:升→L4 | M24:未升→L4 | M30:未升→L4 | M36:未升→L4 | M42:未升→L4
+连续未达标 4 次    危机对话 3 次
+存活状态 stable   失误 streak 0 / 累计 0   倦怠 1 次   危险区决策次数 74
+flags：['honest_report']
+大五证据条数：{'C': 31, 'A': 4, 'O': 22, 'E': 3, 'N': 1}
+大五加权和：{'C': 13.35, 'A': 1.69, 'O': 8.325, 'E': 0.86, 'N': 0.5}
+能力：{'pragmatism': 4, 'collaboration': 7, 'integrity': 33, 'technical_decision': 26, 'initiative': 12, 'architecture': 13, 'assertiveness': 7, 'communication': 10, 'resilience': 4, 'ownership': 5, 'execution': 1}
+专题条数：SDT 24 / 调节焦点 8 / 道德 18 / 归因 4 / CFC·NFC 27
+psych_drive 命中：无
+守界者计数器：甩锅场合 2/3 守住，无人监督场合 3/3 守住
+好感度：{'xiao_lin': 0, 'xiao_zhao': 8}
+记忆标签 35 条
+终局：{'grade': '中坚者', 'label': '中途卡过', 'level': 4, 'frames': {'甩锅场合': 3, '甩锅场合守住': 2, '无人监督场合': 3, '无人监督场合守住': 3}, 'window_count': 7}
+──────────────────────────────────────────────────────────────
+
+已写出 跑批示例_utility.json

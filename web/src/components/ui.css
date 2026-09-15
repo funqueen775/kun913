@@ -1,0 +1,190 @@
+/* ============ 装饰件 ============ */
+
+.roof {
+  position: absolute;
+  left: 50%;
+  top: -46px;
+  transform: translateX(-50%);
+}
+
+.gem {
+  position: absolute;
+  left: 50%;
+  top: -17px;
+  transform: translateX(-50%);
+}
+
+/* 钟楼：骑在外框上沿正中。向外只探出 40，避免被外层容器裁掉 */
+.crest {
+  position: absolute;
+  left: 50%;
+  top: -40px;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+/* 藤叶也往框内收，别探到会被外层裁掉的位置 */
+.leaf {
+  position: absolute;
+  left: -10px;
+  bottom: -10px;
+  z-index: 2;
+}
+
+.frame__leaf { position: absolute; z-index: 2; display: flex; }
+.frame__leaf--tr { right: -10px; top: -8px; }
+.frame__leaf--br { right: -10px; bottom: -8px; }
+
+/* ============ 小牌 ============ */
+
+.plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  background: var(--xz-cream-light);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-sm);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--xz-ink);
+}
+
+/* ============ 米黄面板 ============ */
+
+.wood-panel {
+  position: relative;
+  background: var(--xz-cream);
+  border: var(--xz-stroke-lg) solid var(--xz-ink);
+  border-radius: var(--xz-radius-md);
+  box-shadow: var(--xz-plate-shadow);
+}
+
+.wood-panel::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--xz-ink-soft);
+  border-radius: var(--xz-radius-sm);
+  pointer-events: none;
+}
+
+/* ============ 木质外框（第 2/3 屏） ============ */
+
+.frame {
+  position: absolute;
+  /* 安全边距：外层容器（预览面板/浏览器）可能吃掉画面顶部 ~30px、左右各 ~26px，
+     所以上左右都必须留够，绝不能贴边。改小之前先想想这条。 */
+  inset: 108px 70px 48px;
+  padding: 16px;
+  background: var(--xz-wood);
+  border: var(--xz-stroke-lg) solid var(--xz-wood-dark);
+  border-radius: var(--xz-radius-lg);
+  box-shadow: var(--xz-frame-shadow);
+  z-index: 6;
+}
+
+.frame__paper {
+  position: relative;
+  height: 100%;
+  padding: 8px;
+  background: var(--xz-wood-light);
+  border-radius: var(--xz-radius-md);
+}
+
+.frame__paper-inner {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 22px;
+  background: var(--xz-cream);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-sm);
+}
+
+/* 羊皮纸内部那圈细描边 + 四角小装饰，参考图里有，很提质感 */
+.frame__paper-inner::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 2px solid rgba(91, 58, 38, 0.32);
+  border-radius: var(--xz-radius-xs);
+  pointer-events: none;
+}
+
+/* ============ 按钮 ============ */
+
+.game-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 54px;
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-sm);
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  box-shadow: var(--xz-bevel-light), var(--xz-bevel-dark);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.game-btn:active {
+  transform: translateY(3px);
+  box-shadow: var(--xz-bevel-light), 0 0 0 rgba(91, 58, 38, 0.36);
+}
+
+.game-btn--primary {
+  background: var(--xz-brick);
+  color: var(--xz-title);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.game-btn--secondary {
+  background: var(--xz-cream-light);
+  color: var(--xz-ink);
+  font-size: 16px;
+}
+
+.game-btn--exit {
+  background: var(--xz-green);
+  color: var(--xz-title);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.game-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+  box-shadow: var(--xz-bevel-light);
+}
+
+/* 顶栏小方钮：参考图右上角那三个 */
+.sq-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  background: var(--xz-cream);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-md);
+  box-shadow: var(--xz-bevel-light-strong), 0 3px 0 rgba(69, 39, 22, 0.5);
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+.sq-btn:active { transform: translateY(3px); }
+
+.sq-btn__glyph {
+  font-family: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--xz-ink);
+}
