@@ -5,6 +5,9 @@ const PAPER_DOLL := preload("res://scripts/PaperDoll64Sprite.gd")
 const OFFICE_SET := preload("res://scripts/OfficeSet.gd")
 const OFFICE_NPC := preload("res://scripts/OfficeNpcWalker.gd")
 const MAP_DEBUG_OVERLAY := preload("res://scripts/MapDebugOverlay.gd")
+const TIME_HUD := preload("res://scripts/WorldTimeHud.gd")
+const INTERIOR_PREVIEW := preload("res://scripts/InteriorPreview.gd")
+const STORY_EVENT_PANEL := preload("res://scripts/StoryEventPanel.gd")
 const CHINESE_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const TOWN_MAP_PATH := "res://assets/town/workplace_town_reference.png"
 const WALKABILITY_MASK_PATH := "res://assets/town/walkability_mask.png"
@@ -17,6 +20,18 @@ const COLLISION_LAYER := 1
 const INTERACTION_DISTANCE := 230.0
 const ENTRANCE_DISTANCE := 58.0
 const ZONE_ZOOM := 3.15
+const OUTDOOR_EXPLORATION_ZOOM := 1.55
+const CAMERA_FOLLOW_SPEED := 5.4
+const INTERIOR_ASSETS := {
+	"A": "res://assets/generated/interiors/office_placeholder.png",
+	"B": "res://assets/generated/b_technology_office.png",
+	"C": "res://assets/placeholders/interiors/c_market.png",
+	"D": "res://assets/placeholders/interiors/d_library.png",
+	"E": "res://assets/placeholders/interiors/e_training.png",
+	"F": "res://assets/placeholders/interiors/f_dock.png",
+	"G": "res://assets/placeholders/interiors/g_clinic.png",
+	"H": "res://assets/placeholders/interiors/h_living.png",
+}
 var WALKABLE_AREAS := [
 	# Five destination forecourts / plazas.
 	Rect2(70, 230, 330, 160), Rect2(760, 190, 330, 150), Rect2(1240, 420, 300, 200),
@@ -69,6 +84,17 @@ var _coordinate_label: Label
 var _walkability_image: Image
 var _walkability_debug_sprite: Sprite2D
 var _location_markers: Array[Label] = []
+var _entrance_markers: Array[Polygon2D] = []
+var _highlighted_zone_id := ""
+var _time_hud: WorldTimeHud
+var _interior_preview: InteriorPreview
+var _environment_tint: ColorRect
+var _story_event_panel: StoryEventPanel
+var _story_event: Dictionary = {}
+var _zone_entered_msec := 0
+var _decision_opened_msec := 0
+var _choice_hover_count := 0
+var _last_hovered_choice_id := ""
 
 
 func _ready() -> void:
@@ -82,10 +108,16 @@ func _ready() -> void:
 	_build_hud()
 	_build_location_markers()
 	_build_debug_overlay()
+	_build_world_time()
+	_build_interior_preview()
+	_build_story_event_panel()
 
 
 func _physics_process(delta: float) -> void:
 	if _player == null or _player_sprite == null:
+		return
+	if _interior_preview != null and _interior_preview.is_open():
+		_interior_preview.set_touch_vector(_touch_vector)
 		return
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if _touch_active:
@@ -106,9 +138,25 @@ func _physics_process(delta: float) -> void:
 	_update_nearby_npc()
 	_update_camera(delta)
 
+func _process(_delta: float) -> void:
+	# 任务目标和入口采用低频呼吸动画，手机端无需额外粒子开销。
+	var pulse := (sin(Time.get_ticks_msec() * 0.006) + 1.0) * 0.5
+	for index in _entrance_markers.size():
+		var marker := _entrance_markers[index]
+		if not is_instance_valid(marker):
+			continue
+		var zone: Dictionary = ZONES[index] if index < ZONES.size() else {}
+		var is_target := String(zone.get("id", "")).to_lower() == _highlighted_zone_id.to_lower()
+		# 目标入口保持纯黄，只改变亮度和大小，不再变成橙色。
+		marker.modulate = Color(1.0, 1.0, 0.0, 0.78 + pulse * 0.22) if is_target else Color(1.0, 0.96, 0.05, 1.0)
+		marker.scale = Vector2.ONE * (1.0 + (0.16 + pulse * 0.10) if is_target else 1.0)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if _interior_preview != null and _interior_preview.is_open():
+			if event.keycode == KEY_ESCAPE or event.keycode == KEY_Q:
+				_exit_zone()
+			return
 		if event.keycode == KEY_F3:
 			_debug_overlay.set_overlay_visible(not _debug_overlay.visible_overlay)
 			_walkability_debug_sprite.visible = _debug_overlay.visible_overlay
@@ -154,8 +202,12 @@ func _build_player() -> void:
 func _build_npcs() -> void:
 	for index in NPCS.size():
 		var npc_data: Dictionary = NPCS[index]
+		var safe_route := _sanitize_npc_route(npc_data["route"] as PackedVector2Array)
+		if safe_route.size() < 2:
+			push_warning("NPC %s 没有找到安全巡逻路线，已暂停移动。" % npc_data["name"])
+			continue
 		var character: Node2D = OFFICE_NPC.new()
-		character.configure(String(npc_data["loadout"]), npc_data["route"], 30.0 + index * 2.0, 100 + index)
+		character.configure(String(npc_data["loadout"]), safe_route, 30.0 + index * 2.0, 100 + index)
 		add_child(character)
 		var name_tag := Label.new()
 		name_tag.text = "%s  %s" % [npc_data["name"], npc_data["role"]]
@@ -174,11 +226,56 @@ func _build_npcs() -> void:
 		_npc_instances.append(entry)
 
 
+# NPC 不能像玩家一样依赖物理碰撞来"推回"，否则会在建筑边缘抖动。
+# 创建路线时先把每个点和每一段路线都采样到通行遮罩上，确保不会经过红色碰撞区。
+func _sanitize_npc_route(source_route: PackedVector2Array) -> PackedVector2Array:
+	var route := PackedVector2Array()
+	for source_point in source_route:
+		var safe_point := _nearest_npc_walkable_point(source_point)
+		if safe_point == Vector2.INF:
+			continue
+		if route.is_empty():
+			route.append(safe_point)
+			continue
+		if _is_npc_route_segment_safe(route[-1], safe_point):
+			route.append(safe_point)
+	# A loop must also have a safe final segment back to its first point.
+	if route.size() > 2 and not _is_npc_route_segment_safe(route[-1], route[0]):
+		route.remove_at(route.size() - 1)
+	return route
+
+
+func _nearest_npc_walkable_point(source_point: Vector2) -> Vector2:
+	if _is_walkable_position(source_point):
+		return source_point
+	# Search in small rings so a point near a red outline moves onto the closest road,
+	# instead of jumping across a building or lake.
+	for radius in range(12, 181, 12):
+		for angle_degrees in range(0, 360, 30):
+			var candidate := source_point + Vector2.RIGHT.rotated(deg_to_rad(float(angle_degrees))) * radius
+			if _is_walkable_position(candidate):
+				return candidate
+	return Vector2.INF
+
+
+func _is_npc_route_segment_safe(from: Vector2, to: Vector2) -> bool:
+	var distance := from.distance_to(to)
+	var steps := maxi(1, ceili(distance / 8.0))
+	for index in range(steps + 1):
+		var point := from.lerp(to, float(index) / float(steps))
+		if not _is_walkable_position(point):
+			return false
+	return true
+
+
 func _build_camera() -> void:
 	_camera = Camera2D.new()
-	_camera.position = WORLD_SIZE * 0.5
+	# 室外镜头从玩家身边开始，不再一次展示完整地图。
+	# 世界坐标、碰撞和角色位置不变，只有 Camera2D 负责等比缩放与取景。
+	_camera.position = _player.position if _player != null else WORLD_SIZE * 0.5
+	_camera.zoom = Vector2.ONE * OUTDOOR_EXPLORATION_ZOOM
 	_camera.position_smoothing_enabled = true
-	_camera.position_smoothing_speed = 6.0
+	_camera.position_smoothing_speed = CAMERA_FOLLOW_SPEED
 	_camera.limit_left = 0
 	_camera.limit_top = 0
 	_camera.limit_right = int(WORLD_SIZE.x)
@@ -351,15 +448,18 @@ func _build_location_markers() -> void:
 		marker.add_theme_color_override("font_outline_color", Color("29221c"))
 		marker.add_theme_constant_override("outline_size", 5)
 		marker.z_index = 45
+		# 地点名称已经绘制在底图中，运行时不再叠加文字，避免重复。
+		marker.visible = false
 		add_child(marker)
 		_location_markers.append(marker)
 		var entrance_marker := Polygon2D.new()
 		entrance_marker.name = "Entrance%s" % zone["code"]
 		entrance_marker.polygon = PackedVector2Array([Vector2(0, -14), Vector2(12, 8), Vector2(0, 15), Vector2(-12, 8)])
-		entrance_marker.color = Color("ffd35a")
+		entrance_marker.color = Color("fff500")
 		entrance_marker.position = zone["entrance"]
 		entrance_marker.z_index = 44
 		add_child(entrance_marker)
+		_entrance_markers.append(entrance_marker)
 
 
 func _build_debug_overlay() -> void:
@@ -420,6 +520,7 @@ func _add_wall_collider(rect: Rect2) -> void:
 
 func _build_hud() -> void:
 	var layer := CanvasLayer.new()
+	layer.layer = 60
 	layer.layer = 100
 	add_child(layer)
 	_zone_status = Label.new()
@@ -531,32 +632,49 @@ func _enter_nearby_zone() -> void:
 		return
 	_active_zone = _nearby_zone
 	_nearby_zone = {}
+	_zone_entered_msec = Time.get_ticks_msec()
+	ApiClient.record_event("region_entered", {"regionId": String(_active_zone.get("code", ""))})
 	_zone_button.hide()
-	_exit_zone_button.show()
-	_zone_status.text = "%s区  ·  %s" % [_active_zone["code"], _active_zone["name"]]
-	_dialog_label.text = String(_active_zone.get("purpose", ""))
-	_dialog_label.show()
-	_dialog_timer.start(4.0)
+	_exit_zone_button.hide()
+	_zone_status.hide()
+	_dialog_label.hide()
 	for marker in _location_markers:
-		marker.visible = marker.text.begins_with(String(_active_zone["code"]) + "  ")
+		marker.hide()
 	for npc in _npc_instances:
 		var is_current := String(npc["zone"]).to_lower() == String(_active_zone["id"]).to_lower()
 		var character := npc["character"] as Node2D
 		var tag := npc["name_tag"] as Label
 		character.visible = is_current
 		tag.visible = is_current
+	var texture_path := String(INTERIOR_ASSETS.get(String(_active_zone["code"]), ""))
+	if not texture_path.is_empty():
+		_interior_preview.present(_active_zone, texture_path)
+		_interior_preview.set_phase(String(WorldClock.snapshot().get("phaseId", "day")))
+	var event_opened := _open_due_event_for_active_zone()
+	if not event_opened:
+		_interior_preview.enable_exploration()
 
 
 func _exit_zone() -> void:
 	if _active_zone.is_empty():
 		return
+	var region_id := String(_active_zone.get("code", ""))
+	if _zone_entered_msec > 0:
+		ApiClient.record_event("zone_dwell", {
+			"regionId": region_id,
+			"durationMs": maxi(0, Time.get_ticks_msec() - _zone_entered_msec),
+		})
+	_zone_entered_msec = 0
 	_active_zone = {}
 	_nearby_npc = {}
 	_interaction_button.hide()
 	_exit_zone_button.hide()
+	_zone_status.show()
+	if _interior_preview != null:
+		_interior_preview.dismiss()
 	_zone_status.text = "职场小镇  ·  前往黄色入口，进入职业区域"
 	for marker in _location_markers:
-		marker.show()
+		marker.hide()
 	for npc in _npc_instances:
 		(npc["character"] as Node2D).show()
 		(npc["name_tag"] as Label).hide()
@@ -581,13 +699,94 @@ func _update_nearby_npc() -> void:
 
 
 func _update_camera(delta: float) -> void:
-	var target_position := WORLD_SIZE * 0.5
-	var target_zoom := Vector2.ONE
+	if _camera == null or _player == null:
+		return
+	var target_position := _player.position
+	var target_zoom := Vector2.ONE * OUTDOOR_EXPLORATION_ZOOM
 	if not _active_zone.is_empty():
 		target_position = _active_zone["center"]
 		target_zoom = Vector2.ONE * ZONE_ZOOM
-	_camera.position = _camera.position.lerp(target_position, minf(delta * 4.8, 1.0))
+	_camera.position = _camera.position.lerp(target_position, minf(delta * CAMERA_FOLLOW_SPEED, 1.0))
 	_camera.zoom = _camera.zoom.lerp(target_zoom, minf(delta * 4.2, 1.0))
+
+
+func _build_world_time() -> void:
+	_time_hud = TIME_HUD.new()
+	add_child(_time_hud)
+	WorldClock.time_changed.connect(_on_world_time_changed)
+	WorldClock.main_event_reached.connect(_on_main_event_reached)
+	_time_hud.advance_requested.connect(_on_time_advance_requested)
+	_on_world_time_changed(WorldClock.snapshot())
+	var environment_layer := CanvasLayer.new()
+	environment_layer.layer = 40
+	add_child(environment_layer)
+	_environment_tint = ColorRect.new()
+	_environment_tint.color = Color(1, 1, 1, 0)
+	_environment_tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_environment_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	environment_layer.add_child(_environment_tint)
+
+
+func _on_world_time_changed(snapshot: Dictionary) -> void:
+	if _time_hud != null:
+		_time_hud.set_time(snapshot)
+	if _interior_preview != null and _interior_preview.is_open():
+		_interior_preview.set_phase(String(snapshot.get("phaseId", "day")))
+	if _environment_tint == null:
+		return
+	var tint_by_phase := {
+		"dawn": Color(0.93, 0.64, 0.34, 0.14),
+		"day": Color(1, 1, 1, 0.0),
+		"dusk": Color(0.84, 0.38, 0.18, 0.23),
+		"night": Color(0.07, 0.14, 0.35, 0.42),
+	}
+	_environment_tint.color = tint_by_phase.get(String(snapshot["phaseId"]), Color(1, 1, 1, 0))
+
+
+func _on_time_advance_requested(days: int) -> void:
+	WorldClock.advance_days(days)
+
+
+func _on_main_event_reached(event: Dictionary) -> void:
+	_highlighted_zone_id = String(event.get("locationId", ""))
+	ApiClient.record_event("event_trigger", {
+		"regionId": String(event.get("locationId", "")),
+		"storyId": String(event.get("id", "")),
+		"snapshot": WorldClock.snapshot(),
+	})
+	if _time_hud != null:
+		_time_hud.show_event_gate(event)
+	if _zone_status != null:
+		_zone_status.text = "主线事件已到达：%s · 前往 %s 区" % [event["title"], event["locationId"]]
+	if not _active_zone.is_empty() and String(_active_zone.get("code", "")) == String(event.get("locationId", "")):
+		_story_event = event.duplicate(true)
+		_story_event_panel.present(_story_event)
+
+
+func _build_interior_preview() -> void:
+	_interior_preview = INTERIOR_PREVIEW.new()
+	_interior_preview.exit_requested.connect(_exit_zone)
+	_interior_preview.player_message_submitted.connect(_on_interior_message_submitted)
+	add_child(_interior_preview)
+
+func _build_story_event_panel() -> void:
+	_story_event_panel = STORY_EVENT_PANEL.new()
+	_story_event_panel.choice_confirmed.connect(_on_story_choice_confirmed)
+	_story_event_panel.decision_opened.connect(_on_decision_opened)
+	_story_event_panel.choice_hovered.connect(_on_choice_hovered)
+	add_child(_story_event_panel)
+
+func _open_due_event_for_active_zone() -> bool:
+	var next_event := WorldClock.next_main_event()
+	if next_event.is_empty() or _active_zone.is_empty():
+		return false
+	if String(next_event.get("locationId", "")) != String(_active_zone.get("code", "")):
+		return false
+	if WorldClock.running:
+		return false
+	_story_event = next_event.duplicate(true)
+	_story_event_panel.present(_story_event)
+	return true
 
 
 func _begin_interaction() -> void:
@@ -608,3 +807,59 @@ func _begin_primary_action() -> void:
 func _hide_dialog() -> void:
 	if _dialog_label != null:
 		_dialog_label.hide()
+
+func _on_story_choice_confirmed(event_id: String, choice_id: String, duration_minutes: int) -> void:
+	var event_data := WorldClock.next_main_event()
+	var region_id := String(event_data.get("locationId", ""))
+	ApiClient.record_event("option_click", {
+		"regionId": region_id,
+		"storyId": event_id,
+		"choiceId": _contract_choice_id(event_id, choice_id),
+		"hesitationMs": maxi(0, Time.get_ticks_msec() - _decision_opened_msec),
+		"switchCount": maxi(0, _choice_hover_count - 1),
+		"snapshot": WorldClock.snapshot(),
+	}, duration_minutes * 60)
+	var file := FileAccess.open("user://workplace_town_events.jsonl", FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open("user://workplace_town_events.jsonl", FileAccess.WRITE)
+	if file != null:
+		file.seek_end()
+		file.store_line(JSON.stringify({"eventId": event_id, "choiceId": choice_id, "durationMinutes": duration_minutes, "worldMinute": WorldClock.world_minute}))
+	_story_event_panel.dismiss()
+	WorldClock.complete_main_event(event_id)
+	WorldClock.advance_minutes(float(duration_minutes))
+	_story_event = {}
+	if _interior_preview != null and _interior_preview.is_open():
+		_interior_preview.enable_exploration()
+
+func _on_decision_opened(event_id: String) -> void:
+	_decision_opened_msec = Time.get_ticks_msec()
+	_choice_hover_count = 0
+	_last_hovered_choice_id = ""
+	ApiClient.record_event("node_enter", {
+		"regionId": String(_active_zone.get("code", "")),
+		"storyId": event_id,
+	})
+
+func _on_choice_hovered(event_id: String, choice_id: String) -> void:
+	if choice_id == _last_hovered_choice_id:
+		return
+	_last_hovered_choice_id = choice_id
+	_choice_hover_count += 1
+	ApiClient.record_event("option_hover", {
+		"regionId": String(_active_zone.get("code", "")),
+		"storyId": event_id,
+		"choiceId": _contract_choice_id(event_id, choice_id),
+		"hoverCount": _choice_hover_count,
+	})
+
+func _on_interior_message_submitted(npc_id: String, message: String) -> void:
+	var region_id := String(_active_zone.get("code", "")) if not _active_zone.is_empty() else "A"
+	ApiClient.record_npc_chat(npc_id, message, region_id)
+
+func _contract_choice_id(event_id: String, choice_id: String) -> String:
+	if choice_id.begins_with("option_"):
+		var suffix := choice_id.trim_prefix("option_")
+		var index: String = String({"a":"01", "b":"02", "c":"03"}.get(suffix, suffix))
+		return "%s-C%s" % [event_id, index]
+	return choice_id

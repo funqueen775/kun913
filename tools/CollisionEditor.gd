@@ -16,6 +16,10 @@ var shape_refs: Array[Dictionary] = []
 var shape_list: OptionButton
 var layer_choice: OptionButton
 var status_label: Label
+var coordinate_label: Label
+var editor_panel: ColorRect
+var dragging_panel := false
+var panel_drag_offset := Vector2.ZERO
 
 func _ready() -> void:
 	_load_collision_data()
@@ -27,8 +31,13 @@ func _ready() -> void:
 func _build_map() -> void:
 	var map_sprite := Sprite2D.new()
 	map_sprite.texture = load(MAP_PATH)
-	map_sprite.position = MAP_SIZE * 0.5
-	map_sprite.centered = true
+	map_sprite.position = Vector2.ZERO
+	map_sprite.centered = false
+	if map_sprite.texture != null:
+		var source_size := map_sprite.texture.get_size()
+		map_sprite.scale = Vector2(MAP_SIZE.x / source_size.x, MAP_SIZE.y / source_size.y)
+	# The editor's _draw overlays must render above the map sprite.
+	map_sprite.z_index = -1
 	add_child(map_sprite)
 
 func _build_panel() -> void:
@@ -36,91 +45,119 @@ func _build_panel() -> void:
 	canvas.layer = 10
 	add_child(canvas)
 
-	var panel := ColorRect.new()
-	panel.position = Vector2(PANEL_LEFT, 45)
-	panel.size = Vector2(450, 530)
-	panel.color = Color("1d2833e8")
-	canvas.add_child(panel)
+	editor_panel = ColorRect.new()
+	editor_panel.position = Vector2(PANEL_LEFT, 45)
+	editor_panel.size = Vector2(450, 530)
+	editor_panel.color = Color("1d2833e8")
+	canvas.add_child(editor_panel)
 
 	var title := Label.new()
-	title.text = "碰撞轮廓绘制器"
+	title.text = "碰撞轮廓绘制器  (按住这里拖动)"
 	title.position = Vector2(24, 18)
 	title.add_theme_font_size_override("font_size", 28)
-	panel.add_child(title)
+	title.mouse_filter = Control.MOUSE_FILTER_STOP
+	title.gui_input.connect(_on_title_gui_input)
+	editor_panel.add_child(title)
 
 	var note := Label.new()
 	note.text = "红色 = 已保存碰撞  橙色 = 当前选中\n青色 = 正在绘制的轮廓\n左键加点，右键撤销最后一个点"
 	note.position = Vector2(24, 65)
 	note.add_theme_font_size_override("font_size", 16)
-	panel.add_child(note)
+	editor_panel.add_child(note)
 
 	var layer_label := Label.new()
 	layer_label.text = "新增形状类型"
 	layer_label.position = Vector2(24, 145)
 	layer_label.add_theme_font_size_override("font_size", 17)
-	panel.add_child(layer_label)
+	editor_panel.add_child(layer_label)
 
 	layer_choice = OptionButton.new()
 	layer_choice.position = Vector2(180, 140)
 	layer_choice.size = Vector2(230, 38)
 	for layer in layers:
 		layer_choice.add_item(str(layer.get("id", "未命名")))
-	panel.add_child(layer_choice)
+	editor_panel.add_child(layer_choice)
 
 	var list_label := Label.new()
 	list_label.text = "当前轮廓"
 	list_label.position = Vector2(24, 200)
 	list_label.add_theme_font_size_override("font_size", 17)
-	panel.add_child(list_label)
+	editor_panel.add_child(list_label)
 
 	shape_list = OptionButton.new()
 	shape_list.position = Vector2(24, 230)
 	shape_list.size = Vector2(386, 38)
 	shape_list.item_selected.connect(_on_shape_selected)
-	panel.add_child(shape_list)
+	editor_panel.add_child(shape_list)
 
 	var redraw_button := Button.new()
 	redraw_button.text = "重画当前"
 	redraw_button.position = Vector2(24, 290)
 	redraw_button.size = Vector2(185, 44)
 	redraw_button.pressed.connect(_start_redraw)
-	panel.add_child(redraw_button)
+	editor_panel.add_child(redraw_button)
 
 	var new_button := Button.new()
 	new_button.text = "新增轮廓"
 	new_button.position = Vector2(225, 290)
 	new_button.size = Vector2(185, 44)
 	new_button.pressed.connect(_start_new)
-	panel.add_child(new_button)
+	editor_panel.add_child(new_button)
 
 	var finish_button := Button.new()
 	finish_button.text = "完成轮廓"
 	finish_button.position = Vector2(24, 350)
 	finish_button.size = Vector2(185, 44)
 	finish_button.pressed.connect(_finish_drawing)
-	panel.add_child(finish_button)
+	editor_panel.add_child(finish_button)
 
 	var delete_button := Button.new()
 	delete_button.text = "删除当前"
 	delete_button.position = Vector2(225, 350)
 	delete_button.size = Vector2(185, 44)
 	delete_button.pressed.connect(_delete_selected)
-	panel.add_child(delete_button)
+	editor_panel.add_child(delete_button)
+
+	var clear_button := Button.new()
+	clear_button.text = "清空全部红色轮廓"
+	clear_button.position = Vector2(24, 410)
+	clear_button.size = Vector2(386, 44)
+	clear_button.add_theme_color_override("font_color", Color("ffdddd"))
+	clear_button.pressed.connect(_clear_all_collisions)
+	editor_panel.add_child(clear_button)
 
 	var save_button := Button.new()
 	save_button.text = "保存到 collision.json"
-	save_button.position = Vector2(24, 420)
+	save_button.position = Vector2(24, 470)
 	save_button.size = Vector2(386, 50)
 	save_button.add_theme_font_size_override("font_size", 19)
 	save_button.pressed.connect(_save_collision_data)
-	panel.add_child(save_button)
+	editor_panel.add_child(save_button)
 
 	status_label = Label.new()
 	status_label.text = "请选择一个形状，或新增轮廓。"
-	status_label.position = Vector2(24, 485)
+	status_label.position = Vector2(24, 535)
 	status_label.size = Vector2(386, 36)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	panel.add_child(status_label)
+	editor_panel.add_child(status_label)
+
+	coordinate_label = Label.new()
+	coordinate_label.text = "地图坐标：x 0，y 0"
+	coordinate_label.position = Vector2(24, 575)
+	coordinate_label.add_theme_font_size_override("font_size", 16)
+	editor_panel.add_child(coordinate_label)
+	editor_panel.size.y = 620
+
+func _on_title_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		dragging_panel = event.pressed
+		if dragging_panel:
+			panel_drag_offset = get_viewport().get_mouse_position() - editor_panel.position
+		return
+	if event is InputEventMouseMotion and dragging_panel and (event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
+		var viewport_size := get_viewport_rect().size
+		var desired := get_viewport().get_mouse_position() - panel_drag_offset
+		editor_panel.position = desired.clamp(Vector2.ZERO, viewport_size - editor_panel.size)
 
 func _load_collision_data() -> void:
 	var file := FileAccess.open(COLLISION_PATH, FileAccess.READ)
@@ -214,6 +251,19 @@ func _delete_selected() -> void:
 	status_label.text = "轮廓已从内存删除。点击保存后才会写入文件。"
 	queue_redraw()
 
+func _clear_all_collisions() -> void:
+	if drawing:
+		status_label.text = "请先完成当前草稿，或右键撤销所有草稿点。"
+		return
+	for layer_index in layers.size():
+		layers[layer_index]["polygons"] = []
+	selected_polygon_index = -1
+	shape_refs.clear()
+	shape_list.clear()
+	_save_collision_data()
+	status_label.text = "所有红色轮廓已清空并保存。现在点击“新增轮廓”开始画。"
+	queue_redraw()
+
 func _save_collision_data() -> void:
 	if drawing:
 		status_label.text = "请先完成或撤销正在绘制的轮廓。"
@@ -234,8 +284,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not drawing:
 		return
 	if event is InputEventMouseButton and event.pressed:
-		var point := event.position
-		if point.x >= PANEL_LEFT or point.x < 0 or point.y < 0 or point.x > MAP_SIZE.x or point.y > MAP_SIZE.y:
+		var point: Vector2 = event.position
+		if point.x < 0 or point.y < 0 or point.x > MAP_SIZE.x or point.y > MAP_SIZE.y:
 			return
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			draft_points.append(point)
@@ -245,6 +295,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			draft_points.pop_back()
 			status_label.text = "已撤销最后一个点，还剩 %d 个点。" % draft_points.size()
 			queue_redraw()
+
+func _process(_delta: float) -> void:
+	if coordinate_label == null:
+		return
+	var mouse := get_viewport().get_mouse_position()
+	coordinate_label.text = "地图坐标：x %d，y %d" % [roundi(mouse.x), roundi(mouse.y)]
 
 func _draw() -> void:
 	for layer_index in layers.size():

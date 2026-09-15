@@ -1,0 +1,43 @@
+{
+  "actId": "act_01_enter_industry",
+  "title": "第一幕 进入行业",
+  "range": { "startMonth": 1, "endMonth": 8 },
+  "timeAdvance": {
+    "daysPerAction": 5,
+    "blockedByIncompleteMainEvent": true
+  },
+  "mainEvents": [
+    {
+      "id": "M1-E01",
+      "time": { "month": 1, "day": 15, "phase": "day" },
+      "locationId": "B",
+      "location": "B 科技丘 你的工位",
+      "title": "新员工手册",
+      "durationMinutes": 45
+    },
+    {
+      "id": "M1-E02",
+      "time": { "month": 3, "day": 15, "phase": "day" },
+      "locationId": "A",
+      "location": "A 总部 评审室",
+      "title": "技术选型",
+      "durationMinutes": 60
+    },
+    {
+      "id": "M1-E03",
+      "time": { "month": 5, "day": 15, "phase": "day" },
+      "locationId": "B",
+      "location": "B 科技丘 工位",
+      "title": "评测集要不要建",
+      "durationMinutes": 60
+    },
+    {
+      "id": "M1-E04",
+      "time": { "month": 7, "day": 15, "phase": "night" },
+      "locationId": "B",
+      "location": "B 科技丘 工位",
+      "title": "AI 代码标注",
+      "durationMinutes": 50
+    }
+  ]
+}
