@@ -96,6 +96,17 @@ func advance_days(days: int = 5) -> void:
 		return
 	advance_minutes(float(maxi(1, days) * MINUTES_PER_DAY))
 
+## 睡觉：直接把时间拨到第二天早上，跨过午夜。
+## 不走 advance_minutes 是有意的 —— 那条路会一路检查主线事件，
+## 睡觉属于"跳过夜晚"，不该在半夜把玩家拽起来做剧情。
+## 事件都在 9:00 / 23:00，从 23:00 睡到次日 7:00 不会漏掉任何一个。
+func sleep_until_next_morning(hour: int) -> void:
+	var day_index := world_minute / MINUTES_PER_DAY
+	world_minute = (day_index + 1) * MINUTES_PER_DAY + clampi(hour, 0, 23) * 60
+	_minute_remainder = 0.0
+	running = true
+	_emit_time_changed()
+
 func next_main_event() -> Dictionary:
 	for event in MAIN_EVENTS:
 		if not _completed_main_event_ids.has(String(event["id"])):

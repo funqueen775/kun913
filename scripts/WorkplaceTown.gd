@@ -7,6 +7,7 @@ const OFFICE_NPC := preload("res://scripts/OfficeNpcWalker.gd")
 const MAP_DEBUG_OVERLAY := preload("res://scripts/MapDebugOverlay.gd")
 const TIME_HUD := preload("res://scripts/WorldTimeHud.gd")
 const INTERIOR_PREVIEW := preload("res://scripts/InteriorPreview.gd")
+const DORM_ROOM := preload("res://scripts/DormRoom.gd")
 const STORY_EVENT_PANEL := preload("res://scripts/StoryEventPanel.gd")
 const CHINESE_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const TOWN_MAP_PATH := "res://assets/town/workplace_town_reference.png"
@@ -18,11 +19,26 @@ const NAVIGATION_DATA_PATH := "res://data/town/navigation.json"
 const WORLD_SIZE := Vector2(1920, 1080)
 const PLAYER_SPEED := 270.0
 const COLLISION_LAYER := 1
+## 键盘移动的兜底键位（按物理键位读，换键盘布局也认"WASD 那四个位置"）。
+## 为什么需要兜底：project.godot 的 InputMap 里 move_* 四条曾被写成 device=16，
+## 而真实键盘事件 device=0，Godot 会比对 device → 一条都匹配不上，玩家完全走不动。
+## 配置再被改坏 / 被别的引擎版本重写时，这里保证键盘照样能走。
+const MOVE_LEFT_KEYS := [KEY_A, KEY_LEFT]
+const MOVE_RIGHT_KEYS := [KEY_D, KEY_RIGHT]
+const MOVE_UP_KEYS := [KEY_W, KEY_UP]
+const MOVE_DOWN_KEYS := [KEY_S, KEY_DOWN]
 const INTERACTION_DISTANCE := 230.0
 const ENTRANCE_DISTANCE := 58.0
 const ZONE_ZOOM := 3.15
 const OUTDOOR_EXPLORATION_ZOOM := 1.55
 const CAMERA_FOLLOW_SPEED := 5.4
+## 自由缩放：滚轮 / ± 键 / 触屏双指捏合每次的倍率步长。
+const MAP_ZOOM_STEP := 1.12
+## 缩放上限倍数（相对基础缩放）：1.55 × 2.6 ≈ 4.0，足够贴近看清角色与招牌。
+const MAP_ZOOM_MAX_FACTOR := 2.6
+## 缩放下限倍数：总 zoom 不能低于 _cover_zoom，否则视野超出 0..1920 / 0..1080，
+## 相机 limit 会把画面钉在一边并露出灰底。1.0 / 1.55 ≈ 0.645 时正好看全整张地图。
+const MAP_ZOOM_MIN_FACTOR := 1.0 / OUTDOOR_EXPLORATION_ZOOM
 const INTERIOR_ASSETS := {
 	"A": "res://assets/generated/interiors/office_placeholder.png",
 	"B": "res://assets/generated/b_technology_office.png",
@@ -33,6 +49,13 @@ const INTERIOR_ASSETS := {
 	"G": "res://assets/placeholders/interiors/g_clinic.png",
 	"H": "res://assets/placeholders/interiors/h_living.png",
 }
+## 宿舍门口（H 区 · 慢生活园入口外）。出生、以及每天出门都落在这里。
+## 坐标来自 data/town/regions.json 里 H 区的 entrance (375,465) 再往外让开一点，
+## 免得一出宿舍就被"进入 H 区"的按钮糊脸；已用通行遮罩确认可走。
+const DORM_DOOR_POSITION := Vector2(375, 500)
+## 宵禁：到了这个钟点玩家会被强制送回宿舍，只能睡觉，第二天 WAKE_UP_HOUR 点才出门。
+const CURFEW_HOUR := 23
+const WAKE_UP_HOUR := 7
 var WALKABLE_AREAS := [
 	# Five destination forecourts / plazas.
 	Rect2(70, 230, 330, 160), Rect2(760, 190, 330, 150), Rect2(1240, 420, 300, 200),
@@ -68,6 +91,19 @@ var _camera: Camera2D
 var _cover_zoom := 1.0
 ## 上一帧的视口尺寸：变了才重算相机铺满（size_changed 信号时机不稳，会拿到过期尺寸）
 var _last_viewport_size := Vector2.ZERO
+## 玩家自由缩放的倍率（相对基础缩放），范围钳在 [MAP_ZOOM_MIN_FACTOR, MAP_ZOOM_MAX_FACTOR]。
+## _update_camera 与 _apply_camera_cover 的目标 zoom 都要乘它，两边保持一致才不会互相打架。
+var _map_zoom_factor := 1.0
+var _map_zoom_hint: Label
+## 鼠标拖动平移：按住左键拖动时，相机脱离玩家、按拖动量反向移动（地图跟着手走）。
+## 松手后**保持**在当前视角不回弹 —— 拖动是"我去看看别处"；等玩家一有移动输入再滑回身上。
+var _pan_offset := Vector2.ZERO
+var _is_panning := false
+var _pan_drag_origin := Vector2.ZERO
+var _pan_offset_origin := Vector2.ZERO
+## 触屏双指捏合：触控点 index -> 当前屏幕坐标
+var _zoom_touches := {}
+var _pinch_last_distance := 0.0
 var _touch_vector := Vector2.ZERO
 var _touch_active := false
 var _active_zone: Dictionary = {}
@@ -78,6 +114,7 @@ var _zone_status: Label
 var _interaction_button: Button
 var _zone_button: Button
 var _exit_zone_button: Button
+var _quit_button: Button
 var _dialog_label: Label
 var _dialog_timer: Timer
 var _last_walkable_position := Vector2.ZERO
@@ -94,6 +131,11 @@ var _interior_preview: InteriorPreview
 var _environment_tint: ColorRect
 var _story_event_panel: StoryEventPanel
 var _story_event: Dictionary = {}
+var _dorm: DormRoom
+## 玩家在宿舍里（黑屏盖住地图）：此时人物不能动、地图不能缩放拖动。
+var _in_dorm := false
+## 已经处理过宵禁的那一天（"月-日"），避免同一天被反复拽回宿舍。
+var _curfew_day_key := ""
 var _zone_entered_msec := 0
 var _decision_opened_msec := 0
 var _choice_hover_count := 0
@@ -114,6 +156,28 @@ func _ready() -> void:
 	_build_world_time()
 	_build_interior_preview()
 	_build_story_event_panel()
+	_build_dorm_room()
+	# 开局就站在宿舍里：黑屏 + 唯一一个「离开宿舍」。
+	_enter_dorm(false)
+
+
+## 键盘移动输入：先问 InputMap（方便以后在游戏里改键），拿不到就直接按物理键位兜底。
+## 返回的方向已归一化，斜着走不会比直着走快。
+func _read_move_input() -> Vector2:
+	var from_actions := Input.get_vector("move_left", "move_right", "move_up", "move_down").limit_length(1.0)
+	if from_actions != Vector2.ZERO:
+		return from_actions
+	return Vector2(
+		float(_any_move_key_pressed(MOVE_RIGHT_KEYS)) - float(_any_move_key_pressed(MOVE_LEFT_KEYS)),
+		float(_any_move_key_pressed(MOVE_DOWN_KEYS)) - float(_any_move_key_pressed(MOVE_UP_KEYS))
+	).limit_length(1.0)
+
+
+func _any_move_key_pressed(keys: Array) -> bool:
+	for key in keys:
+		if Input.is_physical_key_pressed(key):
+			return true
+	return false
 
 
 func _physics_process(delta: float) -> void:
@@ -122,7 +186,12 @@ func _physics_process(delta: float) -> void:
 	if _interior_preview != null and _interior_preview.is_open():
 		_interior_preview.set_touch_vector(_touch_vector)
 		return
-	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	# 宿舍黑屏期间人物钉住不动（CanvasLayer 盖住画面，动了对不上）。
+	if _in_dorm:
+		_player.velocity = Vector2.ZERO
+		_player_sprite.set_motion(Vector2.ZERO, 0.0)
+		return
+	var direction := _read_move_input()
 	if _touch_active:
 		direction = _touch_vector
 	var wanted_position := _player.position + direction * PLAYER_SPEED * delta
@@ -156,8 +225,35 @@ func _process(_delta: float) -> void:
 		marker.modulate = Color(1.0, 1.0, 0.0, 0.78 + pulse * 0.22) if is_target else Color(1.0, 0.96, 0.05, 1.0)
 		marker.scale = Vector2.ONE * (1.0 + (0.16 + pulse * 0.10) if is_target else 1.0)
 
+## 拖动中的移动与松手走 _input 而不是 _unhandled_input：
+## 拖动时鼠标很可能划过按钮/摇杆，那些 Control 会吃掉事件，_unhandled_input 就收不到松手了
+## → 会一直卡在"拖动中"。这里抢在 GUI 之前收，并顺手把事件标记为已处理（拖动时不希望误触按钮）。
+func _input(event: InputEvent) -> void:
+	if not _is_panning:
+		return
+	if event is InputEventMouseMotion:
+		_update_map_pan(event.position)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_end_map_pan()
+
+
+## 拖动中窗口失焦（Alt+Tab 之类）会收不到鼠标松手：
+## 不兜这一下，光标就卡在"抓手"上、`_is_panning` 也一直是 true。
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		_end_map_pan()
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if _handle_map_zoom_input(event):
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
+		# 宿舍黑屏盖在最上面，键盘只认"确认当前那一个选项"。
+		if _in_dorm:
+			if event.keycode == KEY_ESCAPE or event.keycode == KEY_Q or event.keycode == KEY_E or event.keycode == KEY_SPACE:
+				_confirm_dorm_action()
+			return
 		if _interior_preview != null and _interior_preview.is_open():
 			if event.keycode == KEY_ESCAPE or event.keycode == KEY_Q:
 				_exit_zone()
@@ -176,12 +272,183 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _debug_overlay != null and _debug_overlay.visible_overlay:
 			var world_position := get_global_mouse_position()
 			_coordinate_label.text = "地图坐标  x: %d  y: %d" % [roundi(world_position.x), roundi(world_position.y)]
+		_begin_map_pan(event.position)
+
+
+## 地图自由缩放入口。返回 true 表示这个事件已被缩放消费掉，别再往下传。
+func _handle_map_zoom_input(event: InputEvent) -> bool:
+	if _is_map_input_locked():
+		_zoom_touches.clear()
+		_pinch_last_distance = 0.0
+		return false
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_zoom_by(MAP_ZOOM_STEP)
+			return true
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_zoom_by(1.0 / MAP_ZOOM_STEP)
+			return true
+	if event is InputEventMagnifyGesture:
+		# 触控板 / 触屏的捏合手势，factor > 1 表示张开（放大）
+		_zoom_by(event.factor)
+		return true
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_EQUAL, KEY_PLUS, KEY_KP_ADD:
+				_zoom_by(MAP_ZOOM_STEP)
+				return true
+			KEY_MINUS, KEY_KP_SUBTRACT:
+				_zoom_by(1.0 / MAP_ZOOM_STEP)
+				return true
+			KEY_0, KEY_KP_0:
+				# 一键回到默认视野
+				_set_map_zoom(1.0)
+				return true
+	return _handle_pinch_zoom(event)
+
+
+## 触屏双指捏合：两指距离张开 → 放大，收拢 → 缩小。
+## 单指（拖摇杆、点按钮）不参与，避免和左下角摇杆抢手势。
+func _handle_pinch_zoom(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_zoom_touches[event.index] = event.position
+		else:
+			_zoom_touches.erase(event.index)
+		if _zoom_touches.size() < 2:
+			_pinch_last_distance = 0.0
+		return false
+	if event is InputEventScreenDrag:
+		if not _zoom_touches.has(event.index):
+			return false
+		_zoom_touches[event.index] = event.position
+		if _zoom_touches.size() < 2:
+			_pinch_last_distance = 0.0
+			return false
+		var indices := _zoom_touches.keys()
+		indices.sort()
+		var first: Vector2 = _zoom_touches[indices[0]]
+		var second: Vector2 = _zoom_touches[indices[1]]
+		var distance := first.distance_to(second)
+		if _pinch_last_distance > 0.0 and distance > 0.0:
+			# 单帧比例变化夹一下，手指甩得再快也不会一帧跳到极限
+			_zoom_by(clampf(distance / _pinch_last_distance, 0.8, 1.25))
+		_pinch_last_distance = distance
+		return true
+	return false
+
+
+func _zoom_by(step: float) -> void:
+	_set_map_zoom(_map_zoom_factor * step)
+
+
+## 倍率钳制：下限保证「视野不超世界」（不露灰底），上限防止放太大糊成马赛克。
+func _set_map_zoom(value: float) -> void:
+	var clamped := clampf(value, MAP_ZOOM_MIN_FACTOR, MAP_ZOOM_MAX_FACTOR)
+	if is_equal_approx(clamped, _map_zoom_factor):
+		return
+	_map_zoom_factor = clamped
+	_update_zoom_hint()
+	# 视野大小变了，可移动范围也跟着变，平移偏移要重新钳一次，
+	# 否则缩小后相机会被相机 limit 钉在边上，玩家再移动时有一段"空转"。
+	_clamp_pan_offset()
+
+
+func _update_zoom_hint() -> void:
+	if _map_zoom_hint == null:
+		return
+	_map_zoom_hint.text = "滚轮 / 双指缩放  ·  拖动平移  ·  %d%%" % roundi(_map_zoom_factor * 100.0)
+
+
+## 室内 / 剧情面板打开时不给缩放与拖动：那些界面盖住了地图，
+## 此时改倍率或视角只会在退出后突然跳变一次，观感很差。
+func _is_map_input_locked() -> bool:
+	if _in_dorm:
+		return true
+	if _interior_preview != null and _interior_preview.is_open():
+		return true
+	if _story_event_panel != null and _story_event_panel.is_open():
+		return true
+	return false
+
+
+## 当前场景的基础缩放：室外 = 探索视角，在区域内 = 区域视角。
+func _base_zoom() -> float:
+	return ZONE_ZOOM if not _active_zone.is_empty() else OUTDOOR_EXPLORATION_ZOOM
+
+
+## 相机跟随的基准点：室外跟着玩家，区域内看区域中心。
+func _camera_anchor() -> Vector2:
+	if not _active_zone.is_empty():
+		var center: Vector2 = _active_zone["center"]
+		return center
+	if _player != null:
+		return _player.position
+	return WORLD_SIZE * 0.5
+
+
+func _begin_map_pan(screen_position: Vector2) -> void:
+	if _is_map_input_locked():
+		return
+	_is_panning = true
+	_pan_drag_origin = screen_position
+	_pan_offset_origin = _pan_offset
+	# 光标给个"抓手"反馈，松手恢复
+	Input.set_default_cursor_shape(Input.CURSOR_DRAG)
+
+
+func _update_map_pan(screen_position: Vector2) -> void:
+	if not _is_panning or _camera == null:
+		return
+	# 屏幕位移 ÷ zoom = 世界位移；鼠标向右拖 → 相机向左走，画面里的地图才跟着手走
+	_pan_offset = _pan_offset_origin - (screen_position - _pan_drag_origin) / _camera.zoom
+	_clamp_pan_offset()
+
+
+func _end_map_pan() -> void:
+	if not _is_panning:
+		return
+	_is_panning = false
+	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+
+
+## 相机最多走到「视野边缘贴住世界边缘」为止：再往外拖也看不见东西，只是白攒偏移。
+## 不做这一步的话，拖过边界再松手，玩家移动时相机会先"空转"一段才跟上。
+func _clamp_pan_offset() -> void:
+	# 没平移过就直接返回：既省计算，也保证「只有滚轮缩放、没拖过鼠标」时偏移恒为 0
+	if _camera == null or _pan_offset == Vector2.ZERO:
+		return
+	var half := get_viewport().get_visible_rect().size / _camera.zoom * 0.5
+	# 参考系必须是「没平移时相机实际会待的位置」，也就是被 limit 钳过之后的落点。
+	# 直接拿玩家位置当参考系是错的：玩家常常就站在可显示范围外（比如出生点 y=810，
+	# 而 1080 世界里相机的 y 上限是 739.5，全靠 limit 兜着），那样一算就会凭空
+	# 冒出一个 -70 的偏移 —— 表现是"只滚了下滚轮，画面就自己挪了一截"。
+	var base_center := _camera_anchor().clamp(half, WORLD_SIZE - half)
+	_pan_offset = (base_center + _pan_offset).clamp(half, WORLD_SIZE - half) - base_center
+
+
+## 玩家一有移动输入就把视角滑回身上（拖动只是"去看看别处"，不是新的停留点）。
+func _decay_pan_offset(delta: float) -> void:
+	if _pan_offset == Vector2.ZERO or _is_panning:
+		return
+	var moving := false
+	if _touch_active:
+		moving = _touch_vector != Vector2.ZERO
+	else:
+		moving = _read_move_input() != Vector2.ZERO
+	if not moving:
+		return
+	# 比相机跟随更快地收回（否则相机自身还在 lerp，两级平滑叠一起会显得迟钝）
+	_pan_offset = _pan_offset.lerp(Vector2.ZERO, minf(delta * CAMERA_FOLLOW_SPEED * 2.5, 1.0))
+	if _pan_offset.length() < 1.0:
+		_pan_offset = Vector2.ZERO
 
 
 func _build_player() -> void:
 	_player = CharacterBody2D.new()
 	_player.name = "Player"
-	_player.position = Vector2(945, 810)
+	# 出生在慢生活园的宿舍门口（H 区），不再是 E 区入口。
+	_player.position = DORM_DOOR_POSITION
 	_last_walkable_position = _player.position
 	_player.collision_layer = 2
 	_player.collision_mask = COLLISION_LAYER
@@ -309,7 +576,9 @@ func _apply_camera_cover() -> void:
 	_last_viewport_size = vp
 	# view_in_world = vp / zoom，要两个方向都 <= 世界尺寸，zoom 取较大者
 	_cover_zoom = maxf(vp.x / WORLD_SIZE.x, vp.y / WORLD_SIZE.y)
-	_camera.zoom = Vector2(_cover_zoom, _cover_zoom)
+	# 铺满系数只是地板：再乘上当前场景的基础缩放与玩家自由缩放倍率才是最终 zoom。
+	# 少了后两项，窗口一变 zoom 就会被拽回 1.0，接着又被 _update_camera 拉回去 —— 画面会抖。
+	_camera.zoom = Vector2.ONE * _cover_zoom * _base_zoom() * _map_zoom_factor
 
 
 func _build_walls() -> void:
@@ -628,6 +897,35 @@ func _build_hud() -> void:
 	_exit_zone_button.hide()
 	_exit_zone_button.pressed.connect(_exit_zone)
 	layer.add_child(_exit_zone_button)
+	# 退出游戏。放在右上角时间面板**下面**：时间面板占 y 26..203 且层级更高，
+	# 跟「返回小镇」按钮一样挤在 y=26 会被整块盖住，落到 215 才露得出来。
+	_quit_button = Button.new()
+	_quit_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_quit_button.position = Vector2(-230, 215)
+	_quit_button.size = Vector2(190, 56)
+	_quit_button.text = "退出游戏"
+	_quit_button.add_theme_font_override("font", CHINESE_FONT)
+	_quit_button.add_theme_font_size_override("font_size", 19)
+	_quit_button.pressed.connect(_quit_game)
+	layer.add_child(_quit_button)
+	# 自由缩放的操作提示 + 当前倍率。放左下角摇杆上方：
+	# 右上角被「第一幕」时间面板占着，放那里会被整块盖住。
+	# 字号必须够大 + 伪粗体：18px 的 Regular 中文横画只有 1px 宽，
+	# 外面套 3px 描边后亮色笔画整根被吃掉，整行看上去是一团暗色。
+	var zoom_font := FontVariation.new()
+	zoom_font.base_font = CHINESE_FONT
+	zoom_font.variation_embolden = 0.55
+	_map_zoom_hint = Label.new()
+	_map_zoom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_map_zoom_hint.position = Vector2(44, -228)
+	_map_zoom_hint.size = Vector2(460, 32)
+	_map_zoom_hint.add_theme_font_override("font", zoom_font)
+	_map_zoom_hint.add_theme_font_size_override("font_size", 20)
+	_map_zoom_hint.add_theme_color_override("font_color", Color(1.0, 0.94, 0.76, 0.92))
+	_map_zoom_hint.add_theme_color_override("font_outline_color", Color("18202b"))
+	_map_zoom_hint.add_theme_constant_override("outline_size", 3)
+	layer.add_child(_map_zoom_hint)
+	_update_zoom_hint()
 	_build_mobile_joystick(layer)
 
 
@@ -724,6 +1022,100 @@ func _exit_zone() -> void:
 	_hide_dialog()
 
 
+## ---------------------------------------------------------------------------
+## 宿舍 / 宵禁
+## 玩家每天从慢生活园的宿舍出发，晚上 CURFEW_HOUR 点必须回到宿舍。
+## 到点没回来也没关系 —— 人会被直接送回宿舍，那一晚只剩「睡觉」一个选项，
+## 睡醒是第二天 WAKE_UP_HOUR 点，重新出现在宿舍门口。
+## ---------------------------------------------------------------------------
+
+func _build_dorm_room() -> void:
+	_dorm = DORM_ROOM.new()
+	_dorm.leave_requested.connect(_on_dorm_leave)
+	_dorm.sleep_requested.connect(_on_dorm_sleep)
+	add_child(_dorm)
+
+
+func _enter_dorm(curfew: bool) -> void:
+	if _dorm == null:
+		return
+	if not _active_zone.is_empty():
+		_exit_zone()
+	_in_dorm = true
+	_hide_dialog()
+	_interaction_button.hide()
+	_zone_button.hide()
+	_exit_zone_button.hide()
+	_zone_status.hide()
+	if curfew:
+		# 宵禁这一晚把时间钉住：不然玩家发呆的功夫，游戏时间会一路跑到后半夜。
+		WorldClock.set_running(false)
+	_dorm.present(curfew)
+
+
+func _on_dorm_leave() -> void:
+	_in_dorm = false
+	if _dorm != null:
+		_dorm.dismiss()
+	_place_player_at_dorm_door()
+	_zone_status.show()
+	_zone_status.text = "职场小镇  ·  前往黄色入口，进入职业区域"
+
+
+func _on_dorm_sleep() -> void:
+	_in_dorm = false
+	if _dorm != null:
+		_dorm.dismiss()
+	WorldClock.sleep_until_next_morning(WAKE_UP_HOUR)
+	_place_player_at_dorm_door()
+	_zone_status.show()
+	_zone_status.text = "职场小镇  ·  第 %d 月 %d 日  ·  新的一天，从宿舍出发" % [
+		int(WorldClock.snapshot().get("month", 1)), int(WorldClock.snapshot().get("day", 1))
+	]
+
+
+## 出门时把人钉在宿舍门口，并让相机直接落位 ——
+## 不落位的话镜头会从昨晚待的地方一路滑过来，看着像瞬移失败。
+func _place_player_at_dorm_door() -> void:
+	if _player == null:
+		return
+	_player.position = DORM_DOOR_POSITION
+	_player.velocity = Vector2.ZERO
+	_last_walkable_position = _player.position
+	if _camera != null:
+		_camera.position = _player.position
+		_camera.reset_smoothing()
+
+
+## 宿舍里只有那一个按钮，键盘（Q / E / 空格 / Esc）点的是同一个。
+func _confirm_dorm_action() -> void:
+	if _dorm == null:
+		return
+	if _dorm.is_curfew():
+		_on_dorm_sleep()
+	else:
+		_on_dorm_leave()
+
+
+## 一过 CURFEW_HOUR 点就把玩家送回宿舍，同一天只送一次。
+func _check_curfew(snapshot: Dictionary) -> void:
+	if _dorm == null or _in_dorm:
+		return
+	if int(snapshot.get("hour", 0)) < CURFEW_HOUR:
+		return
+	var day_key := "%d-%d" % [int(snapshot.get("month", 1)), int(snapshot.get("day", 1))]
+	if _curfew_day_key == day_key:
+		return
+	# 主线剧情开着时先让玩家把选择做完；WorldClock 暂停也说明有事件等处理，
+	# 这时候拽人回宿舍，那个事件就再也触发不到了。
+	if _story_event_panel != null and _story_event_panel.is_open():
+		return
+	if not WorldClock.running:
+		return
+	_curfew_day_key = day_key
+	_enter_dorm(true)
+
+
 func _update_nearby_npc() -> void:
 	_nearby_npc = {}
 	if _active_zone.is_empty():
@@ -744,12 +1136,16 @@ func _update_nearby_npc() -> void:
 func _update_camera(delta: float) -> void:
 	if _camera == null or _player == null:
 		return
-	var target_position := _player.position
-	var target_zoom := Vector2.ONE * OUTDOOR_EXPLORATION_ZOOM * _cover_zoom
-	if not _active_zone.is_empty():
-		target_position = _active_zone["center"]
-		target_zoom = Vector2.ONE * ZONE_ZOOM * _cover_zoom
-	_camera.position = _camera.position.lerp(target_position, minf(delta * CAMERA_FOLLOW_SPEED, 1.0))
+	# 玩家自由缩放倍率叠在场景基础缩放之上：缩到最小时（下限）视野正好铺满整个世界。
+	var target_zoom := Vector2.ONE * _base_zoom() * _cover_zoom * _map_zoom_factor
+	# 拖动平移：相机可以暂时离开玩家去看别处，玩家一有移动输入就滑回去
+	_decay_pan_offset(delta)
+	var target_position := _camera_anchor() + _pan_offset
+	if _is_panning:
+		# 拖动中不做平滑，手感才跟手（松手后重新交给 lerp）
+		_camera.position = target_position
+	else:
+		_camera.position = _camera.position.lerp(target_position, minf(delta * CAMERA_FOLLOW_SPEED, 1.0))
 	_camera.zoom = _camera.zoom.lerp(target_zoom, minf(delta * 4.2, 1.0))
 
 
@@ -775,6 +1171,7 @@ func _on_world_time_changed(snapshot: Dictionary) -> void:
 		_time_hud.set_time(snapshot)
 	if _interior_preview != null and _interior_preview.is_open():
 		_interior_preview.set_phase(String(snapshot.get("phaseId", "day")))
+	_check_curfew(snapshot)
 	if _environment_tint == null:
 		return
 	var tint_by_phase := {
@@ -851,6 +1248,10 @@ func _hide_dialog() -> void:
 	if _dialog_label != null:
 		_dialog_label.hide()
 
+## 退出游戏：直接结束程序。标题页那个「退出游戏」按钮也是同一个动作。
+func _quit_game() -> void:
+	get_tree().quit()
+
 func _on_story_choice_confirmed(event_id: String, choice_id: String, duration_minutes: int) -> void:
 	var event_data := WorldClock.next_main_event()
 	var region_id := String(event_data.get("locationId", ""))
@@ -874,6 +1275,8 @@ func _on_story_choice_confirmed(event_id: String, choice_id: String, duration_mi
 	_story_event = {}
 	if _interior_preview != null and _interior_preview.is_open():
 		_interior_preview.enable_exploration()
+	# 补一次宵禁检查：23:00 撞上主线事件时，先让玩家把选择做完再送回宿舍。
+	_check_curfew(WorldClock.snapshot())
 
 func _on_decision_opened(event_id: String) -> void:
 	_decision_opened_msec = Time.get_ticks_msec()
