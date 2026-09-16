@@ -2,11 +2,15 @@ extends CanvasLayer
 ## 自由周末面板：每 3 个月一次（第 3/6/9…月），玩家自主决定这段时间给什么。
 ## 流程（剧情册 V5.27 §11）：时间卡片「第 X 月·周末到了」→ 选区域 → 选活动
 ## → 小事件（部分带决策点）→ 结算反馈 + 好感度变化（隐藏）→ 雨天 D6 共伞彩蛋。
+## 2026-09-16 重排：两列卡片网格 + 字号提级 + 内容滚动兜底 + 弹出/切换动画。
 ## 数据全部来自 data/story/free_time_system.json v1.3；数值结算在 MonthlyLife。
 ## 选人环节 MVP 不做（用户拍板）：双人/团建活动的同行 NPC 由系统随机指派。
 
 signal weekend_closed(month: int)
 signal memo_requested(event_id: String, memo: Dictionary)
+## 玩家选定的组团（值形如 "D_树影书院" / "心湖"）。小镇据此把地面指引线铺到那个区域；
+## 空字符串表示清掉上个周末留下的目的地。
+signal zone_focused(zone_label: String)
 
 const FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const CONFIG_PATH := "res://data/story/free_time_system.json"
@@ -32,6 +36,24 @@ const ACTIVITY_NAMES := {
 	"W4_team_tool": "给团队造个小工具",
 	"W5_postmortem_notes": "写复盘笔记",
 }
+## 活动一句话标签（区域卡 / 活动卡副文本用）。
+const ACTIVITY_TAGS := {
+	"S2_lakeside_walk": "独处",
+	"S3_rooftop_breeze": "天台",
+	"S4_weekend_overtime": "加班",
+	"D1_coffee_chat": "约饭",
+	"D2_lakeside_deep_talk": "深谈",
+	"D3_lawn_sports": "打球",
+	"D4_camp_bbq": "烧烤",
+	"G1_trust_escape_room": "密室",
+	"G2_campfire": "篝火",
+	"G4_annual_show_rehearsal": "排练",
+	"W1_reproduce_paper": "论文",
+	"W2_own_project": "项目",
+	"W3_tech_blog": "博客",
+	"W4_team_tool": "工具",
+	"W5_postmortem_notes": "复盘",
+}
 const ZONE_NAMES := {
 	"A_总部": "A 总部",
 	"B_科技丘": "B 科技丘",
@@ -42,6 +64,25 @@ const ZONE_NAMES := {
 	"心湖": "心湖",
 	"心湖步道": "心湖步道",
 }
+## 区域卡图标占位字（第二步换像素小图）。
+const ZONE_ICONS := {
+	"A_总部": "总",
+	"B_科技丘": "丘",
+	"C_水巷": "巷",
+	"D_树影书院": "书",
+	"E_训练谷": "训",
+	"H_慢生活园": "园",
+	"心湖": "湖",
+	"心湖步道": "湖",
+}
+const COLOR_BG := Color("54321f")
+const COLOR_BORDER := Color("d49a4c")
+const COLOR_TITLE := Color("ffe5a8")
+const COLOR_TEXT := Color("fff8e8")
+const COLOR_SUB := Color("d5b77b")
+const COLOR_CARD := Color("6b3f26")
+const COLOR_ICON_BG := Color("8a5a38")
+const COLOR_ACCENT := Color("a34a32")
 ## 本期解锁档位（free_time_system schedule.unlocks：1-16 月 = game1）。
 const CURRENT_GAME := 1
 
@@ -57,10 +98,14 @@ var _summary_lines: Array = []
 var _pending_decision: Dictionary = {}
 
 var _root: Control
+var _panel: Panel
 var _title: Label
-var _body: Label
-var _buttons: VBoxContainer
-var _close_button: Button
+var _subtitle: Label
+var _scroll: ScrollContainer
+var _content: VBoxContainer
+var _footer: Button
+var _open_tween: Tween
+var _switch_tween: Tween
 
 
 func setup(life) -> void:
@@ -151,6 +196,9 @@ func open_for_month(month: int) -> void:
 	_pending_decision = {}
 	_root.show()
 	_show_card()
+	_play_open_animation()
+	# 新一个周末开始了，上个周末的目的地要作废：组团得重选。
+	zone_focused.emit("")
 
 
 func is_open() -> bool:
@@ -166,8 +214,11 @@ func close() -> void:
 
 func choose_zone(zone: String) -> void:
 	_zone = zone
+	zone_focused.emit(zone)
 	_step = "activity"
 	_show_activities()
+	# 一选完组团就把地面指引线指过去，玩家关掉面板后不用再猜要往哪走。
+	zone_focused.emit(zone)
 
 
 func choose_activity(activity_id: String) -> Dictionary:
@@ -178,6 +229,13 @@ func choose_activity(activity_id: String) -> Dictionary:
 			break
 	if _activity.is_empty():
 		return {"lines": [], "feedback": "没有这个活动。"}
+	# 直接点活动（没经过选组团）时 _zone 还是空的：拿活动自己的 zone 补上，
+	# 多区域活动（"A_总部|心湖"）取第一个当目的地。
+	if _zone.is_empty():
+		var first_zone := String(_activity.get("zone", "")).split("|")[0]
+		if not first_zone.is_empty():
+			_zone = first_zone
+			zone_focused.emit(first_zone)
 	_targets = auto_targets(_activity)
 	_summary_lines = []
 	if _life != null:
@@ -255,68 +313,113 @@ func _weather_text() -> String:
 	return "☀ 天气：晴" if _weather == "sunny" else "🌧 天气：雨"
 
 
+func _zone_subtitle(zone: String) -> String:
+	var activities := activities_for_zone(zone)
+	var tags: Array[String] = []
+	for activity in activities:
+		if tags.size() >= 2:
+			break
+		var tag := String(ACTIVITY_TAGS.get(String(activity.get("activity_id", "")), ""))
+		if not tag.is_empty():
+			tags.append(tag)
+	if tags.is_empty():
+		return "%d 个活动" % activities.size()
+	return "%d 个活动 · %s" % [activities.size(), " / ".join(tags)]
+
+
+func _activity_subtitle(activity: Dictionary) -> String:
+	var parts: Array[String] = []
+	var tag := String(ACTIVITY_TAGS.get(String(activity.get("activity_id", "")), ""))
+	if not tag.is_empty():
+		parts.append(tag)
+	parts.append("%d 秒" % int(activity.get("estimated_seconds", 30)))
+	var type := String(activity.get("type", "solo"))
+	if type == "duo" or type == "group":
+		parts.append("随机同行")
+	return " · ".join(parts)
+
+
 func _show_card() -> void:
 	_title.text = "第 %d 月 · 周末到了" % _month
-	_body.text = "忙完这个月的活，周末是你的了。\n%s\n\n这段时间给谁、给什么，你自己定。" % _weather_text()
-	_clear_buttons()
-	_add_button("出门逛逛", func(): _step = "zone"; _show_zones())
+	_subtitle.text = _weather_text()
+	_clear_content()
+	var body := _body_label("忙完这个月的活，周末是你的了。\n\n这段时间给谁、给什么，你自己定。\n出去走走，或者给自己安排点什么——都是你的选择。", 17, COLOR_TEXT)
+	_content.add_child(body)
+	_set_footer("出门逛逛", func(): _step = "zone"; _show_zones())
 
 
 func _show_zones() -> void:
 	_title.text = "去哪儿？"
-	_body.text = "坐上小火车，选一片区域下车。"
-	_clear_buttons()
+	_subtitle.text = "坐上小火车，选一片区域下车。"
+	_clear_content()
+	var grid := _make_grid()
 	for zone in zone_list():
 		var zone_key := String(zone)
-		_add_button(zone_display(zone_key), func(): choose_zone(zone_key))
+		var card := _make_card(
+			String(ZONE_ICONS.get(zone_key, "镇")),
+			zone_display(zone_key),
+			_zone_subtitle(zone_key),
+			func(): choose_zone(zone_key)
+		)
+		grid.add_child(card)
+	_content.add_child(grid)
+	_set_footer("", Callable())
 
 
 func _show_activities() -> void:
 	_title.text = "%s · 玩点什么？" % zone_display(_zone)
-	_body.text = _weather_text()
-	_clear_buttons()
+	_subtitle.text = _weather_text()
+	_clear_content()
+	var grid := _make_grid()
 	for activity in activities_for_zone(_zone):
 		var activity_id := String(activity["activity_id"])
-		var label := String(ACTIVITY_NAMES.get(activity_id, activity_id))
-		var type := String(activity.get("type", "solo"))
-		if type == "duo" or type == "group":
-			label += "（随机同行）"
-		_add_button(label, func(): choose_activity(activity_id))
-	_add_button("回车站", func(): _step = "zone"; _show_zones())
+		var card := _make_card(
+			String(ZONE_ICONS.get(_zone, "玩")),
+			String(ACTIVITY_NAMES.get(activity_id, activity_id)),
+			_activity_subtitle(activity),
+			func(): choose_activity(activity_id)
+		)
+		grid.add_child(card)
+	_content.add_child(grid)
+	_set_footer("回车站", func(): _step = "zone"; _show_zones())
 
 
 func _decision_intro() -> String:
 	var trigger := String(_pending_decision.get("trigger_text", ""))
 	var stuck := String(_targets[0]) if not _targets.is_empty() else ""
 	var npc_name := "同伴"
-	if _life != null:
-		npc_name = String(_life.NPC_NAMES.get(stuck, stuck)) if not stuck.is_empty() else npc_name
+	if _life != null and not stuck.is_empty():
+		npc_name = String(_life.NPC_NAMES.get(stuck, stuck))
 	return trigger.replace("{stuck_npc}", npc_name)
 
 
 func _show_decision() -> void:
 	_title.text = String(ACTIVITY_NAMES.get(String(_activity.get("activity_id", "")), "")) + " · 要紧关头"
-	_body.text = _decision_intro()
-	_clear_buttons()
+	_subtitle.text = ""
+	_clear_content()
+	_content.add_child(_body_label(_decision_intro(), 18, COLOR_TEXT))
 	for option in _pending_decision.get("options", []):
 		var option_id := String(option["option_id"])
-		var label := String(option["text"])
-		_add_button(label, func(): choose_decision_option(option_id))
+		var text := String(option["text"])
+		var choice := _make_wide_button(text, func(): choose_decision_option(option_id))
+		_content.add_child(choice)
+	_set_footer("", Callable())
 
 
 func _show_event() -> void:
 	_title.text = String(ACTIVITY_NAMES.get(String(_activity.get("activity_id", "")), "自由活动")) + " · 结束了"
-	var lines := ""
+	_subtitle.text = _weather_text()
+	_clear_content()
 	var instant := String(_activity.get("instant_feedback", ""))
 	if not instant.is_empty():
-		lines += instant + "\n"
+		_content.add_child(_body_label(instant, 17, COLOR_TEXT))
 	for line in _summary_lines:
-		lines += "· %s\n" % String(line)
+		_content.add_child(_body_label("· %s" % String(line), 15, COLOR_SUB))
 	if _weather == "rainy":
-		lines += _append_d6()
-	_body.text = lines.strip_edges()
-	_clear_buttons()
-	_add_button("回宿舍", close)
+		var d6_text := _append_d6()
+		if not d6_text.is_empty():
+			_content.add_child(_body_label(d6_text.strip_edges(), 16, COLOR_TITLE))
+	_set_footer("回宿舍", close)
 
 
 ## D6 雨天共伞彩蛋：雨天自动触发（MVP 简化：只要下雨就走一次），
@@ -326,9 +429,34 @@ func _append_d6() -> String:
 		return ""
 	var d6: Dictionary = _life.apply_d6_umbrella()
 	memo_requested.emit("D6_rain_umbrella", {"text": "那把伞", "tone": "gray-gold", "npc": d6.get("npcName", "")})
-	return "\n—— 彩蛋 · 那把伞 ——\n%s\n%s 好感 +%d" % [
+	return "—— 彩蛋 · 那把伞 ——\n%s\n%s 好感 +%d" % [
 		String(d6.get("text", "")), String(d6.get("npcName", "")), int(d6.get("delta", 0)),
 	]
+
+
+## ---------- 动画 ----------
+
+func _play_open_animation() -> void:
+	if _open_tween != null and _open_tween.is_valid():
+		_open_tween.kill()
+	_panel.pivot_offset = _panel.size / 2.0
+	_panel.scale = Vector2(0.94, 0.94)
+	_panel.modulate.a = 0.0
+	_open_tween = create_tween()
+	_open_tween.set_parallel(true)
+	_open_tween.tween_property(_panel, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_open_tween.tween_property(_panel, "modulate:a", 1.0, 0.22)
+
+
+func _play_switch_animation() -> void:
+	if _switch_tween != null and _switch_tween.is_valid():
+		_switch_tween.kill()
+	_content.modulate.a = 0.0
+	_scroll.position.y = 112.0
+	_switch_tween = create_tween()
+	_switch_tween.set_parallel(true)
+	_switch_tween.tween_property(_content, "modulate:a", 1.0, 0.18)
+	_switch_tween.tween_property(_scroll, "position:y", 100.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 ## ---------- UI ----------
@@ -346,76 +474,155 @@ func _build_ui() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.add_child(dim)
 
-	var panel := Panel.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.position = Vector2(-330, -320)
-	panel.size = Vector2(660, 640)
-	panel.add_theme_stylebox_override("panel", _panel_style())
-	_root.add_child(panel)
+	_panel = Panel.new()
+	_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_panel.position = Vector2(-380, -340)
+	_panel.size = Vector2(760, 680)
+	_panel.add_theme_stylebox_override("panel", _card_style(COLOR_BG, COLOR_BORDER))
+	_root.add_child(_panel)
 
-	_title = _label("自由周末", 24, Color("ffe5a8"))
-	_title.position = Vector2(28, 20)
-	_title.size = Vector2(604, 34)
-	panel.add_child(_title)
+	_title = _content_label("自由周末", 26, COLOR_TITLE)
+	_title.position = Vector2(32, 22)
+	_title.size = Vector2(696, 38)
+	_panel.add_child(_title)
 
-	_body = _label("", 16, Color("fff8e8"))
-	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_body.custom_minimum_size.x = 604
-	_body.max_lines_visible = 14
-	_body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_body.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	_body.position = Vector2(28, 62)
-	_body.size = Vector2(604, 220)
-	panel.add_child(_body)
+	_subtitle = _content_label("", 17, COLOR_SUB)
+	_subtitle.position = Vector2(32, 64)
+	_subtitle.size = Vector2(696, 26)
+	_panel.add_child(_subtitle)
 
-	_buttons = VBoxContainer.new()
-	_buttons.position = Vector2(28, 296)
-	_buttons.size = Vector2(604, 300)
-	_buttons.add_theme_constant_override("separation", 10)
-	panel.add_child(_buttons)
+	_scroll = ScrollContainer.new()
+	_scroll.position = Vector2(32, 100)
+	_scroll.size = Vector2(696, 486)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_panel.add_child(_scroll)
+
+	_content = VBoxContainer.new()
+	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content.custom_minimum_size.x = 668
+	_content.add_theme_constant_override("separation", 12)
+	_scroll.add_child(_content)
+
+	_footer = Button.new()
+	_footer.position = Vector2(32, 604)
+	_footer.size = Vector2(696, 52)
+	_footer.add_theme_font_override("font", FONT)
+	_footer.add_theme_font_size_override("font_size", 19)
+	_footer.add_theme_color_override("font_color", COLOR_TEXT)
+	_footer.add_theme_stylebox_override("normal", _card_style(COLOR_ACCENT, Color("4a2619")))
+	_footer.add_theme_stylebox_override("hover", _card_style(Color("c0603e"), Color("4a2619")))
+	_footer.hide()
+	_panel.add_child(_footer)
 
 
-func _clear_buttons() -> void:
-	for child in _buttons.get_children():
+func _clear_content() -> void:
+	for child in _content.get_children():
 		child.queue_free()
+	_play_switch_animation()
 
 
-func _add_button(text: String, on_pressed: Callable) -> void:
+func _make_grid() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 12)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return grid
+
+
+## 区域 / 活动卡：图标方块 + 标题 + 副文本，整卡可点。
+func _make_card(icon_char: String, title_text: String, sub_text: String, on_pressed: Callable) -> Button:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(328, 78)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_stylebox_override("normal", _card_style(COLOR_CARD, COLOR_BORDER))
+	button.add_theme_stylebox_override("hover", _card_style(Color("7d4c30"), COLOR_TITLE))
+	button.add_theme_stylebox_override("pressed", _card_style(Color("472a19"), COLOR_BORDER))
+	button.pressed.connect(on_pressed)
+
+	var icon := Panel.new()
+	icon.position = Vector2(13, 13)
+	icon.size = Vector2(52, 52)
+	var icon_style := _flat_style(COLOR_ICON_BG)
+	icon_style.set_corner_radius_all(6)
+	icon.add_theme_stylebox_override("panel", icon_style)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(icon)
+	var icon_label := _content_label(icon_char, 20, COLOR_TITLE)
+	icon_label.position = Vector2(0, 0)
+	icon_label.size = Vector2(52, 52)
+	icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon.add_child(icon_label)
+
+	var title := _content_label(title_text, 18, COLOR_TEXT)
+	title.position = Vector2(78, 12)
+	title.size = Vector2(236, 28)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(title)
+	var sub := _content_label(sub_text, 13, COLOR_SUB)
+	sub.position = Vector2(78, 42)
+	sub.size = Vector2(236, 24)
+	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(sub)
+	return button
+
+
+func _make_wide_button(text: String, on_pressed: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(604, 44)
+	button.custom_minimum_size = Vector2(668, 54)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.add_theme_font_override("font", FONT)
-	button.add_theme_font_size_override("font_size", 17)
-	button.add_theme_color_override("font_color", Color("fff0c9"))
-	button.add_theme_stylebox_override("normal", _button_style(Color("7a4630")))
-	button.add_theme_stylebox_override("hover", _button_style(Color("a35a3a")))
+	button.add_theme_font_size_override("font_size", 18)
+	button.add_theme_color_override("font_color", COLOR_TEXT)
+	button.add_theme_stylebox_override("normal", _card_style(COLOR_CARD, COLOR_BORDER))
+	button.add_theme_stylebox_override("hover", _card_style(Color("7d4c30"), COLOR_TITLE))
 	button.pressed.connect(on_pressed)
-	_buttons.add_child(button)
+	return button
 
 
-func _label(value: String, font_size: int, color: Color) -> Label:
+func _set_footer(text: String, on_pressed: Callable) -> void:
+	if text.is_empty():
+		_footer.hide()
+		return
+	_footer.text = text
+	for connection in _footer.pressed.get_connections():
+		_footer.pressed.disconnect(connection["callable"])
+	if on_pressed.is_valid():
+		_footer.pressed.connect(on_pressed)
+	_footer.show()
+
+
+func _content_label(value: String, font_size: int, color: Color, wrap_width := 0.0) -> Label:
 	var label := Label.new()
 	label.text = value
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", FONT)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color("23170f"))
 	label.add_theme_constant_override("outline_size", 3)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if wrap_width > 0.0:
+		label.custom_minimum_size.x = wrap_width
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
 
 
-func _panel_style() -> StyleBoxFlat:
+## 正文区标签（在 VBox/滚动容器里，需要给 autowrap 一个宽度下限）。
+func _body_label(value: String, font_size: int, color: Color) -> Label:
+	return _content_label(value, font_size, color, 660.0)
+
+
+func _card_style(bg: Color, border: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("54321f", 0.96)
-	style.border_color = Color("d49a4c")
+	style.bg_color = bg
+	style.border_color = border
 	style.set_border_width_all(3)
-	style.set_corner_radius_all(3)
+	style.set_corner_radius_all(6)
 	return style
 
 
-func _button_style(color: Color) -> StyleBoxFlat:
-	var style := _panel_style()
-	style.bg_color = color
-	style.border_color = Color("4a2619")
+func _flat_style(bg: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
 	return style
