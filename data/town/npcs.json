@@ -72,7 +72,7 @@
       "place": "走廊 · 看守记忆墙",
       "line": "常在被帮助的位置。深夜路过会停一拍：「师兄还没走？」",
       "note": "",
-      "loadout": "street_creator",
+      "loadout": "bear_green_cardigan",
       "route": [[365, 380], [405, 380], [405, 490], [365, 490]],
       "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？",
       "relation": true

@@ -4,7 +4,7 @@ extends Node2D
 
 const PAPER_DOLL := preload("res://scripts/PaperDoll64Sprite.gd")
 
-var _loadout_id := "neutral_hoodie"
+var _loadout_id := "bear_green_cardigan"
 var _route := PackedVector2Array()
 var _speed := 34.0
 var _route_index := 1

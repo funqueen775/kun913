@@ -8,12 +8,31 @@ func _ready() -> void:
 	add_child(town)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	# 宿舍是正常开场页，不应遮挡对 8 个室内场景的视觉验收。
+	if bool(town.get("_in_dorm")):
+		town.call("_on_dorm_leave")
+		await get_tree().process_frame
 	var camera := town.get("_camera") as Camera2D
-	if camera == null or absf(camera.zoom.x - 1.55) > 0.01:
+	var expected_outdoor_zoom: float = float(town.get("_cover_zoom")) * float(town.OUTDOOR_EXPLORATION_ZOOM)
+	if camera == null or absf(camera.zoom.x - expected_outdoor_zoom) > 0.01:
 		_fail("室外探索镜头未使用近景缩放")
 		return
-	var camera_start := camera.position
+	var zone_a: Dictionary = town.ZONES[0]
 	var player := town.get("_player") as Node2D
+	player.position = (zone_a["rect"] as Rect2).get_center()
+	town.call("_update_zone_state")
+	var location_marker := town.find_child("LocationMarkerA", true, false) as Sprite2D
+	if location_marker == null or not location_marker.visible:
+		_fail("进入 A 区后没有显示地点木牌")
+		return
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path("res://test_artifacts/location_marker_a.png"))
+	player.position = Vector2(960, 540)
+	town.call("_update_zone_state")
+	if location_marker.visible:
+		_fail("离开区域后地点木牌没有隐藏")
+		return
+	var camera_start := camera.position
 	player.position += Vector2(160, 0)
 	town.call("_update_camera", 1.0)
 	if camera.position.x <= camera_start.x:
