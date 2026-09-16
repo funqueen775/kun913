@@ -18,10 +18,10 @@ def set_cell_text(cell, value):
 document = Document(PATH)
 timeline = document.tables[1]
 updates = [
-    ("第 1 月中旬 白天", "B 科技丘 你的工位", "新员工手册"),
-    ("第 3 月中旬 白天", "A 总部 评审室", "技术选型"),
-    ("第 5 月中旬 白天", "B 科技丘 工位", "评测集要不要建"),
-    ("第 7 月中旬 深夜", "B 科技丘 工位", "AI 代码标注"),
+    ("第 1 月初 白天", "B 科技丘 你的工位", "新员工手册"),
+    ("第 3 月初 白天", "A 总部 评审室", "技术选型"),
+    ("第 5 月初 白天", "B 科技丘 工位", "评测集要不要建"),
+    ("第 7 月初 深夜", "B 科技丘 工位", "AI 代码标注"),
 ]
 
 for row_index, (date_text, location, event_title) in enumerate(updates, start=1):

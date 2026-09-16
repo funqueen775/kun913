@@ -7,10 +7,10 @@ const OUTPUT_DIR := "res://test_artifacts"
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUTPUT_DIR))
 	var expected := [
-		{"id": "M1-E01", "month": 1, "day": 15, "hour": 9, "zone": "B", "title": "新员工手册"},
-		{"id": "M1-E02", "month": 3, "day": 15, "hour": 9, "zone": "A", "title": "技术选型"},
-		{"id": "M1-E03", "month": 5, "day": 15, "hour": 9, "zone": "B", "title": "评测集要不要建"},
-		{"id": "M1-E04", "month": 7, "day": 15, "hour": 23, "zone": "B", "title": "AI 代码标注"},
+		{"id": "M1-E01", "month": 1, "day": 1, "hour": 9, "zone": "B", "title": "新员工手册"},
+		{"id": "M1-E02", "month": 3, "day": 1, "hour": 9, "zone": "A", "title": "技术选型"},
+		{"id": "M1-E03", "month": 5, "day": 1, "hour": 9, "zone": "B", "title": "评测集要不要建"},
+		{"id": "M1-E04", "month": 7, "day": 1, "hour": 23, "zone": "B", "title": "AI 代码标注"},
 	]
 	for index in expected.size():
 		var spec: Dictionary = expected[index]

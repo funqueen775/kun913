@@ -3,13 +3,14 @@
   "title": "第一幕 进入行业",
   "range": { "startMonth": 1, "endMonth": 8 },
   "timeAdvance": {
-    "daysPerAction": 5,
-    "blockedByIncompleteMainEvent": true
+    "unit": "month",
+    "mainEventDay": 1,
+    "note": "时间以月为单位：每月 1 日（月初）触发当月主线事件，刚进入游戏即第一幕 E01；主线结算后本月剩余时间为自由活动时段（见 data/story/free_time_system.json）"
   },
   "mainEvents": [
     {
       "id": "M1-E01",
-      "time": { "month": 1, "day": 15, "phase": "day" },
+      "time": { "month": 1, "day": 1, "phase": "day" },
       "locationId": "B",
       "location": "B 科技丘 你的工位",
       "title": "新员工手册",
@@ -17,7 +18,7 @@
     },
     {
       "id": "M1-E02",
-      "time": { "month": 3, "day": 15, "phase": "day" },
+      "time": { "month": 3, "day": 1, "phase": "day" },
       "locationId": "A",
       "location": "A 总部 评审室",
       "title": "技术选型",
@@ -25,7 +26,7 @@
     },
     {
       "id": "M1-E03",
-      "time": { "month": 5, "day": 15, "phase": "day" },
+      "time": { "month": 5, "day": 1, "phase": "day" },
       "locationId": "B",
       "location": "B 科技丘 工位",
       "title": "评测集要不要建",
@@ -33,7 +34,7 @@
     },
     {
       "id": "M1-E04",
-      "time": { "month": 7, "day": 15, "phase": "night" },
+      "time": { "month": 7, "day": 1, "phase": "night" },
       "locationId": "B",
       "location": "B 科技丘 工位",
       "title": "AI 代码标注",

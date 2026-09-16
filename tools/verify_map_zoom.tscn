@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tools/verify_map_zoom.gd" id="1_zoom"]
+
+[node name="VerifyMapZoom" type="Node"]
+script = ExtResource("1_zoom")

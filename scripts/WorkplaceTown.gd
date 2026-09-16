@@ -9,6 +9,7 @@ const TIME_HUD := preload("res://scripts/WorldTimeHud.gd")
 const INTERIOR_PREVIEW := preload("res://scripts/InteriorPreview.gd")
 const DORM_ROOM := preload("res://scripts/DormRoom.gd")
 const STORY_EVENT_PANEL := preload("res://scripts/StoryEventPanel.gd")
+const MEMORY_WALL := preload("res://scripts/MemoryWallPanel.gd")
 const CHINESE_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const TOWN_MAP_PATH := "res://assets/town/workplace_town_reference.png"
 const WALKABILITY_MASK_PATH := "res://assets/town/walkability_mask.png"
@@ -131,6 +132,13 @@ var _interior_preview: InteriorPreview
 var _environment_tint: ColorRect
 var _story_event_panel: StoryEventPanel
 var _story_event: Dictionary = {}
+## 心湖记忆墙：读 user://workplace_town_memos.jsonl，把一路攒下的便签贴成一墙。
+## 故意不写静态类型（也不给它 class_name）：免得依赖 .godot 里的全局类缓存，
+## 那个缓存是编辑器扫描时才刷新的，切分支/新加类名时最容易在这里翻车。
+var _memory_wall
+var _memory_wall_button: Button
+## 开墙前世界时钟是不是在跑。关上要还原，否则玩家会莫名发现时间不走了。
+var _wall_resume_clock := false
 var _dorm: DormRoom
 ## 玩家在宿舍里（黑屏盖住地图）：此时人物不能动、地图不能缩放拖动。
 var _in_dorm := false
@@ -156,6 +164,7 @@ func _ready() -> void:
 	_build_world_time()
 	_build_interior_preview()
 	_build_story_event_panel()
+	_build_memory_wall()
 	_build_dorm_room()
 	# 开局就站在宿舍里：黑屏 + 唯一一个「离开宿舍」。
 	_enter_dorm(false)
@@ -188,6 +197,11 @@ func _physics_process(delta: float) -> void:
 		return
 	# 宿舍黑屏期间人物钉住不动（CanvasLayer 盖住画面，动了对不上）。
 	if _in_dorm:
+		_player.velocity = Vector2.ZERO
+		_player_sprite.set_motion(Vector2.ZERO, 0.0)
+		return
+	# 记忆墙同样盖住地图，人还在走就对不上；键盘不像鼠标，不受 CanvasLayer 拦。
+	if _memory_wall != null and _memory_wall.is_open():
 		_player.velocity = Vector2.ZERO
 		_player_sprite.set_motion(Vector2.ZERO, 0.0)
 		return
@@ -908,6 +922,16 @@ func _build_hud() -> void:
 	_quit_button.add_theme_font_size_override("font_size", 19)
 	_quit_button.pressed.connect(_quit_game)
 	layer.add_child(_quit_button)
+	# 记忆墙入口：跟「退出游戏」同一列往下排（215 → 287），同样避开右上角时间面板。
+	_memory_wall_button = Button.new()
+	_memory_wall_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_memory_wall_button.position = Vector2(-230, 287)
+	_memory_wall_button.size = Vector2(190, 56)
+	_memory_wall_button.text = "记忆墙"
+	_memory_wall_button.add_theme_font_override("font", CHINESE_FONT)
+	_memory_wall_button.add_theme_font_size_override("font_size", 19)
+	_memory_wall_button.pressed.connect(_open_memory_wall)
+	layer.add_child(_memory_wall_button)
 	# 自由缩放的操作提示 + 当前倍率。放左下角摇杆上方：
 	# 右上角被「第一幕」时间面板占着，放那里会被整块盖住。
 	# 字号必须够大 + 伪粗体：18px 的 Regular 中文横画只有 1px 宽，
@@ -1154,7 +1178,7 @@ func _build_world_time() -> void:
 	add_child(_time_hud)
 	WorldClock.time_changed.connect(_on_world_time_changed)
 	WorldClock.main_event_reached.connect(_on_main_event_reached)
-	_time_hud.advance_requested.connect(_on_time_advance_requested)
+	_time_hud.month_advance_requested.connect(_on_month_advance_requested)
 	_on_world_time_changed(WorldClock.snapshot())
 	var environment_layer := CanvasLayer.new()
 	environment_layer.layer = 40
@@ -1183,8 +1207,8 @@ func _on_world_time_changed(snapshot: Dictionary) -> void:
 	_environment_tint.color = tint_by_phase.get(String(snapshot["phaseId"]), Color(1, 1, 1, 0))
 
 
-func _on_time_advance_requested(days: int) -> void:
-	WorldClock.advance_days(days)
+func _on_month_advance_requested() -> void:
+	WorldClock.advance_month()
 
 
 func _on_main_event_reached(event: Dictionary) -> void:
@@ -1212,9 +1236,38 @@ func _build_interior_preview() -> void:
 func _build_story_event_panel() -> void:
 	_story_event_panel = STORY_EVENT_PANEL.new()
 	_story_event_panel.choice_confirmed.connect(_on_story_choice_confirmed)
+	_story_event_panel.outcome_acknowledged.connect(_on_story_outcome_acknowledged)
 	_story_event_panel.decision_opened.connect(_on_decision_opened)
 	_story_event_panel.choice_hovered.connect(_on_choice_hovered)
+	_story_event_panel.handbook_recorded.connect(_on_handbook_recorded)
+	_story_event_panel.memo_recorded.connect(_on_memo_recorded)
 	add_child(_story_event_panel)
+
+
+## 心湖记忆墙。数据在磁盘上，所以它是常驻节点 —— 不依附于任何一次剧情事件。
+func _build_memory_wall() -> void:
+	_memory_wall = MEMORY_WALL.new()
+	_memory_wall.name = "MemoryWall"
+	_memory_wall.wall_closed.connect(_on_memory_wall_closed)
+	add_child(_memory_wall)
+
+
+func _open_memory_wall() -> void:
+	if _memory_wall == null:
+		return
+	if _memory_wall.is_open():
+		return
+	# 开墙期间世界时钟停住：一墙便签是要慢慢看的，不该边看边被宵禁拽走。
+	_wall_resume_clock = WorldClock.running
+	if _wall_resume_clock:
+		WorldClock.set_running(false)
+	_memory_wall.open()
+
+
+func _on_memory_wall_closed() -> void:
+	if _wall_resume_clock:
+		WorldClock.set_running(true)
+	_wall_resume_clock = false
 
 func _open_due_event_for_active_zone() -> bool:
 	var next_event := WorldClock.next_main_event()
@@ -1252,6 +1305,24 @@ func _hide_dialog() -> void:
 func _quit_game() -> void:
 	get_tree().quit()
 
+## 记忆便签落盘：心湖记忆墙的唯一数据源。
+## 便签原本是「弹一下就没了」的装饰，写进 user:// 之后玩家下次进游戏还能翻到
+## 「第 1 月 15 日 · 新员工手册」当时贴了什么 —— 这是 E27 那句质问的情感承重墙。
+func _on_memo_recorded(event_id: String, memo: Dictionary) -> void:
+	if event_id.is_empty() or memo.is_empty():
+		return
+	var line := memo.duplicate(true)
+	line["eventId"] = event_id
+	line["worldMinute"] = WorldClock.world_minute
+	var file := FileAccess.open("user://workplace_town_memos.jsonl", FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open("user://workplace_town_memos.jsonl", FileAccess.WRITE)
+	if file == null:
+		return
+	file.seek_end()
+	file.store_line(JSON.stringify(line))
+	file.close()
+
 func _on_story_choice_confirmed(event_id: String, choice_id: String, duration_minutes: int) -> void:
 	var event_data := WorldClock.next_main_event()
 	var region_id := String(event_data.get("locationId", ""))
@@ -1263,6 +1334,11 @@ func _on_story_choice_confirmed(event_id: String, choice_id: String, duration_mi
 		"switchCount": maxi(0, _choice_hover_count - 1),
 		"snapshot": WorldClock.snapshot(),
 	}, duration_minutes * 60)
+
+
+## 结果拍看完、玩家点「结束」之后才真正结算。
+## 在那之前事件不算完成，时间不推进，玩家也不会被宵禁打断。
+func _on_story_outcome_acknowledged(event_id: String, choice_id: String, duration_minutes: int) -> void:
 	var file := FileAccess.open("user://workplace_town_events.jsonl", FileAccess.READ_WRITE)
 	if file == null:
 		file = FileAccess.open("user://workplace_town_events.jsonl", FileAccess.WRITE)
@@ -1275,7 +1351,7 @@ func _on_story_choice_confirmed(event_id: String, choice_id: String, duration_mi
 	_story_event = {}
 	if _interior_preview != null and _interior_preview.is_open():
 		_interior_preview.enable_exploration()
-	# 补一次宵禁检查：23:00 撞上主线事件时，先让玩家把选择做完再送回宿舍。
+	# 补一次宵禁检查：23:00 撞上主线事件时，先让玩家把结果看完再送回宿舍。
 	_check_curfew(WorldClock.snapshot())
 
 func _on_decision_opened(event_id: String) -> void:
@@ -1297,6 +1373,32 @@ func _on_choice_hovered(event_id: String, choice_id: String) -> void:
 		"storyId": event_id,
 		"choiceId": _contract_choice_id(event_id, choice_id),
 		"hoverCount": _choice_hover_count,
+	})
+
+## 手册阅读埋点：V5.27 对 E01 的要求是记录「各章阅读时长与跳过行为」。
+## 这份数据回答的是"玩家第一天到底想先弄明白什么"——比选项本身更早暴露取向。
+func _on_handbook_recorded(event_id: String, records: Dictionary) -> void:
+	if records.is_empty():
+		return
+	var line := {
+		"eventId": event_id,
+		"totalMs": int(records.get("totalMs", 0)),
+		"chapters": records.get("chapters", {}),
+		"worldMinute": WorldClock.world_minute,
+	}
+	var file := FileAccess.open("user://workplace_town_handbook.jsonl", FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open("user://workplace_town_handbook.jsonl", FileAccess.WRITE)
+	if file != null:
+		file.seek_end()
+		file.store_line(JSON.stringify(line))
+		file.close()
+	ApiClient.record_event("handbook_read", {
+		"regionId": String(_active_zone.get("code", "")) if not _active_zone.is_empty() else "B",
+		"storyId": event_id,
+		"totalMs": line["totalMs"],
+		"chapters": line["chapters"],
+		"snapshot": WorldClock.snapshot(),
 	})
 
 func _on_interior_message_submitted(npc_id: String, message: String) -> void:
