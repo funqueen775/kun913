@@ -1,4 +1,5 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 
@@ -14,8 +15,23 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
-    // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
+
+    windowStage.getMainWindow((error, mainWindow) => {
+      if (error.code) {
+        hilog.error(DOMAIN, 'testTag', 'Failed to get main window. Cause: %{public}s', JSON.stringify(error));
+        return;
+      }
+      mainWindow.setPreferredOrientation(window.Orientation.LANDSCAPE).catch((orientationError: BusinessError) => {
+        hilog.error(DOMAIN, 'testTag', 'Failed to lock landscape. Cause: %{public}s', JSON.stringify(orientationError));
+      });
+      mainWindow.setWindowLayoutFullScreen(true).catch((layoutError: BusinessError) => {
+        hilog.error(DOMAIN, 'testTag', 'Failed to enable fullscreen layout. Cause: %{public}s', JSON.stringify(layoutError));
+      });
+      mainWindow.setWindowSystemBarEnable([]).catch((barError: BusinessError) => {
+        hilog.error(DOMAIN, 'testTag', 'Failed to hide system bars. Cause: %{public}s', JSON.stringify(barError));
+      });
+    });
 
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
