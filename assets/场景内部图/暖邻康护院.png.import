@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctby4qd1kpnye"
-path="res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"
+uid="uid://doee1jrrbmndi"
+path="res://.godot/imported/暖邻康护院.png-8e217b4b078144d7567ec95355329ab7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/paper_doll_64/compiled/bear_plaid_glasses_walk_64.png"
-dest_files=["res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"]
+source_file="res://assets/场景内部图/暖邻康护院.png"
+dest_files=["res://.godot/imported/暖邻康护院.png-8e217b4b078144d7567ec95355329ab7.ctex"]
 
 [params]
 

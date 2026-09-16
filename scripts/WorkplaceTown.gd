@@ -87,11 +87,11 @@ var ZONES := [
 	{"id": "h", "code": "H", "name": "慢生活园·宿舍与桌游馆", "rect": Rect2(760, 760, 390, 250), "center": Vector2(955, 885), "door": "top"},
 ]
 var NPCS := [
-	{"zone": "a", "name": "陈工", "role": "邻组 Leader", "loadout": "suit_man", "route": PackedVector2Array([Vector2(405, 345), Vector2(510, 345), Vector2(510, 390), Vector2(405, 390)]), "prompt": "结论是什么？预算和工期，一句话说完。"},
-	{"zone": "b", "name": "王哥", "role": "技术 · 你的导师", "loadout": "neutral_hoodie", "route": PackedVector2Array([Vector2(850, 325), Vector2(1070, 325), Vector2(1070, 370), Vector2(850, 370)]), "prompt": "方案我看过了，先别急着推。说说你为什么选这条路线。"},
-	{"zone": "c", "name": "小林", "role": "产品", "loadout": "energetic_ponytail", "route": PackedVector2Array([Vector2(1435, 335), Vector2(1650, 335), Vector2(1650, 380), Vector2(1435, 380)]), "prompt": "客户那边催得很急，先帮我把需求优先级定下来。"},
-	{"zone": "d", "name": "老周", "role": "资深", "loadout": "elder_man", "route": PackedVector2Array([Vector2(1205, 680), Vector2(1285, 680), Vector2(1285, 800), Vector2(1205, 800)]), "prompt": "复盘会上有不同说法。你觉得该由谁来牵头？"},
-	{"zone": "h", "name": "小赵", "role": "实习生", "loadout": "street_creator", "route": PackedVector2Array([Vector2(365, 380), Vector2(405, 380), Vector2(405, 490), Vector2(365, 490)]), "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？"},
+	{"zone": "a", "name": "陈工", "role": "邻组 Leader", "loadout": "bear_beige_blazer", "route": PackedVector2Array([Vector2(405, 345), Vector2(510, 345), Vector2(510, 390), Vector2(405, 390)]), "prompt": "结论是什么？预算和工期，一句话说完。"},
+	{"zone": "b", "name": "王哥", "role": "技术 · 你的导师", "loadout": "bear_plaid_glasses", "route": PackedVector2Array([Vector2(850, 325), Vector2(1070, 325), Vector2(1070, 370), Vector2(850, 370)]), "prompt": "方案我看过了，先别急着推。说说你为什么选这条路线。"},
+	{"zone": "c", "name": "小林", "role": "产品", "loadout": "bear_green_cardigan", "route": PackedVector2Array([Vector2(1435, 335), Vector2(1650, 335), Vector2(1650, 380), Vector2(1435, 380)]), "prompt": "客户那边催得很急，先帮我把需求优先级定下来。"},
+	{"zone": "d", "name": "老周", "role": "资深", "loadout": "bear_orange_blazer", "route": PackedVector2Array([Vector2(1205, 680), Vector2(1285, 680), Vector2(1285, 800), Vector2(1205, 800)]), "prompt": "复盘会上有不同说法。你觉得该由谁来牵头？"},
+	{"zone": "h", "name": "小赵", "role": "实习生", "loadout": "bear_green_cardigan", "route": PackedVector2Array([Vector2(365, 380), Vector2(405, 380), Vector2(405, 490), Vector2(365, 490)]), "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？"},
 ]
 
 var _office: OfficeSet
@@ -494,6 +494,7 @@ func _build_player() -> void:
 	_player_sprite.position = Vector2(-32, -72)
 	_player_sprite.configure_motion_speed(PLAYER_SPEED)
 	_player.add_child(_player_sprite)
+	_player_sprite.set_loadout("bear_green_cardigan")
 
 
 func _build_npcs() -> void:
@@ -1059,7 +1060,7 @@ func _exit_zone() -> void:
 	_zone_status.show()
 	if _interior_preview != null:
 		_interior_preview.dismiss()
-	_zone_status.text = "职场小镇  ·  前往黄色入口，进入职业区域"
+	_refresh_objective_hint()
 	for marker in _location_markers:
 		marker.hide()
 	for npc in _npc_instances:
@@ -1105,7 +1106,7 @@ func _on_dorm_leave() -> void:
 		_dorm.dismiss()
 	_place_player_at_dorm_door()
 	_zone_status.show()
-	_zone_status.text = "职场小镇  ·  前往黄色入口，进入职业区域"
+	_refresh_objective_hint()
 
 
 func _on_dorm_sleep() -> void:
@@ -1115,9 +1116,7 @@ func _on_dorm_sleep() -> void:
 	WorldClock.sleep_until_next_morning(WAKE_UP_HOUR)
 	_place_player_at_dorm_door()
 	_zone_status.show()
-	_zone_status.text = "职场小镇  ·  第 %d 月 %d 日  ·  新的一天，从宿舍出发" % [
-		int(WorldClock.snapshot().get("month", 1)), int(WorldClock.snapshot().get("day", 1))
-	]
+	_refresh_objective_hint()
 
 
 ## 出门时把人钉在宿舍门口，并让相机直接落位 ——
@@ -1218,6 +1217,7 @@ func _on_world_time_changed(snapshot: Dictionary) -> void:
 	if _interior_preview != null and _interior_preview.is_open():
 		_interior_preview.set_phase(String(snapshot.get("phaseId", "day")))
 	_check_curfew(snapshot)
+	_refresh_objective_hint()
 	if _environment_tint == null:
 		return
 	var tint_by_phase := {
@@ -1242,11 +1242,34 @@ func _on_main_event_reached(event: Dictionary) -> void:
 	})
 	if _time_hud != null:
 		_time_hud.show_event_gate(event)
-	if _zone_status != null:
-		_zone_status.text = "主线事件已到达：%s · 前往 %s 区" % [event["title"], event["locationId"]]
+	_refresh_objective_hint()
 	if not _active_zone.is_empty() and String(_active_zone.get("code", "")) == String(event.get("locationId", "")):
 		_story_event = event.duplicate(true)
 		_story_event_panel.present(_story_event)
+
+
+func _refresh_objective_hint() -> void:
+	if _zone_status == null:
+		return
+	var next_event := WorldClock.next_main_event()
+	var snapshot := WorldClock.snapshot()
+	if not next_event.is_empty() and _is_event_due(next_event, snapshot):
+		_zone_status.text = "主线任务：%s · 前往 %s 区" % [
+			String(next_event.get("title", "")),
+			String(next_event.get("locationId", "")),
+		]
+		return
+	if next_event.is_empty():
+		_zone_status.text = "职场小镇  ·  主线已完成，自由探索职业区域"
+		return
+	_zone_status.text = "职场小镇  ·  前往黄色入口，进入职业区域"
+
+
+func _is_event_due(event: Dictionary, snapshot: Dictionary) -> bool:
+	if WorldClock.running:
+		return false
+	var event_minute := ((int(event.get("month", 1)) - 1) * 30 + (int(event.get("day", 1)) - 1)) * 24 * 60 + int(event.get("hour", 9)) * 60
+	return int(snapshot.get("worldMinute", 0)) >= event_minute
 
 
 func _build_interior_preview() -> void:

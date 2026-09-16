@@ -38,7 +38,7 @@ const HANDBOOK := preload("res://scripts/HandbookPanel.gd")
 const TORN_BUBBLE := preload("res://scripts/ui/TornBubble.gd")
 
 const FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
-const DOLL_ATLAS := "res://assets/characters/paper_doll_64/compiled/%s_walk_64.png"
+const DOLL_ATLAS := "res://assets/characters/paper_doll_64/portraits/%s_walk_64.png"
 const TYPE_INTERVAL := 0.022
 
 ## 入场拍：黑场里先把"这是哪一幕、哪一天、什么地方"压上来，再落进叙述。
@@ -50,22 +50,31 @@ const ENTRY_DIM := 0.62
 
 ## 立绘尺寸：说话人放大压边，旁听者缩小压暗。
 ## 像素图放大走 NEAREST 过滤，保住像素块硬边，不做线性模糊。
-const FOCUS_SCALE := 8.6
-const IDLE_SCALE := 4.6
+const FOCUS_SCALE := 4.3
+const IDLE_SCALE := 2.3
 ## 水平落点（占总宽比例）。0.075 / 0.925 让立绘有一角实打实伸到画面外，形成"压边"。
 const SLOT_X := {"left": 0.075, "right": 0.925}
 const GROUND_Y := 0.86
 
-## 区域内景图（占位稿，美术同名覆盖即可，不用改代码）
+## 区域内景图：剧情演出与可探索室内共用同一批场景美术。
 const INTERIOR_BY_ZONE := {
-	"A": "res://assets/placeholders/interiors/a_town_hall.png",
-	"B": "res://assets/placeholders/interiors/b_workshop.png",
-	"C": "res://assets/placeholders/interiors/c_market.png",
-	"D": "res://assets/placeholders/interiors/d_library.png",
-	"E": "res://assets/placeholders/interiors/e_training.png",
-	"F": "res://assets/placeholders/interiors/f_dock.png",
-	"G": "res://assets/placeholders/interiors/g_clinic.png",
-	"H": "res://assets/placeholders/interiors/h_living.png",
+	"A": "res://assets/场景内部图/熊起东方总部.png",
+	"B": "res://assets/场景内部图/云栖科技丘.png",
+	"C": "res://assets/场景内部图/创意水巷.png",
+	"D": "res://assets/场景内部图/树影图书馆.png",
+	"E": "res://assets/场景内部图/松风训练谷.png",
+	"F": "res://assets/场景内部图/观澜展会码头.png",
+	"G": "res://assets/场景内部图/暖邻康护院.png",
+	"H": "res://assets/场景内部图/慢生活园.png",
+}
+
+const BEAR_LOADOUT_BY_ACTOR := {
+	"小熊": "bear_green_cardigan",
+	"王哥": "bear_plaid_glasses",
+	"陈工": "bear_beige_blazer",
+	"小林": "bear_green_cardigan",
+	"老周": "bear_orange_blazer",
+	"小赵": "bear_green_cardigan",
 }
 
 ## 情境强度只做光影，不显示任何标签或数字（V5.27 红线：测量口径不下发前端）
@@ -329,6 +338,7 @@ func _cast_list() -> Array:
 			var actor := Dictionary(entry)
 			if not actor.has("id"):
 				actor["id"] = String(actor.get("name", "actor"))
+			actor["loadout"] = _bear_loadout(actor)
 			result.append(actor)
 		elif entry is String:
 			var id := String(entry)
@@ -336,8 +346,13 @@ func _cast_list() -> Array:
 			if profile.is_empty():
 				continue
 			profile["id"] = id
+			profile["loadout"] = _bear_loadout(profile)
 			result.append(profile)
 	return result
+
+
+func _bear_loadout(actor: Dictionary) -> String:
+	return String(BEAR_LOADOUT_BY_ACTOR.get(String(actor.get("name", "")), "bear_green_cardigan"))
 
 
 ## 立绘：直接取纸娃娃图集第一帧（down 方向），不引额外依赖。
@@ -351,11 +366,11 @@ func _add_actor(actor: Dictionary) -> void:
 	shadow.color = Color(0.02, 0.03, 0.05, 0.34)
 	anchor.add_child(shadow)
 	var sprite := Sprite2D.new()
-	sprite.texture = _load_texture(DOLL_ATLAS % String(actor.get("loadout", "neutral_hoodie")))
+	sprite.texture = _load_texture(DOLL_ATLAS % String(actor.get("loadout", "bear_green_cardigan")))
 	sprite.region_enabled = true
-	sprite.region_rect = Rect2(0, 0, 64, 80)
+	sprite.region_rect = Rect2(0, 0, 128, 160)
 	sprite.centered = false
-	sprite.position = Vector2(-32, -72)
+	sprite.position = Vector2(-64, -144)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	anchor.add_child(sprite)
 	_actors.append({"data": actor, "anchor": anchor})

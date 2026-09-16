@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctby4qd1kpnye"
-path="res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"
+uid="uid://c8wsrsjrska1s"
+path="res://.godot/imported/创意水巷.png-3dbaf2f424f8937be50a6a37a5b0a3c7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/paper_doll_64/compiled/bear_plaid_glasses_walk_64.png"
-dest_files=["res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"]
+source_file="res://assets/场景内部图/创意水巷.png"
+dest_files=["res://.godot/imported/创意水巷.png-3dbaf2f424f8937be50a6a37a5b0a3c7.ctex"]
 
 [params]
 

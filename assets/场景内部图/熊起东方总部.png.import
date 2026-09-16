@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctby4qd1kpnye"
-path="res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"
+uid="uid://5xchjrb5er52"
+path="res://.godot/imported/熊起东方总部.png-93c3ea8156789bd69addffb45e227460.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/paper_doll_64/compiled/bear_plaid_glasses_walk_64.png"
-dest_files=["res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"]
+source_file="res://assets/场景内部图/熊起东方总部.png"
+dest_files=["res://.godot/imported/熊起东方总部.png-93c3ea8156789bd69addffb45e227460.ctex"]
 
 [params]
 

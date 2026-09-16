@@ -449,7 +449,7 @@ func _quit_game() -> void:
 
 func _enter_town() -> void:
 	var file := FileAccess.open(PROFILE_PATH, FileAccess.WRITE)
-	if file != null: file.store_string(JSON.stringify({"sessionId":"local-" + str(Time.get_unix_time_from_system()), "avatarId":"energetic_ponytail", "contentVersion":"v1", "currentNodeId":"M1-E01", "unlockedRegionIds":["A", "H"]}))
+	if file != null: file.store_string(JSON.stringify({"sessionId":"local-" + str(Time.get_unix_time_from_system()), "avatarId":"bear_green_cardigan", "contentVersion":"v1", "currentNodeId":"M1-E01", "unlockedRegionIds":["A", "H"]}))
 	get_tree().change_scene_to_file("res://Main.tscn")
 
 # ------------------------------------------------------------------ 零件

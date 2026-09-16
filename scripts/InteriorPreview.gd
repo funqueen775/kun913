@@ -96,10 +96,12 @@ func is_open() -> bool:
 	return _root != null and _root.visible
 
 func enable_exploration() -> void:
-	if _player == null or _npc == null:
+	if _player == null:
 		return
 	_exploration_enabled = true
 	_player.show()
+	if _npc == null:
+		return
 	_npc.show()
 	_npc.process_mode = Node.PROCESS_MODE_INHERIT
 	_update_talk_state()
@@ -155,14 +157,18 @@ func _build_interior_characters(location: Dictionary) -> void:
 	_player_sprite.scale = Vector2.ONE * CHARACTER_SCALE
 	_player_sprite.configure_motion_speed(PLAYER_SPEED)
 	_player.add_child(_player_sprite)
+	_player_sprite.set_loadout("bear_green_cardigan")
 	shadow.scale = Vector2.ONE * CHARACTER_SCALE
 
 	# 所有临时室内图统一预留中央活动区；后续替换美术时只需微调这组点。
 	var route := PackedVector2Array([Vector2(720, 610), Vector2(900, 610), Vector2(900, 700), Vector2(720, 700)])
 	_npc = OFFICE_NPC.new()
 	_npc_data = _npc_for_location(location)
+	if _npc_data.is_empty():
+		_npc = null
+		return
 	_npc.name = "InteriorNpc"
-	_npc.configure(String(_npc_data.get("loadout", "neutral_hoodie")), route, 52.0, 20260914 + String(location.get("code", "A")).unicode_at(0))
+	_npc.configure(String(_npc_data.get("loadout", "bear_green_cardigan")), route, 52.0, 20260914 + String(location.get("code", "A")).unicode_at(0))
 	_npc.scale = Vector2.ONE * CHARACTER_SCALE
 	_root.add_child(_npc)
 	_npc_name = _label("%s · %s" % [_npc_data.get("name", "场景 NPC"), _npc_data.get("role", "区域协作")], 17, Color("fff2c7"))
@@ -246,16 +252,13 @@ func _build_interior_characters(location: Dictionary) -> void:
 func _npc_for_location(location: Dictionary) -> Dictionary:
 	var code := String(location.get("code", "")).to_lower()
 	var catalog := {
-		"a": {"npcId":"amy", "name":"艾米", "role":"总部接待", "loadout":"skirt_woman"},
-		"b": {"npcId":"chengong", "name":"陈工", "role":"技术协作", "loadout":"neutral_hoodie"},
-		"c": {"npcId":"linzong", "name":"林总", "role":"品牌顾问", "loadout":"suit_man"},
-		"d": {"npcId":"zhoulan", "name":"周岚", "role":"培训导师", "loadout":"elder_man"},
-		"e": {"npcId":"xiaomo", "name":"小莫", "role":"训练教练", "loadout":"street_creator"},
-		"f": {"npcId":"azhe", "name":"阿哲", "role":"会展统筹", "loadout":"suit_man"},
-		"g": {"npcId":"ningning", "name":"宁宁", "role":"员工关怀", "loadout":"energetic_ponytail"},
-		"h": {"npcId":"lele", "name":"乐乐", "role":"生活运营", "loadout":"neutral_hoodie"},
+		"a": {"npcId":"chengong", "name":"陈工", "role":"邻组 Leader", "loadout":"bear_beige_blazer"},
+		"b": {"npcId":"wange", "name":"王哥", "role":"技术 · 你的导师", "loadout":"bear_plaid_glasses"},
+		"c": {"npcId":"xiaolin", "name":"小林", "role":"产品", "loadout":"bear_green_cardigan"},
+		"d": {"npcId":"laozhou", "name":"老周", "role":"资深", "loadout":"bear_orange_blazer"},
+		"h": {"npcId":"xiaozhao", "name":"小赵", "role":"实习生", "loadout":"bear_green_cardigan"},
 	}
-	return catalog.get(code, catalog["b"])
+	return catalog.get(code, {})
 
 func _update_talk_state() -> void:
 	if _talk_button == null or _npc == null or _player == null:

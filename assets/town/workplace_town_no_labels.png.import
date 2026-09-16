@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctby4qd1kpnye"
-path="res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"
+uid="uid://dm7p0y3cgixex"
+path="res://.godot/imported/workplace_town_no_labels.png-cafc83dced20d4e96ce6e3f82228dbcf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/paper_doll_64/compiled/bear_plaid_glasses_walk_64.png"
-dest_files=["res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"]
+source_file="res://assets/town/workplace_town_no_labels.png"
+dest_files=["res://.godot/imported/workplace_town_no_labels.png-cafc83dced20d4e96ce6e3f82228dbcf.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctby4qd1kpnye"
-path="res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"
+uid="uid://d4e7mqrfeaa3q"
+path="res://.godot/imported/bear_green_cardigan_walk_64.png-9ffd8008689e760af1dc5467ae65f141.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/paper_doll_64/compiled/bear_plaid_glasses_walk_64.png"
-dest_files=["res://.godot/imported/bear_plaid_glasses_walk_64.png-3846e1e963cde8b19af10762ba88ea07.ctex"]
+source_file="res://assets/characters/paper_doll_64/portraits/bear_green_cardigan_walk_64.png"
+dest_files=["res://.godot/imported/bear_green_cardigan_walk_64.png-9ffd8008689e760af1dc5467ae65f141.ctex"]
 
 [params]
 
