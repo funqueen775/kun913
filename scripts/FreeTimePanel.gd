@@ -83,8 +83,12 @@ const COLOR_SUB := Color("d5b77b")
 const COLOR_CARD := Color("6b3f26")
 const COLOR_ICON_BG := Color("8a5a38")
 const COLOR_ACCENT := Color("a34a32")
-## 本期解锁档位（free_time_system schedule.unlocks：1-16 月 = game1）。
-const CURRENT_GAME := 1
+## 解锁阶段 = 当前月份所属区间（口径见 free_time_system schedule.unlocks）。
+## 2026-09-16 用户拍板：不分局，一局跑完 48 个月；原 game1/2/3 只是阶段 1/2/3，不再是独立局。
+## ⚠ 阶段只是「月份区间」，数据字段仍叫 unlock_game（后端 free_time.py 同读这个字段，不改名）。
+const STAGE_SPAN_MONTHS := 16
+const STAGE_MAX := 3
+const DEFAULT_STAGE := 1
 
 var _life
 var _config: Dictionary = {}
@@ -128,14 +132,27 @@ func _load_config() -> Dictionary:
 
 ## ---------- 数据口径（探针直接测这些） ----------
 
-## 当前档位可选的活动（排除未解锁档位与自动触发的 D6）。
+## 月份 → 阶段：1-16 → 1，17-32 → 2，33-48 → 3。越界夹到 [1, 3]。
+func stage_for_month(month: int) -> int:
+	if month <= 0:
+		return DEFAULT_STAGE
+	return clampi(int((month - 1) / STAGE_SPAN_MONTHS) + 1, DEFAULT_STAGE, STAGE_MAX)
+
+
+## 面板当前阶段（open_for_month 之后按当月算，未开面板时按 _month=0 → 阶段 1）。
+func current_stage() -> int:
+	return stage_for_month(_month)
+
+
+## 当前阶段可选的活动（排除未解锁阶段与自动触发的 D6）。
 func unlocked_activities() -> Array:
+	var stage := current_stage()
 	var result: Array = []
 	for activity in _config.get("activities", []):
 		if not activity is Dictionary:
 			continue
-		var unlock := int(activity.get("unlock_game", CURRENT_GAME))
-		if unlock > CURRENT_GAME:
+		var unlock := int(activity.get("unlock_game", DEFAULT_STAGE))
+		if unlock > stage:
 			continue
 		if activity.has("weather_req") or activity.has("auto_trigger"):
 			continue

@@ -1,29 +1,28 @@
 {
- "_readme": "自由活动与好感度系统全量配置（剧情册 V5.2 §2.4/2.5、专册《自由活动与好感度系统设计 V1》的落地版）。19 个活动（含 V5.4 新增工作型 W1-W5） + 好感度 spec + 天气 + 收益递减规则。所有数值为预标定，策划改这里不改代码。红线：affinity 数值对玩家隐藏（视觉=记忆墙便签蓝→黄→金渐进）；本文件任何字段不得下发前端或进大模型 prompt。",
+ "_readme": "自由活动与好感度系统全量配置（剧情册 V5.2 §2.4/2.5、专册《自由活动与好感度系统设计 V1》的落地版）。19 个活动（含 V5.4 新增工作型 W1-W5） + 好感度 spec + 天气 + 收益递减规则。所有数值为预标定，策划改这里不改代码。2026-09-16 v1.4：全表数值均衡（方案文档《自由周末参与感设计说明 V1》§13.2）——消除同档位严格支配，同类内数值平手、差异只在 scoring_card 与 memory_tag。新增 conditional_gain 字段（带 when 条件的收益替代）。红线：affinity 数值对玩家隐藏（视觉=记忆墙便签蓝→黄→金渐进）；本文件任何字段不得下发前端或进大模型 prompt。",
  "system_id": "free_time_system",
- "version": "1.3",
+ "version": "1.4",
  "schedule": {
   "cadence": "every_3_months",
   "total_slots": 16,
   "slot_name": "自由周末",
   "flow": "时间卡片「第X月·周末到了」→ 小火车选组团（explore_click zone）→ 选活动（explore_click activity_id）→ 小事件30-60秒 → 结算 + 记忆墙/好感度变化",
   "unlocks": {
-   "note": "组团随局解锁，与美术 P0/P1/P2 制作顺序对齐",
-   "game1_months_1_16": [
+   "note": "组团按月份阶段开放（2026-09-16 用户拍板：不分局，一局跑完 48 个月；原 game1/2/3 即阶段 1/2/3，只是月份区间，不是独立的一局）。",
+   "stage1_months_1_16": [
     "A_总部",
     "B_科技丘",
     "C_水巷",
     "心湖",
     "E_训练谷"
    ],
-   "game2_months_17_32": [
-    "F_会展码头",
-    "G_康护院"
-   ],
-   "game3_months_33_48": [
+   "stage2_months_17_32": [
     "D_树影书院",
     "H_慢生活园"
-   ]
+   ],
+   "stage3_months_33_48": [],
+   "_stage3_todo": "阶段 3 暂无专属组团：原设计把 F_会展码头 / G_康护院 放在这一档，但这两组团当前零活动。补上活动后，把名字挪进 stage3_months_33_48。",
+   "_field_note": "活动真正的门槛看 activity.unlock_game（值 = 阶段号，与上表同义）；本表只是文档，代码不读它。"
   }
  },
  "weather": {
@@ -119,7 +118,7 @@
   {
    "activity_id": "S1_library_study",
    "zone": "D_树影书院",
-   "unlock_game": 3,
+   "unlock_game": 2,
    "type": "solo",
    "party_size": 1,
    "estimated_seconds": 20,
@@ -178,7 +177,15 @@
    "party_size": 1,
    "estimated_seconds": 20,
    "gain": {
-    "H": 2
+    "H": 1
+   },
+   "conditional_gain": {
+    "when": {
+     "H_lte": 3
+    },
+    "gain": {
+     "H": 2
+    }
    },
    "conditional_text": {
     "when": {
@@ -253,10 +260,11 @@
     "lao_zhou"
    ],
    "estimated_seconds": 30,
-   "gain": {
-    "N": 1
+   "gain": {},
+   "cost": {
+    "H": 1
    },
-   "affinity_gain": 3,
+   "affinity_gain": 5,
    "prototype": "CareerSim #31 午饭跟谁吃（38次）",
    "bigfive_proxy": "A+",
    "memory_tag": null,
@@ -282,8 +290,9 @@
     "lao_zhou"
    ],
    "estimated_seconds": 60,
-   "gain": {
-    "H": 1
+   "gain": {},
+   "cost": {
+    "H": 2
    },
    "affinity_gain": 8,
    "hooks": {
@@ -346,8 +355,9 @@
     "lao_zhou"
    ],
    "estimated_seconds": 30,
-   "gain": {
-    "H": 2
+   "gain": {},
+   "cost": {
+    "H": 1
    },
    "affinity_gain": 5,
    "prototype": "CareerSim #65 午休羽毛球联赛",
@@ -378,7 +388,7 @@
    "cost": {
     "H": 1
    },
-   "affinity_gain": 6,
+   "affinity_gain": 5,
    "hooks": {
     "early_secret": {
      "chance": 0.3,
@@ -399,7 +409,7 @@
   {
    "activity_id": "D5_study_together",
    "zone": "D_树影书院",
-   "unlock_game": 3,
+   "unlock_game": 2,
    "type": "duo",
    "party_size": 2,
    "candidates": [
@@ -411,6 +421,9 @@
    "estimated_seconds": 30,
    "gain": {
     "S": 1
+   },
+   "cost": {
+    "H": 2
    },
    "affinity_gain": 4,
    "bigfive_proxy": null,
@@ -534,9 +547,7 @@
    "cost": {
     "H": 1
    },
-   "affinity_gain": {
-    "each": 4
-   },
+   "affinity_gain": {"each": 5},
    "prototype": "CareerSim #27 聚餐第二场 KTV 与晋升决策者（首期无 KTV 场地改篝火晚会）",
    "decision": {
     "node_id": "g2_mic_pass",
@@ -591,7 +602,7 @@
   {
    "activity_id": "G3_board_game",
    "zone": "H_慢生活园",
-   "unlock_game": 3,
+   "unlock_game": 2,
    "type": "group",
    "party_size": 3,
    "candidates": [
@@ -601,11 +612,12 @@
     "lao_zhou"
    ],
    "estimated_seconds": 40,
-   "gain": {
-    "S": 1
+   "gain": {},
+   "cost": {
+    "H": 1
    },
    "affinity_gain": {
-    "each": 4
+    "each": 5
    },
    "instant_feedback": "三局两胜。你输了两局，但看穿了小赵藏牌的小动作。",
    "scoring_card": {
@@ -624,9 +636,13 @@
    "party_size": "team",
    "estimated_seconds": 40,
    "gain": {},
+   "cost": {
+    "H": 1
+   },
    "affinity_gain": {
     "each": 3
    },
+   "_affinity_note": "team 型活动的 each = 全员（整个同事池各 +3），不是只见面的两人 —— 年会排练本就是公司级场合。每人低、覆盖面广，所以与 group 型（每人 +5、只见面两人）互不支配。",
    "prototype": "CareerSim #11 年会被起哄上台表演",
    "decision": {
     "node_id": "g4_stage_or_backstage",
@@ -681,7 +697,7 @@
     "S": 2
    },
    "cost": {
-    "H": 1
+    "H": 2
    },
    "bigfive_proxy": "O+",
    "bigfive_note": "开放性最强行为锚点：无人要求仍主动尝试新东西",
@@ -773,11 +789,10 @@
    "party_size": 1,
    "estimated_seconds": 40,
    "gain": {
-    "N": 2,
-    "S": 1
+    "N": 2
    },
    "cost": {
-    "H": 1
+    "H": 2
    },
    "bigfive_proxy": "E+",
    "bigfive_note": "影响力经营 vs 埋头干活的分歧点",
@@ -818,7 +833,6 @@
    "party_size": 1,
    "estimated_seconds": 40,
    "gain": {
-    "N": 1,
     "S": 1
    },
    "cost": {
@@ -989,6 +1003,11 @@
   }
  },
  "_change_log": [
+  {
+   "version": "1.4",
+   "date": "2026-09-16",
+   "change": "数值均衡：消除 6 组同档位严格支配（W1→W2 / G3→S1 / D5→S1 / D3→D1 / S3→S2 / G1→G2）。原则＝同类内数值平手、差异只在标签；社交一律 H−1、单人好感 +5，D2 最贵（H−2/+8）、G4 公司活动最低（每人 +3）。新增 conditional_gain（S3 生命 ≤3 才给满）。scoring_card / input_structure 未改。改前请跑 build/probe_free_time.gd 的支配断言。"
+  },
   {
    "version": "1.3",
    "date": "2026-09-11",
