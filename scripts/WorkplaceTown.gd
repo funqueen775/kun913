@@ -10,6 +10,9 @@ const INTERIOR_PREVIEW := preload("res://scripts/InteriorPreview.gd")
 const DORM_ROOM := preload("res://scripts/DormRoom.gd")
 const STORY_EVENT_PANEL := preload("res://scripts/StoryEventPanel.gd")
 const MEMORY_WALL := preload("res://scripts/MemoryWallPanel.gd")
+const MONTHLY_LIFE := preload("res://scripts/MonthlyLife.gd")
+const ENERGY_PANEL := preload("res://scripts/EnergyPanel.gd")
+const FREE_TIME_PANEL := preload("res://scripts/FreeTimePanel.gd")
 const CHINESE_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const TOWN_MAP_PATH := "res://assets/town/workplace_town_reference.png"
 const WALKABILITY_MASK_PATH := "res://assets/town/walkability_mask.png"
@@ -148,6 +151,13 @@ var _zone_entered_msec := 0
 var _decision_opened_msec := 0
 var _choice_hover_count := 0
 var _last_hovered_choice_id := ""
+## 月度生活系统：每月 3 点精力 / 公开数值 / 月底结算 / 好感度（见 scripts/MonthlyLife.gd）。
+var _monthly_life
+## 精力面板（时间 HUD 正下方）与自由周末面板。
+var _energy_panel
+var _free_time_panel
+## 已经开过自由周末的月份（每 3 个月一次：第 3/6/9…月）。
+var _weekend_done_months: Array[int] = []
 
 
 func _ready() -> void:
@@ -161,6 +171,7 @@ func _ready() -> void:
 	_build_hud()
 	_build_location_markers()
 	_build_debug_overlay()
+	_build_monthly_life()
 	_build_world_time()
 	_build_interior_preview()
 	_build_story_event_panel()
@@ -1190,9 +1201,54 @@ func _build_world_time() -> void:
 	environment_layer.add_child(_environment_tint)
 
 
+## 月度生活系统 + 两块面板。MonthlyLife 故意不做 autoload：
+## 引用从这里下发，探针也能直接 new（见 build/probe_free_time.gd）。
+func _build_monthly_life() -> void:
+	_monthly_life = MONTHLY_LIFE.new()
+	_monthly_life.name = "MonthlyLife"
+	add_child(_monthly_life)
+	_energy_panel = ENERGY_PANEL.new()
+	_energy_panel.setup(_monthly_life)
+	add_child(_energy_panel)
+	_free_time_panel = FREE_TIME_PANEL.new()
+	_free_time_panel.setup(_monthly_life)
+	_free_time_panel.weekend_closed.connect(_on_weekend_closed)
+	_free_time_panel.memo_requested.connect(_on_memo_recorded)
+	add_child(_free_time_panel)
+
+
+func _on_weekend_closed(month: int) -> void:
+	if not _weekend_done_months.has(month):
+		_weekend_done_months.append(month)
+	ApiClient.record_event("weekend_close", {"month": month, "snapshot": WorldClock.snapshot()})
+	WorldClock.set_running(true)
+	_check_curfew(WorldClock.snapshot())
+
+
+## 每 3 个月一个自由周末（第 3/6/9…月）。进月时若该月没有待结算的主线事件
+## （或主线已结完），就弹自由周末；本月还有主线时先推主线，主线结完自然轮到周末。
+func _maybe_open_weekend(snapshot: Dictionary) -> void:
+	if _free_time_panel == null or _monthly_life == null:
+		return
+	var month := int(snapshot["month"])
+	if month % 3 != 0 or _weekend_done_months.has(month):
+		return
+	if _in_dorm or _free_time_panel.is_open():
+		return
+	var next_event := WorldClock.next_main_event()
+	if not next_event.is_empty() and int(next_event["month"]) == month:
+		return
+	# 开面板期间世界时钟停住：周末是要慢慢挑的，不该边挑边被宵禁拽走。
+	WorldClock.set_running(false)
+	_free_time_panel.open_for_month(month)
+
+
 func _on_world_time_changed(snapshot: Dictionary) -> void:
+	if _monthly_life != null:
+		_monthly_life.ensure_month(int(snapshot["month"]))
 	if _time_hud != null:
 		_time_hud.set_time(snapshot)
+	_maybe_open_weekend(snapshot)
 	if _interior_preview != null and _interior_preview.is_open():
 		_interior_preview.set_phase(String(snapshot.get("phaseId", "day")))
 	_check_curfew(snapshot)
@@ -1207,7 +1263,25 @@ func _on_world_time_changed(snapshot: Dictionary) -> void:
 	_environment_tint.color = tint_by_phase.get(String(snapshot["phaseId"]), Color(1, 1, 1, 0))
 
 
+## 「推进到下月」：如果下一月和下一个主线事件之间卡着一个还没玩过的自由周末月，
+## 先跳到那个周末月的 1 日 09:00（周末优先于主线，否则会被 advance_month 一跳吞掉）。
+## 没有中间周末月就走原来的 advance_month。
 func _on_month_advance_requested() -> void:
+	var month := int(WorldClock.snapshot()["month"])
+	var next_event := WorldClock.next_main_event()
+	var event_month := 9999
+	if not next_event.is_empty():
+		event_month = int(next_event["month"])
+	var weekend_month := 0
+	for candidate in range(month + 1, event_month):
+		if candidate % 3 == 0 and not _weekend_done_months.has(candidate):
+			weekend_month = candidate
+			break
+	if weekend_month > 0:
+		var target_minute := (weekend_month - 1) * WorldClock.DAYS_PER_MONTH * WorldClock.MINUTES_PER_DAY + 9 * 60
+		if target_minute > WorldClock.world_minute:
+			WorldClock.advance_minutes(float(target_minute - WorldClock.world_minute))
+			return
 	WorldClock.advance_month()
 
 
