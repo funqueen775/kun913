@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "loadoutId": "bear_plaid_glasses",
+  "displayName": "熊 · 格纹衬衫",
+  "previewOnly": false,
+  "frame": [
+    64,
+    80
+  ],
+  "root": [
+    32,
+    72
+  ],
+  "sheet": [
+    256,
+    320
+  ],
+  "directions": [
+    "down",
+    "right",
+    "up",
+    "left"
+  ],
+  "columnSequence": [
+    "neutral",
+    "step_right",
+    "neutral",
+    "step_left"
+  ],
+  "frameDurationMs": 200,
+  "filter": "nearest",
+  "mipmaps": false,
+  "runtimeMode": "precompiled_single_sprite_atlas",
+  "atlas": "assets/characters/paper_doll_64/compiled/bear_plaid_glasses_walk_64.png",
+  "sourceNote": "美术交付的 4 方向 x 4 帧熊行走图（1280x1280 JPG）经 build_bear_atlas.py 裁剪缩放；脚底对齐 root y=72。"
+}

@@ -57,6 +57,34 @@
   ],
   "loadouts": [
     {
+      "loadoutId": "bear_plaid_glasses",
+      "displayName": "熊 · 格纹衬衫",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/bear_plaid_glasses_walk_64.png",
+      "preset": false
+    },
+    {
+      "loadoutId": "bear_green_cardigan",
+      "displayName": "熊 · 绿开衫",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/bear_green_cardigan_walk_64.png",
+      "preset": false
+    },
+    {
+      "loadoutId": "bear_beige_blazer",
+      "displayName": "熊 · 米色西装",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/bear_beige_blazer_walk_64.png",
+      "preset": false
+    },
+    {
+      "loadoutId": "bear_orange_blazer",
+      "displayName": "熊 · 深色西装",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/bear_orange_blazer_walk_64.png",
+      "preset": false
+    },
+    {
       "loadoutId": "master_64",
       "displayName": "64px 无表情动作母版",
       "previewOnly": true,
