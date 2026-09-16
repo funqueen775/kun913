@@ -1,7 +1,7 @@
 class_name WorldTimeHud
 extends CanvasLayer
 
-signal advance_requested(days: int)
+signal month_advance_requested
 
 const FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
@@ -22,21 +22,21 @@ func _ready() -> void:
 	_title.position = Vector2(18, 12)
 	_title.size = Vector2(314, 28)
 	panel.add_child(_title)
-	_date = _label("第 1 月 1 日", 20, Color("ffe5a8"))
+	_date = _label("第 1 月", 22, Color("ffe5a8"))
 	_date.position = Vector2(18, 46)
 	_date.size = Vector2(160, 31)
 	panel.add_child(_date)
-	_clock = _label("09:00 · 白天", 18, Color("fff8e8"))
+	_clock = _label("01日 09:00 · 白天", 17, Color("fff8e8"))
 	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_clock.position = Vector2(155, 46)
 	_clock.size = Vector2(177, 31)
 	panel.add_child(_clock)
-	_next_event = _label("主线：第 1 月中旬", 14, Color("f3d59a"))
+	_next_event = _label("主线：第 1 月初", 14, Color("f3d59a"))
 	_next_event.position = Vector2(18, 81)
 	_next_event.size = Vector2(314, 23)
 	panel.add_child(_next_event)
 	var advance := Button.new()
-	advance.text = "推进 5 天"
+	advance.text = "推进到下月"
 	advance.position = Vector2(18, 112)
 	advance.size = Vector2(314, 47)
 	advance.add_theme_font_override("font", FONT)
@@ -44,9 +44,9 @@ func _ready() -> void:
 	advance.add_theme_color_override("font_color", Color("fff0c9"))
 	advance.add_theme_stylebox_override("normal", _button_style(Color("a34a32")))
 	advance.add_theme_stylebox_override("hover", _button_style(Color("c5603e")))
-	advance.pressed.connect(func(): advance_requested.emit(5))
+	advance.pressed.connect(func(): month_advance_requested.emit())
 	panel.add_child(advance)
-	var hint := _label("探索和活动也会推进时间", 13, Color("d5b77b"))
+	var hint := _label("主线过后，本月剩余时间自由活动", 13, Color("d5b77b"))
 	hint.position = Vector2(18, 161)
 	hint.size = Vector2(314, 16)
 	panel.add_child(hint)
@@ -54,13 +54,14 @@ func _ready() -> void:
 func set_time(snapshot: Dictionary) -> void:
 	if _date == null:
 		return
-	_date.text = "第 %d 月 %d 日" % [int(snapshot["month"]), int(snapshot["day"])]
-	_clock.text = "%s · %s" % [snapshot["clock"], snapshot["phaseName"]]
+	# 以「月」为时间单位：月是主位，日/时刻降为右侧小字。
+	_date.text = "第 %d 月" % int(snapshot["month"])
+	_clock.text = "%02d日 %s · %s" % [int(snapshot["day"]), snapshot["clock"], snapshot["phaseName"]]
 	var next_event := WorldClock.next_main_event()
 	if next_event.is_empty():
 		_next_event.text = "第一幕主线事件已完成"
 	else:
-		_next_event.text = "下一主线：第 %d 月中旬 · %s" % [int(next_event["month"]), next_event["title"]]
+		_next_event.text = "下一主线：第 %d 月初 · %s" % [int(next_event["month"]), next_event["title"]]
 
 func show_event_gate(event: Dictionary) -> void:
 	_next_event.text = "主线待完成：%s" % event["title"]
