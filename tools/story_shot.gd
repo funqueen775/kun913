@@ -1,7 +1,7 @@
 extends Control
 
 ## 剧情演出开窗自检：连拍 入场 / 旁白 / 说话 / 可交互 / 手册 / 选项 / 结果 / 独处 共 8 张图。
-const SHOT_DIR := "E:/03_Projects/bear/.workbuddy/tmp/shots"
+const SHOT_DIR := "res://test_artifacts/story_shots"
 ## 入场拍自动跳走需要 CARD_IN + HOLD + OUT（0.35 + 1.45 + 0.5）秒，留点余量。
 const ENTRY_WAIT := 2.6
 ## 打字机每 0.022 秒出 2 字，最长的一段话也在 2 秒内出完。
@@ -11,6 +11,7 @@ var _panel: CanvasLayer
 
 
 func _ready() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SHOT_DIR))
 	_panel = load("res://scripts/StoryEventPanel.gd").new()
 	add_child(_panel)
 	await _run_e01()
@@ -83,6 +84,6 @@ func _shot(name: String) -> void:
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
-	var path := "%s/story_%s.png" % [SHOT_DIR, name]
+	var path := ProjectSettings.globalize_path("%s/story_%s.png" % [SHOT_DIR, name])
 	var error := image.save_png(path)
 	print("shot %s -> %s (%s)" % [name, path, error])

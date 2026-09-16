@@ -3,12 +3,13 @@ extends Control
 ## 心湖记忆墙开窗自检：连拍 空墙 / 满墙 / 点开一张 三张图。
 ## 造句子用的是事件目录里真实的 memoryNote / outcome 文案，
 ## 但**只走 show_records()，不碰磁盘** —— 玩家的真实存档一个字节都不动。
-const SHOT_DIR := "E:/03_Projects/bear/.workbuddy/tmp/shots"
+const SHOT_DIR := "res://test_artifacts/memorywall_shots"
 
 var _wall
 
 
 func _ready() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SHOT_DIR))
 	_wall = load("res://scripts/MemoryWallPanel.gd").new()
 	add_child(_wall)
 	await _wait(0.5)
@@ -73,6 +74,6 @@ func _shot(name: String) -> void:
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
-	var path := "%s/wall_%s.png" % [SHOT_DIR, name]
+	var path := ProjectSettings.globalize_path("%s/wall_%s.png" % [SHOT_DIR, name])
 	var error := image.save_png(path)
 	print("shot %s -> %s (%s)" % [name, path, error])

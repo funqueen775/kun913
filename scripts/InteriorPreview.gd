@@ -10,7 +10,8 @@ const OFFICE_NPC := preload("res://scripts/OfficeNpcWalker.gd")
 const INTERIOR_BOUNDS := Rect2(560, 420, 820, 300)
 const PLAYER_SPEED := 260.0
 const TALK_DISTANCE := 165.0
-const CHARACTER_SCALE := 5.0
+# 室内背景已换为完整场景图，角色保持可辨识但不遮挡家具与动线。
+const CHARACTER_SCALE := 5.0 / 3.0
 
 var _root: Control
 var _title: Label

@@ -12,6 +12,10 @@ func _ready() -> void:
 	add_child(town)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	# PR #3 增加了宿舍开场遮罩；先离开宿舍，后续才是在可见的小镇/室内流程上验收。
+	if bool(town.get("_in_dorm")):
+		town.call("_on_dorm_leave")
+		await get_tree().process_frame
 	var zone_b: Dictionary = {}
 	for zone in town.ZONES:
 		if String(zone.get("code", "")) == "B":
@@ -59,8 +63,8 @@ func _ready() -> void:
 	var interior_player := interior.get("_player") as Node2D
 	var npc := interior.get("_npc") as Node2D
 	var player_sprite := interior.get("_player_sprite") as Node2D
-	if player_sprite.scale != Vector2.ONE * 5.0 or npc.scale != Vector2.ONE * 5.0:
-		_fail("室内人物没有放大到 5 倍")
+	if player_sprite.scale != Vector2.ONE * (5.0 / 3.0) or npc.scale != Vector2.ONE * (5.0 / 3.0):
+		_fail("室内人物没有使用三分之一的显示比例")
 		return
 	var player_start := interior_player.position
 	var npc_start := npc.position
