@@ -13,6 +13,8 @@ const TOWN_ART := preload("res://assets/ui/intro/town_1.png")
 const LIFE_ART := preload("res://assets/ui/intro/town_3.png")
 const PLAQUE_SHELL := preload("res://assets/ui/startup/startup_menu_shell.png")
 const PROFILE_PATH := "user://workplace_town_profile.json"
+# Batch 3（2026-09-17）：「我的报告」接通 —— 面板按需实例化，报告只在服务端算。
+const REPORT_PANEL := preload("res://scripts/ReportPanel.gd")
 
 const PAPER := Color("f6e6bd")
 const INK := Color("4a2b1a")
@@ -80,13 +82,14 @@ const MAIN_MENU := [
 	["加载游戏", true],
 ]
 const SUB_MENU := [
-	["我的报告", false],
+	["我的报告", true],
 	["游戏设置", false],
 ]
 
 var _mode := "title"
 var _page := 0
 var _fonts: Dictionary = {}
+var _report_panel: CanvasLayer
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -159,13 +162,14 @@ func _title_screen() -> void:
 		column.add_child(main_btn)
 	column.add_child(_spacer(20))
 
-	# 两个次级按钮：并排一行
+	# 两个次级按钮：并排一行。第一个 = 我的报告（Batch 3 接通）。
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	for sub_item in SUB_MENU:
+	for i in SUB_MENU.size():
+		var sub_item: Array = SUB_MENU[i]
 		var sub_btn := _button(sub_item[0], "secondary")
 		sub_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		sub_btn.pressed.connect(_placeholder)
+		sub_btn.pressed.connect(_open_report if i == 0 else _placeholder)
 		row.add_child(sub_btn)
 	column.add_child(row)
 
@@ -185,8 +189,16 @@ func _topbar() -> void:
 	for text in ["我的报告", "游戏设置", "帮助"]:
 		var chip := _button(text, "chip")
 		chip.custom_minimum_size = Vector2(134, 56)
-		chip.pressed.connect(_placeholder)
+		chip.pressed.connect(_open_report if text == "我的报告" else _placeholder)
 		top.add_child(chip)
+
+
+## 打开「我的报告」面板（按需实例化，ReportPanel 自己管拉取与失败文案）。
+func _open_report() -> void:
+	if _report_panel == null:
+		_report_panel = REPORT_PANEL.new()
+		add_child(_report_panel)
+	_report_panel.open()
 
 # ------------------------------------------------------------------ 导览三页
 # 【2026-09-15 排版重排】三个坑一起修掉，动这块之前先读完：

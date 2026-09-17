@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TitleScreen } from './screens/TitleScreen'
 import { TownIntroScreen } from './screens/TownIntroScreen'
 import { EntryScreen } from './screens/EntryScreen'
+import { ReportScreen } from './screens/ReportScreen'
 import { report } from './api/report'
 
 /**
@@ -12,9 +13,9 @@ import { report } from './api/report'
  *
  * 屏数还少，用一个 step 状态机就够 —— 等主循环进来再决定要不要引 react-router。
  */
-export type Step = 'title' | 'town' | 'game'
+export type Step = 'title' | 'town' | 'game' | 'report'
 
-const STEPS: Step[] = ['title', 'town', 'game']
+const STEPS: Step[] = ['title', 'town', 'game', 'report']
 
 /** 深链：?screen=town&page=2 —— 评审时可以直接把某一屏某一页发出去 */
 function readDeepLink(): { step: Step; page: number } {
@@ -45,11 +46,15 @@ export default function App() {
         onStart={() => go('town', 'intro_start_click')}
         onContinue={() => go('game', 'intro_continue_click')}
         onLoad={() => report('intro_load_click')}
-        onReport={() => report('intro_report_click')}
+        onReport={() => go('report', 'intro_report_click')}
         onSettings={() => report('intro_settings_click')}
         onExit={() => report('intro_exit_click')}
       />
     )
+  }
+
+  if (step === 'report') {
+    return <ReportScreen onBack={() => setStep('title')} />
   }
 
   if (step === 'town') {

@@ -1,0 +1,341 @@
+/* 报告屏 —— 外壳（木框 + 羊皮纸）复用 components/ui.css 的 .frame，
+   顶栏结构照 TownIntroScreen（返回 + 标题牌 + 状态牌），内容区整块滚动。 */
+
+/* ---------- 顶栏 ---------- */
+
+.rp__top {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  height: 50px;
+  flex: none;
+}
+
+.rp__back { width: 168px; flex: none; }
+.rp__back .game-btn { height: 100%; font-size: 17px; letter-spacing: 3px; }
+
+.rp__titles {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--xz-cream-light);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-sm);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6);
+}
+
+.rp__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  line-height: 1.1;
+  color: var(--xz-ink);
+}
+
+.rp__subtitle {
+  margin: 1px 0 0;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--xz-brown-text);
+}
+
+.rp__status {
+  width: 132px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--xz-title);
+  background: var(--xz-green);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-sm);
+}
+
+/* ---------- 内容区：整块滚动 ---------- */
+
+.rp__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding: 4px 6px 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rp__sec { display: flex; flex-direction: column; gap: 10px; }
+
+.rp__sec-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--xz-ink);
+}
+
+.rp__sec-no {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--xz-title);
+  background: var(--xz-wood-light);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-xs);
+}
+
+/* ---------- 一 · 终局总评 ---------- */
+
+.rp__verdict {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 22px;
+  background: var(--xz-cream-light);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-md);
+}
+
+.rp__verdict-grade {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 128px;
+  padding: 10px 14px;
+  background: var(--xz-wood);
+  border: var(--xz-stroke) solid var(--xz-wood-dark);
+  border-radius: var(--xz-radius-sm);
+}
+
+.rp__verdict-level {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--xz-title);
+}
+
+.rp__verdict-name {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--xz-title);
+}
+
+.rp__verdict-side { min-width: 0; }
+
+.rp__verdict-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--xz-brick);
+}
+
+.rp__verdict-sketch {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--xz-ink);
+}
+
+/* ---------- 陈述行（死数字与结论句统一装在小牌里） ---------- */
+
+.rp__line-card {
+  padding: 10px 16px;
+  background: var(--xz-cream-light);
+  border: 1px solid var(--xz-ink-soft);
+  border-radius: var(--xz-radius-sm);
+}
+
+.rp__line-card p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--xz-brown-text); }
+
+/* ---------- 二 · 雷达 ---------- */
+
+.rp__radar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--xz-cream-light);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-md);
+}
+
+.rp__radar { width: 268px; flex: none; }
+
+.rp__pillar-list {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.rp__pillar { display: flex; align-items: center; gap: 10px; }
+
+.rp__pillar-name { width: 76px; flex: none; font-size: 13px; font-weight: 700; color: var(--xz-ink); }
+
+.rp__pillar-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--xz-parchment-deep);
+  border: 1px solid var(--xz-ink-soft);
+  border-radius: var(--xz-radius-xs);
+  overflow: hidden;
+}
+
+.rp__pillar-bar i { display: block; height: 100%; background: var(--xz-orange); }
+
+.rp__pillar-val { width: 64px; flex: none; text-align: right; font-size: 12px; color: var(--xz-brown-text); }
+
+/* ---------- 三 · 性格五维 ---------- */
+
+.rp__bigfive {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rp__bf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 16px;
+  background: var(--xz-cream-light);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-sm);
+}
+
+.rp__bf--dim { border-style: dashed; border-color: var(--xz-ink-soft); }
+
+.rp__bf-name { width: 76px; flex: none; font-size: 14px; font-weight: 700; color: var(--xz-ink); }
+
+.rp__bf-detail { flex: 1; font-size: 13px; color: var(--xz-brown-text); }
+.rp__bf-detail b { color: var(--xz-ink); }
+
+.rp__bf-conflict {
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-style: normal;
+  color: var(--xz-title);
+  background: var(--xz-brick);
+  border-radius: var(--xz-radius-xs);
+}
+
+.rp__bf-ev { flex: none; font-size: 12px; color: var(--xz-brown-text); }
+
+/* ---------- 四 · 行为专题 ---------- */
+
+.rp__topics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.rp__topic {
+  padding: 14px 18px;
+  background: var(--xz-cream-light);
+  border: var(--xz-stroke) solid var(--xz-ink);
+  border-radius: var(--xz-radius-md);
+}
+
+.rp__topic h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--xz-ink);
+}
+
+.rp__topic-sum { margin: 6px 0 10px; font-size: 13px; line-height: 1.6; color: var(--xz-brown-text); }
+
+.rp__topic ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+.rp__topic li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--xz-brown-text);
+  border-top: 1px dashed var(--xz-ink-soft);
+  padding-top: 5px;
+}
+
+.rp__topic li b { color: var(--xz-ink); }
+
+/* ---------- 五 · 晋升轨迹 ---------- */
+
+.rp__windows { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.rp__win {
+  min-width: 96px;
+  padding: 8px 12px;
+  text-align: center;
+  background: var(--xz-cream-light);
+  border: var(--xz-stroke) solid var(--xz-ink-soft);
+  border-radius: var(--xz-radius-sm);
+}
+
+.rp__win--pass {
+  background: var(--xz-grass);
+  border-color: var(--xz-ink);
+}
+
+.rp__win-month { display: block; font-size: 12px; color: var(--xz-brown-text); }
+.rp__win--pass .rp__win-month { color: var(--xz-ink); }
+
+.rp__win-state { display: block; margin-top: 2px; font-size: 14px; font-weight: 700; color: var(--xz-ink); }
+
+/* ---------- 七 · 关键时刻回放 ---------- */
+
+.rp__replay {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rp__replay li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 16px;
+  background: var(--xz-cream-light);
+  border: 1px solid var(--xz-ink-soft);
+  border-radius: var(--xz-radius-sm);
+}
+
+.rp__replay-when { font-size: 12px; color: var(--xz-brown-text); }
+.rp__replay-text { font-size: 13px; color: var(--xz-ink); }
+
+/* ---------- 底部 ---------- */
+
+.rp__foot {
+  margin-top: 2px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--xz-brown-text);
+}
