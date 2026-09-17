@@ -173,6 +173,34 @@ def _sprint_and_disguise(state: GameState, reg, tracking: list[dict]) -> dict:
     return {"sprint": sprint, "disguise": {"level": level, "line": line}}
 
 
+# ---------------------------------------------------------------- 模块：在场一幕回声
+def _encounter_echoes(tracking: list[dict]) -> dict:
+    """在场一幕回声（encounter_choice 聚合）。
+
+    同一个活动、同一处境，不同的人应答不同——应答里带的性格标签（memory_tags）
+    是报告能区分「主动招呼的人」和「想自己待着的人」的原料。
+    红线：只报标签与次数描述，不报任何数值；一次都没上报过 → n=0、line 空串
+    （与 psychDriveHighlights 同规则：无据不推断）。
+    """
+    rows = [t for t in tracking
+            if t.get("tap") == "encounter_choice" and t.get("memoryTags")]
+    if not rows:
+        return {"n": 0, "tags": [], "line": ""}
+    counts: dict[str, int] = {}
+    for t in rows:
+        for tag in t["memoryTags"]:
+            tag = str(tag)
+            if tag:
+                counts[tag] = counts.get(tag, 0) + 1
+    tags = [{"tag": k, "n": v}
+            for k, v in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]
+    top = tags[0]["tag"]
+    suffix = "的样子" if tags[0]["n"] >= 2 else "的样子（只记下过一次）"
+    line = (f"{len(rows)} 次撞见人的时刻，"
+            f"你最容易留下「{top}」{suffix}。" if counts else "")
+    return {"n": len(rows), "tags": tags, "line": line}
+
+
 # ---------------------------------------------------------------- 模块：证据回放
 def _evidence_replay(state: GameState) -> list[dict]:
     """犹豫离群点 + 横跳离群点（算法册 §7 特色分析 1/2）：离群点 = 在意的事。"""
@@ -256,6 +284,7 @@ def build(result, reg, self_ratings: dict[str, float] | None = None,
         "situationTrack": _situation_track(state, months_log),
         "promotionTrack": _promotion_track(state),
         "sprintAndDisguise": _sprint_and_disguise(state, reg, result.log.tracking),
+        "encounterEchoes": _encounter_echoes(result.log.tracking),
         "psychDriveHighlights": [{"tag": p["tag"], "line": p["line"],
                                   "evidence": p["evidence"]}
                                  for p in topics.psych_drive(state)],
