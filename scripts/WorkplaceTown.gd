@@ -10,6 +10,7 @@ const INTERIOR_PREVIEW := preload("res://scripts/InteriorPreview.gd")
 const DORM_ROOM := preload("res://scripts/DormRoom.gd")
 const STORY_EVENT_PANEL := preload("res://scripts/StoryEventPanel.gd")
 const MEMORY_WALL := preload("res://scripts/MemoryWallPanel.gd")
+const LEDGER_BOOK := preload("res://scripts/WeekendLedgerBook.gd")
 const MONTHLY_LIFE := preload("res://scripts/MonthlyLife.gd")
 const ENERGY_PANEL := preload("res://scripts/EnergyPanel.gd")
 const FREE_TIME_PANEL := preload("res://scripts/FreeTimePanel.gd")
@@ -151,8 +152,18 @@ var _story_event: Dictionary = {}
 ## 那个缓存是编辑器扫描时才刷新的，切分支/新加类名时最容易在这里翻车。
 var _memory_wall
 var _memory_wall_button: Button
+var _ledger_book_button: Button
 ## 开墙前世界时钟是不是在跑。关上要还原，否则玩家会莫名发现时间不走了。
 var _wall_resume_clock := false
+## 周末手账册（§6.2）：16 页，读 user://workplace_town_weekends.jsonl。同一个停钟待遇。
+var _ledger_book
+var _ledger_resume_clock := false
+## 周末回声（§6.1）语料缓存：res://data/story/weekend_echo.json，懒加载一次。
+var _echo_config := {}
+## 周日（§13.1）= 周末收束的次日。-1 = 从没收束过周末，永不触发周日态。
+var _sunday_day_index := -1
+## 这个周日有没有坐下过（湖边/天台二选一，一个周日一次）。
+var _sunday_sit_done := false
 var _dorm: DormRoom
 ## 玩家在宿舍里（黑屏盖住地图）：此时人物不能动、地图不能缩放拖动。
 var _in_dorm := false
@@ -716,7 +727,8 @@ func _load_map_data() -> void:
 		loaded_npcs.append({
 			"zone": String(item.get("zone", "")).to_lower(), "name": String(item.get("name", "")),
 			"role": String(item.get("role", "")), "loadout": String(item.get("loadout", "")),
-			"route": route_points, "prompt": String(item.get("prompt", ""))
+			"route": route_points, "prompt": String(item.get("prompt", "")),
+			"sunday_prompt": _string_array(item.get("sunday_prompt", [])),
 		})
 	if loaded_npcs.size() > 0:
 		NPCS = loaded_npcs
@@ -733,6 +745,18 @@ func _load_map_data() -> void:
 
 func _dictionary_to_vector(value: Dictionary) -> Vector2:
 	return Vector2(float(value.get("x", 0)), float(value.get("y", 0)))
+
+
+## jsonl/json 里的字符串数组兜底（sunday_prompt 等纯文案字段）。
+func _string_array(value) -> Array:
+	var out: Array = []
+	if value is Array:
+		for item in (value as Array):
+			if item is String and not (item as String).is_empty():
+				out.append(item)
+	elif value is String and not (value as String).is_empty():
+		out.append(value)
+	return out
 
 
 func _read_json(path: String) -> Dictionary:
@@ -954,6 +978,16 @@ func _build_hud() -> void:
 	_memory_wall_button.add_theme_font_size_override("font_size", 19)
 	_memory_wall_button.pressed.connect(_open_memory_wall)
 	layer.add_child(_memory_wall_button)
+	# 周末手账入口（§6.2）：跟「记忆墙」同款长条按钮，往下顺延一格。
+	_ledger_book_button = Button.new()
+	_ledger_book_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_ledger_book_button.position = Vector2(-230, 359)
+	_ledger_book_button.size = Vector2(190, 56)
+	_ledger_book_button.text = "周末手账"
+	_ledger_book_button.add_theme_font_override("font", CHINESE_FONT)
+	_ledger_book_button.add_theme_font_size_override("font_size", 19)
+	_ledger_book_button.pressed.connect(_open_ledger_book)
+	layer.add_child(_ledger_book_button)
 	# 自由缩放的操作提示 + 当前倍率。放左下角摇杆上方：
 	# 右上角被「第一幕」时间面板占着，放那里会被整块盖住。
 	# 字号必须够大 + 伪粗体：18px 的 Regular 中文横画只有 1px 宽，
@@ -1052,6 +1086,10 @@ func _enter_nearby_zone() -> void:
 	var event_opened := _open_due_event_for_active_zone()
 	if not event_opened:
 		_interior_preview.enable_exploration()
+		# 回声不跟剧情开场抢话：有事件先演事件，回声留给下次进来。
+		# 周日坐下优先于回声——这个周日只有一次坐下，回声不在这天的话下次还在。
+		if not (_is_sunday() and _maybe_show_sunday_sit()):
+			_maybe_show_weekend_echo()
 
 
 func _exit_zone() -> void:
@@ -1235,15 +1273,47 @@ func _build_monthly_life() -> void:
 	_free_time_panel.setup(_monthly_life)
 	_free_time_panel.weekend_closed.connect(_on_weekend_closed)
 	_free_time_panel.memo_requested.connect(_on_memo_recorded)
+	_free_time_panel.weekend_ledger.connect(_on_weekend_ledger)
 	add_child(_free_time_panel)
 
 
 func _on_weekend_closed(month: int) -> void:
 	if not _weekend_done_months.has(month):
 		_weekend_done_months.append(month)
-	ApiClient.record_event("weekend_close", {"month": month, "snapshot": WorldClock.snapshot()})
+	# 契约 payload.regionId 是必填且强制 ^[A-H]$（server.py post_event），缺了会被 400 拒。
+	# weekend_close 是全局收束事件、没有天然区域，取当前所在区域；取不到就退回总部 A。
+	var close_region := String(_active_zone.get("code", "")) if not _active_zone.is_empty() else ""
+	ApiClient.record_event("weekend_close", {
+		"regionId": close_region if close_region.length() == 1 else "A",
+		"month": month,
+		"snapshot": WorldClock.snapshot(),
+	})
 	WorldClock.set_running(true)
+	# 周日 = 周末收束的次日（§13.1）。这一天的打开方式：NPC 说周日闲话（不加好感）、
+	_sunday_day_index = int(WorldClock.snapshot().get("dayIndex", -1)) + 1
+	_sunday_sit_done = false
 	_check_curfew(WorldClock.snapshot())
+## 今天是不是「周日」（周末收束后的那一天）。没收束过任何周末时恒否。
+func _is_sunday() -> bool:
+	return _sunday_day_index >= 0 \
+		and int(WorldClock.snapshot().get("dayIndex", -1)) == _sunday_day_index
+
+
+## 周日的坐下时刻（§13.1：湖边 + 天台各一个「坐下」，走遍小镇想待会儿就待会儿）。
+## 湖边（心湖）与天台（A_总部）都在 A 区——进 A 区就算走到位，一個周日只坐一次。
+## 只落 zone_dwell（进区/出区本来就会记），不加任何数值、不进 events.jsonl。
+func _maybe_show_sunday_sit() -> bool:
+	if _sunday_sit_done or _active_zone.is_empty() \
+			or String(_active_zone.get("code", "")) != "A":
+		return false
+	_sunday_sit_done = true
+	var line := "你在湖边坐下。水面把云搬得很慢，你也没急着去哪。"
+	if int(WorldClock.snapshot().get("dayIndex", 0)) % 2 == 1:
+		line = "天台的风还是那个风。今天它只负责吹，不负责让你清醒。"
+	_dialog_label.text = line
+	_dialog_label.show()
+	_dialog_timer.start(8.0)
+	return true
 
 
 ## 每 3 个月一个自由周末（第 3/6/9…月）。进月时若该月没有待结算的主线事件
@@ -1388,6 +1458,83 @@ func _on_memory_wall_closed() -> void:
 		WorldClock.set_running(true)
 	_wall_resume_clock = false
 
+
+## 周末手账册（§6.2）：16 页，已过是卡、未到是「还没到」的空格。
+func _build_ledger_book() -> void:
+	_ledger_book = LEDGER_BOOK.new()
+	_ledger_book.name = "WeekendLedgerBook"
+	_ledger_book.book_closed.connect(_on_ledger_book_closed)
+	add_child(_ledger_book)
+
+
+func _open_ledger_book() -> void:
+	if _ledger_book == null:
+		_build_ledger_book()
+	if _ledger_book.is_open():
+		return
+	# 与记忆墙同一待遇：看手账时世界时钟停住。
+	_ledger_resume_clock = WorldClock.running
+	if _ledger_resume_clock:
+		WorldClock.set_running(false)
+	_ledger_book.open(_read_weekend_records(), int(WorldClock.snapshot().get("month", 1)))
+
+
+func _on_ledger_book_closed() -> void:
+	if _ledger_resume_clock:
+		WorldClock.set_running(true)
+	_ledger_resume_clock = false
+
+
+## 读全部周末手账（jsonl → 数组）。文件不存在就是新档：返回空，手账册全页「还没到」。
+func _read_weekend_records() -> Array:
+	var records: Array = []
+	var f := FileAccess.open("user://workplace_town_weekends.jsonl", FileAccess.READ)
+	if f == null:
+		return records
+	while not f.eof_reached():
+		var raw := f.get_line()
+		if raw.strip_edges().is_empty():
+			continue
+		var parsed = JSON.parse_string(raw)
+		if parsed is Dictionary:
+			records.append(parsed)
+	f.close()
+	return records
+
+
+## ---- D 件·回声（§6.1）：进区域时同行者冒一句提起上周末的话 ----
+
+func _load_echo_config() -> Dictionary:
+	if not _echo_config.is_empty():
+		return _echo_config
+	var f := FileAccess.open("res://data/story/weekend_echo.json", FileAccess.READ)
+	if f == null:
+		return {}
+	var parsed = JSON.parse_string(f.get_as_text())
+	f.close()
+	if parsed is Dictionary:
+		_echo_config = parsed
+	return _echo_config
+
+
+## 进区域时最多冒一句；没演过 / 都消费完了 / 活动没词，就安静。
+## 消费在展示之后：整条手账 echoConsumed 写回 jsonl，不做复读机。
+func _maybe_show_weekend_echo() -> void:
+	var echo_cfg := _load_echo_config()
+	if echo_cfg.is_empty():
+		return
+	var picked: Dictionary = _monthly_life.pick_weekend_echo(
+		_read_weekend_records(), String(_active_zone.get("code", "")),
+		echo_cfg, MONTHLY_LIFE.NPC_NAMES)
+	if picked.is_empty():
+		return
+	_dialog_label.text = "%s：%s" % [String(picked.get("npcName", "有人")), String(picked.get("line", ""))]
+	_dialog_label.show()
+	_dialog_timer.start(6.0)
+	_monthly_life.consume_weekend_echo(
+		"user://workplace_town_weekends.jsonl",
+		int(picked.get("month", 0)), String(picked.get("slotId", "")))
+
 func _open_due_event_for_active_zone() -> bool:
 	var next_event := WorldClock.next_main_event()
 	if next_event.is_empty() or _active_zone.is_empty():
@@ -1404,7 +1551,12 @@ func _open_due_event_for_active_zone() -> bool:
 func _begin_interaction() -> void:
 	if _nearby_npc.is_empty():
 		return
-	_dialog_label.text = "%s：%s" % [_nearby_npc["name"], _nearby_npc["prompt"]]
+	# 周日闲话（§13.1）：只换台词，**不加好感**——加了玩家就会把周日刷成好感资源。
+	var prompt := String(_nearby_npc.get("prompt", ""))
+	var sunday_lines = _nearby_npc.get("sunday_prompt", [])
+	if _is_sunday() and sunday_lines is Array and not (sunday_lines as Array).is_empty():
+		prompt = String((sunday_lines as Array)[randi() % (sunday_lines as Array).size()])
+	_dialog_label.text = "%s：%s" % [_nearby_npc["name"], prompt]
 	_dialog_label.show()
 	_dialog_timer.start(6.0)
 
@@ -1427,6 +1579,50 @@ func _quit_game() -> void:
 ## 记忆便签落盘：心湖记忆墙的唯一数据源。
 ## 便签原本是「弹一下就没了」的装饰，写进 user:// 之后玩家下次进游戏还能翻到
 ## 「第 1 月 15 日 · 新员工手册」当时贴了什么 —— 这是 E27 那句质问的情感承重墙。
+## 自由周末手账落盘（§7.2 weekend_ledger / §8）。一个周末一条，独立于主线便签：
+## 主线便签进记忆墙，周末手账是「我的周末」这个容器（二期手账册读它）。
+func _on_weekend_ledger(record: Dictionary) -> void:
+	if record.is_empty():
+		return
+	# B 件发射端（设计说明 §13.4）：把在场一幕的应答上报后端（encounter_choice，
+	# 契约叙事流补充枚举）。只报标签与选项，不带任何数值；没演过这一幕就不发。
+	var enc_v = record.get("encounter", {})
+	var enc: Dictionary = enc_v if enc_v is Dictionary else {}
+	var enc_tags: Array = enc.get("tags", []) if enc.get("tags", []) is Array else []
+	if not enc.is_empty() and not enc_tags.is_empty():
+		var enc_slot_id := String(enc.get("slotId", ""))
+		var enc_zone := ""
+		var enc_targets: Array = []
+		for slot in record.get("slots", []):
+			if slot is Dictionary and String(slot.get("slotId", "")) == enc_slot_id:
+				enc_zone = String(slot.get("zone", ""))
+				var t = slot.get("targets", [])
+				enc_targets = t if t is Array else []
+				break
+		# regionId 与 weekend_close 同规：单字母 A-H，解析不出退回总部 A（400 拒空值）。
+		var region := enc_zone.strip_edges().split("_")[0].to_upper() if not enc_zone.is_empty() else ""
+		var payload := {
+			"regionId": region if (region.length() == 1 and "ABCDEFGH".contains(region)) else "A",
+			"activityId": String(enc.get("activityId", "")),
+			"optionId": String(enc.get("optionId", "")),
+			"memoryTags": enc_tags,
+			"month": int(record.get("month", 0)),
+		}
+		if not enc_targets.is_empty():
+			payload["npcId"] = String(enc_targets[0])
+		ApiClient.record_event("encounter_choice", payload)
+	var line := record.duplicate(true)
+	line["worldMinute"] = WorldClock.world_minute
+	var file := FileAccess.open("user://workplace_town_weekends.jsonl", FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open("user://workplace_town_weekends.jsonl", FileAccess.WRITE)
+	if file == null:
+		return
+	file.seek_end()
+	file.store_line(JSON.stringify(line))
+	file.close()
+
+
 func _on_memo_recorded(event_id: String, memo: Dictionary) -> void:
 	if event_id.is_empty() or memo.is_empty():
 		return

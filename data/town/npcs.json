@@ -1,14 +1,18 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "_source": "《事件场景与人物对照表 V2》《剧情设计详细方案 V5.27》。开场三屏与地图内 NPC **共用这一份**，改演员只改这里。",
   "_artNote": "角色设定是【熊】。王哥/陈工/小林/老周 已接入美术交付的熊行走图（loadout = bear_plaid_glasses / bear_beige_blazer / bear_green_cardigan / bear_orange_blazer，atlas 见 assets/characters/paper_doll_64/compiled/）。小赵（street_creator）暂无熊图，仍沿用人类纸娃娃占位。新增造型只在 wardrobe_catalog.json 的 loadouts 里追加条目，字段名不变。",
   "_decisions": [
     "角色形象：保留【熊】设定，美术出图；在此之前沿用人类纸娃娃占位（2026-09-13 定）",
     "演员表：只用这 5 只熊，Godot 里原有的 8 个区域 NPC（艾米/陈工/林总/周岚/小莫/阿哲/宁宁/乐乐）作废（2026-09-13 定）",
     "区域名：以 data/town/regions.json 为准",
-    "已删除的「选择初始同事」屏的残留字段（recommended / selectable）不再保留"
+    "已删除的「选择初始同事」屏的残留字段（recommended / selectable）不再保留",
+    "周日闲话（2026-09-17，设计说明 §13.1）：sunday_prompt 数组，只在「周日」（周末面板收束次日）替换日常 prompt，纯台词**不加好感**——加了就会把周日刷成好感资源。随机挑一句说。"
   ],
-  "coordinateSpace": { "width": 1920, "height": 1080 },
+  "coordinateSpace": {
+    "width": 1920,
+    "height": 1080
+  },
   "npcs": [
     {
       "id": "wange",
@@ -19,9 +23,30 @@
       "line": "爱泼冷水，但认可扎实的调研。他说「别折腾」的时候，一般是真心话。",
       "note": "",
       "loadout": "bear_plaid_glasses",
-      "route": [[850, 325], [1070, 325], [1070, 370], [850, 370]],
+      "route": [
+        [
+          850,
+          325
+        ],
+        [
+          1070,
+          325
+        ],
+        [
+          1070,
+          370
+        ],
+        [
+          850,
+          370
+        ]
+      ],
       "prompt": "方案我看过了，先别急着推。说说你为什么选这条路线。",
-      "relation": true
+      "relation": true,
+      "sunday_prompt": [
+        "周末就该把电脑合上。手痒的话，写点给自己看的。",
+        "我以前周末也加班，后来发现错过的都不是代码。"
+      ]
     },
     {
       "id": "chengong",
@@ -33,9 +58,30 @@
       "note": "不进关系系统",
       "noteDetail": "事务型直属上级：无好感度、无熊友卡、不参与邀约",
       "loadout": "bear_beige_blazer",
-      "route": [[405, 345], [510, 345], [510, 390], [405, 390]],
+      "route": [
+        [
+          405,
+          345
+        ],
+        [
+          510,
+          345
+        ],
+        [
+          510,
+          390
+        ],
+        [
+          405,
+          390
+        ]
+      ],
       "prompt": "结论是什么？预算和工期，一句话说完。",
-      "relation": false
+      "relation": false,
+      "sunday_prompt": [
+        "今天谁都不许提排期——我先违规，罚自己晒十分钟太阳。",
+        "周日还晃到公司？那记得把周末也下了班。"
+      ]
     },
     {
       "id": "xiaolin",
@@ -47,9 +93,30 @@
       "note": "",
       "loadout": "bear_green_cardigan",
       "_loadoutNote": "造型待产品定；若定为女性形象，把 loadout 换成 skirt_woman 即可",
-      "route": [[1435, 335], [1650, 335], [1650, 380], [1435, 380]],
+      "route": [
+        [
+          1435,
+          335
+        ],
+        [
+          1650,
+          335
+        ],
+        [
+          1650,
+          380
+        ],
+        [
+          1435,
+          380
+        ]
+      ],
       "prompt": "客户那边催得很急，先帮我把需求优先级定下来。",
-      "relation": true
+      "relation": true,
+      "sunday_prompt": [
+        "湖边的风比会议室的好闻多了。",
+        "今天不聊需求。聊点没用但开心的。"
+      ]
     },
     {
       "id": "laozhou",
@@ -60,9 +127,30 @@
       "line": "在听，等着看谁认领。年轻时也被侵占过署名——他知道那是什么滋味。",
       "note": "",
       "loadout": "bear_orange_blazer",
-      "route": [[1205, 680], [1285, 680], [1285, 800], [1205, 800]],
+      "route": [
+        [
+          1205,
+          680
+        ],
+        [
+          1285,
+          680
+        ],
+        [
+          1285,
+          800
+        ],
+        [
+          1205,
+          800
+        ]
+      ],
       "prompt": "复盘会上有不同说法。你觉得该由谁来牵头？",
-      "relation": true
+      "relation": true,
+      "sunday_prompt": [
+        "慢一点，不一定就是落后。",
+        "周末的意义，是让你周一还想回来。"
+      ]
     },
     {
       "id": "xiaozhao",
@@ -73,9 +161,30 @@
       "line": "常在被帮助的位置。深夜路过会停一拍：「师兄还没走？」",
       "note": "",
       "loadout": "bear_green_cardigan",
-      "route": [[365, 380], [405, 380], [405, 490], [365, 490]],
+      "route": [
+        [
+          365,
+          380
+        ],
+        [
+          405,
+          380
+        ],
+        [
+          405,
+          490
+        ],
+        [
+          365,
+          490
+        ]
+      ],
       "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？",
-      "relation": true
+      "relation": true,
+      "sunday_prompt": [
+        "师兄，今天小镇的猫都比平时懒。",
+        "我昨天玩了一下午桌游，一个字都不想看。"
+      ]
     }
   ]
 }

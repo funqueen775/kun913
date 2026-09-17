@@ -8,9 +8,17 @@ extends CanvasLayer
 
 signal weekend_closed(month: int)
 signal memo_requested(event_id: String, memo: Dictionary)
+## 一个周末的完整手账记录（§7.2 weekend_ledger）。小镇侧落 workplace_town_weekends.jsonl。
+signal weekend_ledger(record: Dictionary)
 ## 玩家选定的组团（值形如 "D_树影书院" / "心湖"）。小镇据此把地面指引线铺到那个区域；
 ## 空字符串表示清掉上个周末留下的目的地。
 signal zone_focused(zone_label: String)
+
+## 一个自由周末 = 周六 2 格（设计文档 §3.1 / §13.1：周六 2 格 + 周日自由）。
+## 周日**不进这张表**：它没有额度、不出结算、不铺引导线。
+const SLOT_IDS: Array[String] = ["sat_am", "sat_pm"]
+const SEGMENT_LABELS: Array[String] = ["周六上午", "周六下午"]
+const SLOT_COUNT := 2
 
 const FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const CONFIG_PATH := "res://data/story/free_time_system.json"
@@ -75,6 +83,20 @@ const ZONE_ICONS := {
 	"心湖": "湖",
 	"心湖步道": "湖",
 }
+## 组团名 → 契约 regionId 字母。契约对**每个**事件强制 payload.regionId 匹配 ^[A-H]$
+## （server.py post_event），所以自由活动的埋点也必须带这个字段。
+## 「心湖 / 心湖步道」在 A–H 里没有独立字母，按设计文档 §12 口径算 A（主城核心景观带）。
+## 副作用已知：zone_dwell 的空间偏好统计会把心湖停留记进 A。
+const ZONE_CODES := {
+	"A_总部": "A",
+	"B_科技丘": "B",
+	"C_水巷": "C",
+	"D_树影书院": "D",
+	"E_训练谷": "E",
+	"H_慢生活园": "H",
+	"心湖": "A",
+	"心湖步道": "A",
+}
 const COLOR_BG := Color("54321f")
 const COLOR_BORDER := Color("d49a4c")
 const COLOR_TITLE := Color("ffe5a8")
@@ -100,6 +122,18 @@ var _activity: Dictionary = {}
 var _targets: Array = []
 var _summary_lines: Array = []
 var _pending_decision: Dictionary = {}
+## 周六两格。每格 {slotId, zone, activityId, activity, targets, labels}；activity 为空 = 留白。
+var _slots: Array = []
+## 正在编辑第几格（begin_slot 设，choose_activity 用完即回 slots）。
+var _editing_slot := -1
+## commit_weekend() 的逐格结算结果 + 组合效果（手账页只读这两个）。
+var _slot_results: Array = []
+var _combo: Dictionary = {}
+var _note_edit: LineEdit
+## B 件·在场一幕：演了哪一格 / 选了哪个应答 / 结算结果（只含标签，不含数值）。
+var _encounter_slot := -1
+var _encounter_option: Dictionary = {}
+var _encounter_result: Dictionary = {}
 
 var _root: Control
 var _panel: Panel
@@ -178,6 +212,17 @@ func zone_display(zone: String) -> String:
 	return String(ZONE_NAMES.get(zone, zone))
 
 
+## 组团名 → 契约 regionId（A–H 单字母）。查表优先，其次取 "D_树影书院" 这类前缀字母；
+## 两者都落空时兜底 "A"——宁可标成总部，也不要发空串被服务端 400 拒。
+func zone_region_id(zone: String) -> String:
+	var code := String(ZONE_CODES.get(zone, ""))
+	if code.is_empty():
+		code = zone.strip_edges().split("_")[0].to_upper()
+	if code.length() == 1 and "ABCDEFGH".contains(code):
+		return code
+	return "A"
+
+
 func activities_for_zone(zone: String) -> Array:
 	var result: Array = []
 	for activity in unlocked_activities():
@@ -205,17 +250,79 @@ func auto_targets(activity: Dictionary) -> Array:
 func open_for_month(month: int) -> void:
 	_month = month
 	_weather = _life.roll_weather() if _life != null else "sunny"
-	_step = "card"
 	_zone = ""
 	_activity = {}
 	_targets = []
 	_summary_lines = []
 	_pending_decision = {}
+	_slot_results = []
+	_combo = {}
+	_note_edit = null
+	_encounter_slot = -1
+	_encounter_option = {}
+	_encounter_result = {}
+	_editing_slot = -1
+	_slots = []
+	for slot_id in SLOT_IDS:
+		_slots.append(_blank_slot(slot_id))
+	_step = "slots"
 	_root.show()
-	_show_card()
+	_show_slots()
 	_play_open_animation()
 	# 新一个周末开始了，上个周末的目的地要作废：组团得重选。
 	zone_focused.emit("")
+
+
+func _blank_slot(slot_id: String) -> Dictionary:
+	return {
+		"slotId": slot_id,
+		"zone": "",
+		"activityId": "",
+		"activity": {},
+		"targets": [],
+		"labels": [],
+	}
+
+
+## 周六两格（探针直接读这个）。
+func slots() -> Array:
+	return _slots
+
+
+func slot_is_blank(index: int) -> bool:
+	if index < 0 or index >= _slots.size():
+		return true
+	return ((_slots[index] as Dictionary).get("activity") as Dictionary).is_empty()
+
+
+## 该活动是否已排进别格（§13.2 拍板：同一个活动一个周末只能出现一次）。
+func activity_used_elsewhere(activity_id: String, except_index: int) -> bool:
+	for i in _slots.size():
+		if i == except_index:
+			continue
+		if String((_slots[i] as Dictionary).get("activityId", "")) == activity_id:
+			return true
+	return false
+
+
+## 点某一格 → 给它选区域（填格流程的入口）。
+func begin_slot(index: int) -> void:
+	if index < 0 or index >= _slots.size():
+		return
+	_editing_slot = index
+	_zone = String((_slots[index] as Dictionary).get("zone", ""))
+	_step = "slots_zone"
+	_show_zones()
+
+
+## 清空一格 = 恢复留白（留白是有效选择，不提示、不惩罚）。
+func clear_slot(index: int) -> void:
+	if index < 0 or index >= _slots.size():
+		return
+	_slots[index] = _blank_slot(SLOT_IDS[index])
+	_editing_slot = index
+	_step = "slots"
+	_show_slots()
 
 
 func is_open() -> bool:
@@ -229,54 +336,137 @@ func close() -> void:
 	weekend_closed.emit(month)
 
 
+## 为「正在编辑的那一格」选区域 → 进活动列表。**不结算**。
 func choose_zone(zone: String) -> void:
 	_zone = zone
-	zone_focused.emit(zone)
-	_step = "activity"
+	_step = "slots_activity"
 	_show_activities()
 	# 一选完组团就把地面指引线指过去，玩家关掉面板后不用再猜要往哪走。
 	zone_focused.emit(zone)
 
 
+## 把活动填进正在编辑的那一格。**填格不结算**（§3.1）——结算是 commit_weekend() 的事。
+## 埋点 explore_click 落在这里：每格最终选的活动就是「投入结构」的来源。
 func choose_activity(activity_id: String) -> Dictionary:
-	_activity = {}
-	for activity in unlocked_activities():
-		if String(activity.get("activity_id", "")) == activity_id:
-			_activity = activity
+	if _editing_slot < 0 or _editing_slot >= _slots.size():
+		return {"ok": false, "feedback": "没有正在编辑的那一格。"}
+	var activity := {}
+	for candidate in unlocked_activities():
+		if String(candidate.get("activity_id", "")) == activity_id:
+			activity = candidate
 			break
-	if _activity.is_empty():
-		return {"lines": [], "feedback": "没有这个活动。"}
-	# 直接点活动（没经过选组团）时 _zone 还是空的：拿活动自己的 zone 补上，
-	# 多区域活动（"A_总部|心湖"）取第一个当目的地。
-	if _zone.is_empty():
-		var first_zone := String(_activity.get("zone", "")).split("|")[0]
-		if not first_zone.is_empty():
-			_zone = first_zone
-			zone_focused.emit(first_zone)
-	_targets = auto_targets(_activity)
-	_summary_lines = []
-	if _life != null:
-		var result: Dictionary = _life.apply_weekend_activity(_activity, _targets)
-		_summary_lines = result.get("lines", [])
+	if activity.is_empty():
+		return {"ok": false, "feedback": "没有这个活动。"}
+	if activity_used_elsewhere(activity_id, _editing_slot):
+		return {"ok": false, "feedback": "这个活动已经排进另一格了。"}
+	var targets := auto_targets(activity)
+	var chosen_zone := _zone
+	if chosen_zone.is_empty():
+		# 直接点活动（没经过选组团）时 _zone 还是空的：拿活动自己的 zone 补上，
+		# 多区域活动（"A_总部|心湖"）取第一个当目的地。
+		chosen_zone = String(activity.get("zone", "")).split("|")[0]
+	var slot: Dictionary = _slots[_editing_slot]
+	slot["zone"] = chosen_zone
+	slot["activityId"] = activity_id
+	slot["activity"] = activity
+	slot["targets"] = targets
+	slot["labels"] = _slot_labels(targets)
+	_slots[_editing_slot] = slot
 	# 埋点：explore_click 扩展字段（free_time_system tracking_spec）。
 	# 防御式取 ApiClient：--script 探针模式没有 autoload，硬引用会在探针里炸。
 	var api := get_node_or_null("/root/ApiClient")
 	if api != null:
 		api.record_event("explore_click", {
-			"slotIndex": _month,
-			"zone": _zone,
+			"regionId": zone_region_id(chosen_zone),
+			"slotIndex": _editing_slot,
+			"slotId": String(slot.get("slotId", "")),
+			"zone": chosen_zone,
 			"activityId": activity_id,
-			"targets": _targets,
+			"targets": targets,
 			"weather": _weather,
 		})
-	if _should_show_decision():
-		_step = "decision"
+	_step = "slots"
+	_show_slots()
+	return {"ok": true, "activity": activity, "slotIndex": _editing_slot, "lines": []}
+
+
+## 「就这样过」→ 一次性结算（逐格 + 组合），再决定要不要演一次决策点，最后进手账页。
+func commit_weekend() -> Dictionary:
+	if _life == null:
+		return {}
+	var result: Dictionary = _life.apply_weekend(_slots)
+	_slot_results = result.get("slot_results", [])
+	_combo = result.get("combo", {})
+	# 一个周末**最多演一屏**：有 decision 就演 decision（B 件让位），没有才退而演在���一幕。
+	var decision_slot := _pick_decision_slot()
+	var encounter_index := -1
+	if decision_slot < 0:
+		encounter_index = _pick_encounter_slot()
+	if decision_slot >= 0:
+		_editing_slot = decision_slot
+		_activity = _slots[decision_slot]["activity"]
+		_targets = _slots[decision_slot]["targets"]
 		_pending_decision = _activity.get("decision", {})
+		_step = "decision"
 		_show_decision()
+	elif encounter_index >= 0:
+		_editing_slot = encounter_index
+		_encounter_slot = encounter_index
+		_activity = _slots[encounter_index]["activity"]
+		_targets = _slots[encounter_index]["targets"]
+		_zone = String(_slots[encounter_index].get("zone", ""))
+		_step = "encounter"
+		_show_encounter()
 	else:
-		_step = "event"
-		_show_event()
-	return {"lines": _summary_lines, "activity": _activity}
+		_step = "ledger"
+		_show_ledger()
+	return result
+
+
+## 一个周末**最多演一次**决策点（§3.3）：取第一格带 decision 且当下成立的那个。
+## 其余格降级为普通结算——"那晚后来又聊了两句"写进手账就够。
+func _pick_decision_slot() -> int:
+	for i in _slots.size():
+		var activity = (_slots[i] as Dictionary).get("activity")
+		if not (activity is Dictionary) or (activity as Dictionary).is_empty():
+			continue
+		var act := activity as Dictionary
+		if not act.has("decision"):
+			continue
+		_activity = act
+		_targets = (_slots[i] as Dictionary).get("targets", [])
+		if _should_show_decision():
+			return i
+	return -1
+
+
+## B 件：两格里挑一格演「在场一幕」。条件＝这格有活动 + 有同行者 + 活动配了 encounter。
+## 「一个周末最多一屏、decision 优先」由 commit_weekend() 把关，这里只负责找到第一格。
+func _pick_encounter_slot() -> int:
+	for i in _slots.size():
+		var slot = _slots[i]
+		if not (slot is Dictionary):
+			continue
+		var act = (slot as Dictionary).get("activity")
+		if not (act is Dictionary) or (act as Dictionary).is_empty():
+			continue
+		var targets = (slot as Dictionary).get("targets", [])
+		if not (targets is Array) or (targets as Array).is_empty():
+			continue
+		var enc = (act as Dictionary).get("encounter")
+		if not (enc is Dictionary) or (enc as Dictionary).is_empty():
+			continue
+		return i
+	return -1
+
+
+## 同行者的显示名（手账页那几行用；没有同行者就是"一个人"）。
+func _slot_labels(targets: Array) -> Array:
+	var names: Array = []
+	for npc_id in targets:
+		var key := String(npc_id)
+		names.append(String(_life.NPC_NAMES.get(key, key)) if _life != null else key)
+	return names
 
 
 func _should_show_decision() -> bool:
@@ -318,9 +508,10 @@ func choose_decision_option(option_id: String) -> Dictionary:
 	var feedback := String(result.get("feedback", ""))
 	if not feedback.is_empty():
 		_summary_lines.append(feedback)
-	_step = "event"
+	# 决策是周末内的一幕，演完直接进手账页，不再单独出一屏数字结算。
+	_step = "ledger"
 	_pending_decision = {}
-	_show_event()
+	_show_ledger()
 	return result
 
 
@@ -356,17 +547,56 @@ func _activity_subtitle(activity: Dictionary) -> String:
 	return " · ".join(parts)
 
 
-func _show_card() -> void:
+## 新首屏：周六两格总表（§3.1）。填格不结算，底部「就这样过」才一次性结算。
+func _show_slots() -> void:
 	_title.text = "第 %d 月 · 周末到了" % _month
-	_subtitle.text = _weather_text()
+	_subtitle.text = "%s　·　周六两格，自己排" % _weather_text()
 	_clear_content()
-	var body := _body_label("忙完这个月的活，周末是你的了。\n\n这段时间给谁、给什么，你自己定。\n出去走走，或者给自己安排点什么——都是你的选择。", 17, COLOR_TEXT)
-	_content.add_child(body)
-	_set_footer("出门逛逛", func(): _step = "zone"; _show_zones())
+	_content.add_child(_body_label("忙完这个月的活，这个周末是你的了。\n两格，给谁、给什么，你自己排——哪一格空着也行。", 17, COLOR_TEXT))
+	for i in _slots.size():
+		_content.add_child(_make_slot_row(i))
+	_set_footer("就这样过", commit_weekend)
+
+
+func _make_slot_row(index: int) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var card := _make_card(
+		"上" if index == 0 else "下",
+		String(SEGMENT_LABELS[index]),
+		slot_summary(index),
+		func(): begin_slot(index)
+	)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(card)
+	if not slot_is_blank(index):
+		row.add_child(_make_small_button("清空", func(): clear_slot(index)))
+	return row
+
+
+## 一格的摘要（手账页与两格总表共用）：活动名 + 同行者；留白返回"还没安排"。
+func slot_summary(index: int) -> String:
+	if index < 0 or index >= _slots.size() or slot_is_blank(index):
+		return "还没安排"
+	var slot: Dictionary = _slots[index]
+	var act := slot.get("activity") as Dictionary
+	var aid := String(act.get("activity_id", ""))
+	var labels: Array = slot.get("labels", [])
+	var who := "一个人"
+	if not labels.is_empty():
+		who = " / ".join(labels)
+	return "%s · %s" % [String(ACTIVITY_NAMES.get(aid, aid)), who]
+
+
+func _segment_label(index: int) -> String:
+	if index >= 0 and index < SEGMENT_LABELS.size():
+		return String(SEGMENT_LABELS[index])
+	return "这一格"
 
 
 func _show_zones() -> void:
-	_title.text = "去哪儿？"
+	_title.text = "%s：去哪儿？" % _segment_label(_editing_slot)
 	_subtitle.text = "坐上小火车，选一片区域下车。"
 	_clear_content()
 	var grid := _make_grid()
@@ -380,25 +610,29 @@ func _show_zones() -> void:
 		)
 		grid.add_child(card)
 	_content.add_child(grid)
-	_set_footer("", Callable())
+	_set_footer("回周末", func(): _step = "slots"; _show_slots())
 
 
 func _show_activities() -> void:
-	_title.text = "%s · 玩点什么？" % zone_display(_zone)
+	_title.text = "%s · %s——玩点什么？" % [_segment_label(_editing_slot), zone_display(_zone)]
 	_subtitle.text = _weather_text()
 	_clear_content()
 	var grid := _make_grid()
 	for activity in activities_for_zone(_zone):
 		var activity_id := String(activity["activity_id"])
+		# §13.2：同一个活动一个周末只能出现一次 → 已填进另一格的置灰不可选。
+		var used := activity_used_elsewhere(activity_id, _editing_slot)
+		var sub := "已经排进另一格了" if used else _activity_subtitle(activity)
 		var card := _make_card(
 			String(ZONE_ICONS.get(_zone, "玩")),
 			String(ACTIVITY_NAMES.get(activity_id, activity_id)),
-			_activity_subtitle(activity),
-			func(): choose_activity(activity_id)
+			sub,
+			func(): choose_activity(activity_id),
+			used
 		)
 		grid.add_child(card)
 	_content.add_child(grid)
-	_set_footer("回车站", func(): _step = "zone"; _show_zones())
+	_set_footer("回周末", func(): _step = "slots"; _show_slots())
 
 
 func _decision_intro() -> String:
@@ -421,6 +655,198 @@ func _show_decision() -> void:
 		var choice := _make_wide_button(text, func(): choose_decision_option(option_id))
 		_content.add_child(choice)
 	_set_footer("", Callable())
+
+
+## B 件 · 在场一幕（§4）：一屏场景 + 2-3 个应答。**不改任何数值** ——
+## 好感与属性早已由 commit_weekend() 结清，这里只是给这场活动一张脸。
+func _show_encounter() -> void:
+	var act_id := String(_activity.get("activity_id", ""))
+	_title.text = "%s · 撞见" % String(ACTIVITY_NAMES.get(act_id, act_id))
+	_subtitle.text = "%s　·　%s" % [_segment_label(_editing_slot), zone_display(_zone)]
+	_clear_content()
+	_content.add_child(_body_label(_encounter_intro(), 18, COLOR_TEXT))
+	var enc = _activity.get("encounter")
+	if not (enc is Dictionary):
+		_set_footer("就这样", _finish_weekend)
+		return
+	var options = (enc as Dictionary).get("options", [])
+	if options is Array:
+		for candidate in (options as Array):
+			if not (candidate is Dictionary):
+				continue
+			var option_id := String((candidate as Dictionary).get("option_id", ""))
+			var option_text := String((candidate as Dictionary).get("text", option_id))
+			_content.add_child(_make_wide_button(option_text, func(): choose_encounter_option(option_id)))
+	_set_footer("", Callable())
+
+
+## 场景句里的 {who} → 随机同行者的显示名。沿用 _decision_intro() 替换 {stuck_npc} 的既有做法。
+func _encounter_intro() -> String:
+	var enc = _activity.get("encounter")
+	var text := "" if not (enc is Dictionary) else String((enc as Dictionary).get("text", ""))
+	var who := "同伴"
+	if _life != null and not _targets.is_empty():
+		who = String(_life.NPC_NAMES.get(String(_targets[0]), String(_targets[0])))
+	return text.replace("{who}", who)
+
+
+## 选定应答 → **只落标签**，随即进手账页。不碰 skill / output / health / 好感任何一个数。
+func choose_encounter_option(option_id: String) -> Dictionary:
+	var enc = _activity.get("encounter")
+	if not (enc is Dictionary):
+		return {"ok": false, "feedback": "这一幕没有可应答的选项。"}
+	var options = (enc as Dictionary).get("options", [])
+	if not (options is Array):
+		return {"ok": false, "feedback": "这一幕没有可应答的选项。"}
+	var chosen: Dictionary = {}
+	for candidate in (options as Array):
+		if not (candidate is Dictionary):
+			continue
+		if String((candidate as Dictionary).get("option_id", "")) == option_id:
+			chosen = candidate as Dictionary
+			break
+	if chosen.is_empty():
+		return {"ok": false, "feedback": "没有这个应答。"}
+	_encounter_option = chosen
+	_encounter_result = _life.apply_encounter_option(chosen) if _life != null else {}
+	_step = "ledger"
+	_show_ledger()
+	return {"ok": true, "option": chosen, "result": _encounter_result}
+
+
+## 周末手账页（C 件，§5）。
+## 红线：**一行数字流水都不出现**——"专业能力 +1" / "王哥 好感 +5" 全部不展示，
+## 数值变化降级为方向性的人话（relation_phrase / weekend_structure_line）。
+func _show_ledger() -> void:
+	_title.text = "第 %d 月 · 周末手账" % _month
+	_subtitle.text = _weather_text()
+	_clear_content()
+	for row in _slot_table_lines():
+		_content.add_child(_body_label(String(row), 16, COLOR_TEXT))
+	_content.add_child(_separator())
+	var enc_lines := _encounter_lines()
+	if not enc_lines.is_empty():
+		for line in enc_lines:
+			_content.add_child(_body_label(String(line), 15, COLOR_SUB))
+		_content.add_child(_separator())
+	_content.add_child(_body_label("写下你的一句：", 15, COLOR_SUB))
+	_note_edit = LineEdit.new()
+	_note_edit.placeholder_text = "（可以不写）"
+	_note_edit.max_length = 40
+	_note_edit.custom_minimum_size = Vector2(660, 44)
+	_note_edit.add_theme_font_override("font", FONT)
+	_note_edit.add_theme_font_size_override("font_size", 16)
+	_note_edit.add_theme_color_override("font_color", COLOR_TEXT)
+	_note_edit.add_theme_stylebox_override("normal", _card_style(Color("452a1c"), COLOR_BORDER))
+	_note_edit.add_theme_stylebox_override("focus", _card_style(Color("452a1c"), COLOR_TITLE))
+	_content.add_child(_note_edit)
+	_content.add_child(_separator())
+	if _life != null:
+		_content.add_child(_body_label(_life.weekend_structure_line(_slots), 16, COLOR_TITLE))
+	for phrase in _relation_phrases():
+		_content.add_child(_body_label(String(phrase), 15, COLOR_SUB))
+	for line in _combo.get("lines", []):
+		_content.add_child(_body_label(String(line), 15, COLOR_SUB))
+	if _weather == "rainy":
+		var d6_text := _append_d6()
+		if not d6_text.is_empty():
+			_content.add_child(_body_label(d6_text.strip_edges(), 16, COLOR_TITLE))
+	_set_footer("就这样", _finish_weekend)
+
+
+## 手账表格的每一行：「周六上午　湖边散步深谈　王哥」；留白写"留白"。
+func _slot_table_lines() -> Array:
+	var rows: Array = []
+	for i in _slots.size():
+		if slot_is_blank(i):
+			rows.append("%s　留白" % SEGMENT_LABELS[i])
+			continue
+		var slot: Dictionary = _slots[i]
+		var act := slot.get("activity") as Dictionary
+		var aid := String(act.get("activity_id", ""))
+		var labels: Array = slot.get("labels", [])
+		var who := "一个人"
+		if not labels.is_empty():
+			who = " / ".join(labels)
+		rows.append("%s　%s　%s" % [SEGMENT_LABELS[i], String(ACTIVITY_NAMES.get(aid, aid)), who])
+	return rows
+
+
+func _relation_phrases() -> Array:
+	var phrases: Array = []
+	for entry in _slot_results:
+		if not (entry is Dictionary):
+			continue
+		for phrase in (entry as Dictionary).get("relations", []):
+			phrases.append(String(phrase))
+	return phrases
+
+
+## 手账页的「在场一幕」块：一句当时的画面 + 「记住了你：XXX」。**恒无数字**（红线）。
+func _encounter_lines() -> Array:
+	var lines: Array = []
+	if _encounter_result.is_empty():
+		return lines
+	var feedback := String(_encounter_result.get("feedback", ""))
+	if not feedback.is_empty():
+		lines.append(feedback)
+	var remembered = _encounter_result.get("lines", [])
+	if remembered is Array:
+		for phrase in (remembered as Array):
+			lines.append(String(phrase))
+	return lines
+
+
+## 落手账（§7.2）：完整记录进 weekend_ledger（小镇侧写 jsonl）；
+## 玩家手写那句另走 memo_requested，供记忆墙当便签用。
+func _finish_weekend() -> void:
+	var note := ""
+	if _note_edit != null:
+		note = _note_edit.text.strip_edges()
+	# B 件：把这一幕的选择写进手账存档，供 §6 回声（下次进入该区域 NPC 回召）消费。
+	var encounter_record := {}
+	if _encounter_slot >= 0:
+		encounter_record = {
+			"slotId": String((_slots[_encounter_slot] as Dictionary).get("slotId", "")),
+			"activityId": String(_activity.get("activity_id", "")),
+			"optionId": String(_encounter_option.get("option_id", "")),
+			"tags": _encounter_result.get("tags", []),
+		}
+	var record := {
+		"month": _month,
+		"weather": _weather,
+		"slots": _slot_records(),
+		"combo": String(_combo.get("key", "")),
+		# 手账册（§6.2）复显用的投入结构人话；老记录没这字段，册子侧自行兜底。
+		"structureLine": _life.weekend_structure_line(_slots) if _life != null else "",
+		"sameZoneFocus": bool(_combo.get("same_zone", false)),
+		"playerNote": note,
+		"relations": _relation_phrases(),
+		"encounter": encounter_record,
+		"echoConsumed": false,
+	}
+	if not note.is_empty():
+		memo_requested.emit("weekend_%d" % _month, {"text": note, "tone": "parchment", "npc": ""})
+	weekend_ledger.emit(record)
+	close()
+
+
+func _slot_records() -> Array:
+	var records: Array = []
+	for i in _slots.size():
+		var slot: Dictionary = _slots[i]
+		records.append({
+			"slotId": String(slot.get("slotId", "")),
+			"blank": slot_is_blank(i),
+			"zone": String(slot.get("zone", "")),
+			"activityId": String(slot.get("activityId", "")),
+			"targets": slot.get("targets", []),
+		})
+	return records
+
+
+func _separator() -> Label:
+	return _content_label("─".repeat(20), 13, COLOR_SUB)
 
 
 func _show_event() -> void:
@@ -446,8 +872,10 @@ func _append_d6() -> String:
 		return ""
 	var d6: Dictionary = _life.apply_d6_umbrella()
 	memo_requested.emit("D6_rain_umbrella", {"text": "那把伞", "tone": "gray-gold", "npc": d6.get("npcName", "")})
-	return "—— 彩蛋 · 那把伞 ——\n%s\n%s 好感 +%d" % [
-		String(d6.get("text", "")), String(d6.get("npcName", "")), int(d6.get("delta", 0)),
+	# ⚠ 红线（§5）：这里以前会把 "%s 好感 +%d" 直接打上手账页——雨天（20%）必漏一次数值。
+	# 改成人话，只交代同路的是谁，数字一个都不给。
+	return "—— 彩蛋 · 那把伞 ——\n%s\n和你撑同一把伞的是%s。" % [
+		String(d6.get("text", "")), String(d6.get("npcName", "")),
 	]
 
 
@@ -548,13 +976,19 @@ func _make_grid() -> GridContainer:
 
 
 ## 区域 / 活动卡：图标方块 + 标题 + 副文本，整卡可点。
-func _make_card(icon_char: String, title_text: String, sub_text: String, on_pressed: Callable) -> Button:
+## disabled = true 用于「已排进另一格」的活动：置灰、不可点（§13.2 同一活动只出现一次）。
+func _make_card(icon_char: String, title_text: String, sub_text: String, on_pressed: Callable, disabled := false) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(328, 78)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_stylebox_override("normal", _card_style(COLOR_CARD, COLOR_BORDER))
-	button.add_theme_stylebox_override("hover", _card_style(Color("7d4c30"), COLOR_TITLE))
-	button.add_theme_stylebox_override("pressed", _card_style(Color("472a19"), COLOR_BORDER))
+	if disabled:
+		button.disabled = true
+		button.add_theme_stylebox_override("normal", _card_style(Color("452a1c"), Color("6b4a33")))
+		button.add_theme_stylebox_override("disabled", _card_style(Color("452a1c"), Color("6b4a33")))
+	else:
+		button.add_theme_stylebox_override("normal", _card_style(COLOR_CARD, COLOR_BORDER))
+		button.add_theme_stylebox_override("hover", _card_style(Color("7d4c30"), COLOR_TITLE))
+		button.add_theme_stylebox_override("pressed", _card_style(Color("472a19"), COLOR_BORDER))
 	button.pressed.connect(on_pressed)
 
 	var icon := Panel.new()
@@ -582,6 +1016,20 @@ func _make_card(icon_char: String, title_text: String, sub_text: String, on_pres
 	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(sub)
 	return button
+
+
+## 窄按钮（两格总表右侧的「清空」）。
+func _make_small_button(text: String, on_pressed: Callable) -> Button:
+	var small := Button.new()
+	small.text = text
+	small.custom_minimum_size = Vector2(96, 78)
+	small.add_theme_font_override("font", FONT)
+	small.add_theme_font_size_override("font_size", 16)
+	small.add_theme_color_override("font_color", COLOR_SUB)
+	small.add_theme_stylebox_override("normal", _card_style(Color("452a1c"), COLOR_BORDER))
+	small.add_theme_stylebox_override("hover", _card_style(COLOR_CARD, COLOR_TITLE))
+	small.pressed.connect(on_pressed)
+	return small
 
 
 func _make_wide_button(text: String, on_pressed: Callable) -> Button:

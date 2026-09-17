@@ -1,7 +1,7 @@
 {
- "_readme": "自由活动与好感度系统全量配置（剧情册 V5.2 §2.4/2.5、专册《自由活动与好感度系统设计 V1》的落地版）。19 个活动（含 V5.4 新增工作型 W1-W5） + 好感度 spec + 天气 + 收益递减规则。所有数值为预标定，策划改这里不改代码。2026-09-16 v1.4：全表数值均衡（方案文档《自由周末参与感设计说明 V1》§13.2）——消除同档位严格支配，同类内数值平手、差异只在 scoring_card 与 memory_tag。新增 conditional_gain 字段（带 when 条件的收益替代）。红线：affinity 数值对玩家隐藏（视觉=记忆墙便签蓝→黄→金渐进）；本文件任何字段不得下发前端或进大模型 prompt。",
+ "_readme": "自由活动与好感度系统全量配置（剧情册 V5.2 §2.4/2.5、专册《自由活动与好感度系统设计 V1》的落地版）。19 个活动（含 V5.4 新增工作型 W1-W5） + 好感度 spec + 天气 + 收益递减规则。所有数值为预标定，策划改这里不改代码。2026-09-16 v1.4：全表数值均衡（方案文档《自由周末参与感设计说明 V1》§13.2）——消除同档位严格支配，同类内数值平手、差异只在 scoring_card 与 memory_tag。新增 conditional_gain 字段（带 when 条件的收益替代）。红线：affinity 数值对玩家隐藏（视觉=记忆墙便签蓝→黄→金渐进）；本文件任何字段不得下发前端或进大模型 prompt。2026-09-16 v1.5：给 D1/D3/D4/D5/G3 五个有人同行、但没有既有 decision 的活动补 `encounter`（B 件·在场一幕）——一屏「撞见」场景加 2-3 个应答。**硬约束：encounter 的 option 只能带 memory_tags 与 instant_feedback，绝不带 gain / affinity_delta**，因为这一幕是性格测量、不是好感度博弈，好感照旧按活动自己的 affinity_gain 走。场景句里的 `{who}` 由运行时替换成随机同行者姓名（沿用 decision.trigger_text 的 `{stuck_npc}` 做法）。D6 是 auto_trigger 的雨天彩蛋、不进可选列表，故不给 encounter。",
  "system_id": "free_time_system",
- "version": "1.4",
+ "version": "1.6",
  "schedule": {
   "cadence": "every_3_months",
   "total_slots": 16,
@@ -179,14 +179,24 @@
    "gain": {
     "H": 1
    },
-   "conditional_gain": {
-    "when": {
-     "H_lte": 3
-    },
-    "gain": {
-     "H": 2
-    }
+ "conditional_gain": [
+  {
+   "when": {
+    "H_lte": 3
    },
+   "gain": {
+    "H": 2
+   }
+  },
+  {
+   "when": {
+    "H_gte": 7
+   },
+   "gain": {
+    "H": 0
+   }
+  }
+ ],
    "conditional_text": {
     "when": {
      "H_lte": 3
@@ -269,6 +279,35 @@
    "bigfive_proxy": "A+",
    "memory_tag": null,
    "instant_feedback": "外摆的椅子有点晃，咖啡一般，但话比咖啡多。",
+   "encounter": {
+    "text": "你在外摆的椅子坐下，抬头看见 {who} 端着咖啡站在门口。他没看见你。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "招呼他坐过来",
+      "memory_tags": [
+       "会先开口的人"
+      ],
+      "instant_feedback": "你招了招手。他愣了一下才认出来，端着杯子蹭到你对面坐下。"
+     },
+     {
+      "option_id": "B",
+      "text": "点点头",
+      "memory_tags": [
+       "不远不近"
+      ],
+      "instant_feedback": "你抬下巴点了下头。他也点了下头，端着杯子从你桌边绕过去了。"
+     },
+     {
+      "option_id": "C",
+      "text": "低头看手机",
+      "memory_tags": [
+       "想自己待着"
+      ],
+      "instant_feedback": "你把手机翻出来。再抬头的时候，门口已经没人了。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -363,6 +402,35 @@
    "prototype": "CareerSim #65 午休羽毛球联赛",
    "bigfive_proxy": "E+",
    "instant_feedback": "三局两胜。你输了两局，但笑得比赢的时候多。",
+   "encounter": {
+    "text": "打到第三局，{who} 弯腰撑着膝盖喘气，汗珠挂在额角。他把球抛回来：「再来？」",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "接住，再来一局",
+      "memory_tags": [
+       "输得起也接得住"
+      ],
+      "instant_feedback": "你把球接住抛回去。等太阳偏下去，两个人才想起比分早就不算了。"
+     },
+     {
+      "option_id": "B",
+      "text": "差不多了，去喝口水",
+      "memory_tags": [
+       "会照看节奏"
+      ],
+      "instant_feedback": "你说差不多了。他愣了半秒，笑出声：「行，今天服你。」"
+     },
+     {
+      "option_id": "C",
+      "text": "干脆往草坪上一躺",
+      "memory_tags": [
+       "累到家了也不装"
+      ],
+      "instant_feedback": "你径直往后倒了下去。他跟着坐下来，两个人喘着气看天，谁也没先说话。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -392,11 +460,41 @@
    "hooks": {
     "early_secret": {
      "chance": 0.3,
-     "effect": "对方提前讲秘密（好感+4 而非+6，但知心时刻提前解锁）",
-     "note": "炭火和深夜让人诚实，但要少拿 2 分——捷径有价"
+     "affinity_delta": -1,
+     "effect": "对方提前讲秘密（好感 +4 而非 +5，但知心时刻提前解锁）",
+     "note": "炭火和深夜让人诚实，但捷径有价：少拿 1 分，换知心时刻提前解锁。数值由 affinity_delta 决定，不写死在代码里"
     }
    },
    "instant_feedback": "烤串糊了两串，烟熏得人流眼泪。话题倒是越聊越深。",
+   "encounter": {
+    "text": "炭火把烟直往天上送。{who} 翻着串，没回头：「你说，咱这行能干到几岁？」",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "说实话，不一定干得到",
+      "memory_tags": [
+       "说得出口实话"
+      ],
+      "instant_feedback": "你说不一定干得到。他翻串的手停了一下，然后「嗯」了一声，没再往下问。"
+     },
+     {
+      "option_id": "B",
+      "text": "说想过试试别的",
+      "memory_tags": [
+       "心里有别的打算"
+      ],
+      "instant_feedback": "你说想过别的可能性。他没追问，只是把烤好的串先递给了你。"
+     },
+     {
+      "option_id": "C",
+      "text": "岔开，说明天还得上班",
+      "memory_tags": [
+       "不急着交底"
+      ],
+      "instant_feedback": "你说先不想这个，明天还得早起。他笑了一声，话题就散在烟里了。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -428,6 +526,35 @@
    "affinity_gain": 4,
    "bigfive_proxy": null,
    "instant_feedback": "两张桌子，两杯茶，各自翻各自的书。安静，但不尴尬。",
+   "encounter": {
+    "text": "抬头的工夫，{who} 也正好从书里抬起头来。两个人对上眼，都没说话。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "笑一下，继续看自己的",
+      "memory_tags": [
+       "安静也自在"
+      ],
+      "instant_feedback": "你笑了一下又低下去。翻页的声音重新响起来，中间一次也没断。"
+     },
+     {
+      "option_id": "B",
+      "text": "问他看的是什么书",
+      "memory_tags": [
+       "好奇不憋着"
+      ],
+      "instant_feedback": "你问了他书名。他把封面转过来给你看，讲了两句，又都埋回书里。"
+     },
+     {
+      "option_id": "C",
+      "text": "把书合上，先走",
+      "memory_tags": [
+       "该走就走得动"
+      ],
+      "instant_feedback": "你把书合上收进包里。他抬手挥了一下，没人觉得尴尬。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -620,6 +747,35 @@
     "each": 5
    },
    "instant_feedback": "三局两胜。你输了两局，但看穿了小赵藏牌的小动作。",
+   "encounter": {
+    "text": "一局快收尾的时候，你眼角扫到 {who} 把一张牌往袖口底下压了压。桌面上没人注意。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "当场说破",
+      "memory_tags": [
+       "当场就说的性子"
+      ],
+      "instant_feedback": "你把牌往桌上一放：「等等，你袖子里那张呢？」桌上愣了半秒，然后笑成一片。"
+     },
+     {
+      "option_id": "B",
+      "text": "什么也不说，往后记着",
+      "memory_tags": [
+       "心里有数不点破"
+      ],
+      "instant_feedback": "你什么也没讲，低头继续理自己的牌。但后来每一轮，都多看了那个袖口一眼。"
+     },
+     {
+      "option_id": "C",
+      "text": "跟着笑，假装没看见",
+      "memory_tags": [
+       "乐意让场面圆着"
+      ],
+      "instant_feedback": "你跟着笑，把视线挪开了。事后想起来，其实也没什么大不了。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -1003,6 +1159,16 @@
   }
  },
  "_change_log": [
+  {
+   "version": "1.6",
+   "date": "2026-09-17",
+   "change": "S3 天台吹风反支配（用户拍板方案①）：conditional_gain 改为**数组**（逐条判定、首条命中即用；单对象写法兼容保留）——H≤3 时 H+2、H≥7 时 H+0（状态好去天台就只是吹了会儿风）、中间档维持基础 H+1。至此 S3 不再弱支配 S2 湖边独走：S2 是唯一任何状态下稳定 H+1 的独处活动，两者各有适用场景。MonthlyLife.gain_for 同步支持数组解析。encounter / 数值表其余项未动。"
+  },
+  {
+   "version": "1.5",
+   "date": "2026-09-16",
+   "change": "B 件·在场一幕：D1/D3/D4/D5/G3 五个 duo/group 活动新增 encounter 字段（一屏撞见场景 + 3 个应答，每个应答只落 memory_tags 与 instant_feedback）。硬口径：不改任何数值——好感/属性照旧由 affinity_gain 与 gain/cost 决定，应答只决定标签；一个周末最多演一屏，且 decision 优先于 encounter。D2/G1/G2/G4 已有 decision、D6 是自动彩蛋，均不重复加。scoring_card / 数值表未改。"
+  },
   {
    "version": "1.4",
    "date": "2026-09-16",
