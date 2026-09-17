@@ -66,6 +66,7 @@ sys.path.insert(0, str(_ENGINE_ROOT))
 
 from app.core.loader import load  # noqa: E402
 from app.core import constants as C  # noqa: E402
+from app.engine import promotion as pr  # noqa: E402
 from app.engine import timeline as tl  # noqa: E402
 from app.engine.settlement import normalize_mainline, settle  # noqa: E402
 from app.engine.state import DecisionRecord, GameState  # noqa: E402
@@ -265,10 +266,44 @@ class Engine:
         choice = normalize_mainline(self.reg, engine_key, option)
         result = settle(st, choice, self.reg, month=month,
                         hesitation_ms=hesitation_ms, switch_count=switch_count)
+        result["promotionWindows"] = self.settle_promotion_windows(st)
         return result
 
+    def settle_promotion_windows(self, st: GameState) -> list[dict]:
+        """补齐「已跨过但还没结算」的考核窗（第 6/12/18/24/30/36/42 月）。
+
+        跑批路径（simulation.py）是**逐月**循环，考核月自然命中一次；
+        服务层是**逐事件跳跃**推进 —— 月份取自事件排期 sched_month，
+        相邻两件事之间可能跨过 1-3 个月，考核月会被跳过去。
+        这里在每次结算后，按月份升序把跨过的窗补上。
+
+        为什么补结算是对的：每个窗结算时 promotion.settle_window 会把
+        window_cumulative 清零，所以下一个窗拿到的恰好是「自上个窗以来」
+        的累积，与跑批逐个窗结算的语义一致。
+
+        幂等：已结算的月份记在 st.promotion_windows 里，而 state 落库 →
+        重放 / 重复上报不会把同一个窗结算两次。
+
+        ⚠ 刻意**不接** survival.raise_flags：跑批在 settle_window 前调它，
+        把窗内隐瞒类 flag 记一次失误。但生存轨整体（monthly_tick 自我修复）
+        在服务层根本没接 —— 只记失误、不修复，会让 strikes 单向累积恶化。
+        留待生存轨整条接入时一起做，这里不欠新债。
+        """
+        settled = {w.get("month") for w in st.promotion_windows}
+        out: list[dict] = []
+        for m in C.PROMOTION_MONTHS:
+            if m <= st.month and m not in settled:
+                out.append(pr.settle_window(st, m))
+                settled.add(m)
+        return out
 
     def next_undone(self, st: GameState) -> str | None:
+        """全量排期（44 节点）里下一个未完成的。
+
+        ⚠ 服务层的会话推进**不用**这个 —— 它按剧本全量 schedule 走，
+        而 Godot 目前只提供 19 个节点，用它会卡在缺失节点上永远前进不了。
+        Service 走映射表的 playableOrder。这里保留给「覆盖度对账」用。
+        """
         done = set(st.events_done)
         return next((e for e in self.sched_order if e not in done), None)
 
@@ -573,6 +608,7 @@ class Service:
 
         报告层的「冲刺与伪装」模块吃两类轨迹：
           - explore_click：自由周末的组团与同伴（真实埋点，从 events 表还原）
+          - promotion_window：考核窗（账本里的真实状态，不是埋点，直接合成同形条目）
         另还原 encounter_choice（在场一幕应答）→ 报告层的性格回声（encounterEchoes）。
         服务层收不到的（比如还没实现的埋点）就不出现 —— 对应的分析自然为空。
         """
@@ -601,6 +637,9 @@ class Service:
                     "targets": targets if isinstance(targets, list) else [],
                     "activityId": payload.get("activityId"),
                 })
+        for w in st.promotion_windows:
+            tracking.append({"tap": "promotion_window", "month": w["month"],
+                             "passed": w["promoted"]})
         return tracking
 
     def _self_ratings(self, sid: str) -> dict[str, float] | None:

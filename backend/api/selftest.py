@@ -340,6 +340,43 @@ def main() -> int:
     check("生成后 status 200 ready",
           code == 200 and st_post.get("status") == "ready", str((code, st_post)))
 
+    # ---- ⑭ 考核窗接线：跨过考核月应真的结算一个窗
+    # 跑批（simulation.py）是逐月循环，考核月自然命中一次；服务层是**逐事件跳跃**
+    # 推进（月份取自事件排期），考核月会被跳过去 —— Engine.settle_promotion_windows
+    # 负责把跨过的窗按序补上。接线前 promotion_windows 恒空 → 报告晋升轨迹永远空。
+    from app.core import constants as C
+    code, s3 = c.req("POST", "/api/v1/sessions", {"contentVersion": "v1"})
+    sid3 = s3["sessionId"]
+    walked = 0
+    for _ in range(8):
+        code, nxt = c.req("GET", f"/api/v1/sessions/{sid3}/next")
+        if code != 200 or nxt.get("nodeType") == "finished":
+            break
+        node = nxt.get("nodeId", "")
+        choices = nxt.get("choices") or []
+        if choices:
+            code, _ = c.req("POST", f"/api/v1/sessions/{sid3}/events",
+                            make_event(node, choices[0]["choiceId"]))
+        else:
+            code, _ = c.req("POST", f"/api/v1/sessions/{sid3}/events",
+                            make_event(node, "-", event_type="achievement_view"))
+        if code != 200:
+            break
+        walked += 1
+    st3 = srv.Engine.state_from_json(svc.store.get_session(sid3)["state_json"])
+    months3 = [w.get("month") for w in st3.promotion_windows]
+    check("跨过考核月后真的建起了考核窗", len(months3) > 0,
+          f"walked={walked} months={months3}")
+    check("考核窗月份落在 PROMOTION_MONTHS 内",
+          all(m in C.PROMOTION_MONTHS for m in months3), str(months3))
+    check("同一考核月不重复结算（幂等）", len(months3) == len(set(months3)), str(months3))
+    rep3 = build_report(sim.RunResult(state=st3, log=sim.RunLog()), reg)
+    wins3 = (rep3.get("layers", {}).get("persona", {})
+             .get("promotionTrack", {}).get("windows", []))
+    check("报告 promotionTrack.windows 不再恒空（与 state 窗数一致）",
+          len(wins3) == len(months3) > 0,
+          f"report={len(wins3)} state={len(months3)}")
+
     # 未知会话三条路由都要 404，不能因为「没有 reports 行」就 500
     ghost = uuid.uuid4()
     codes = [c.req("GET", f"/api/v1/sessions/{ghost}/report")[0],

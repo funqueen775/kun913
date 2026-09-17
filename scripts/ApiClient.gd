@@ -1,15 +1,36 @@
 extends Node
 
-# Frontend transport boundary for the OpenAPI contract. The backend is not
-# deployed yet, so mock mode preserves every raw event locally and never blocks play.
+# Frontend transport boundary for the OpenAPI contract.
+#
+# 两种模式（由 data/integration/api_config.json 的 mode 决定）：
+#   mock —— 事件只进本地队列，一个网络包都不发。行为与接入前完全一致（默认值）。
+#   live —— 队列当重传缓冲：2xx 才出队；网络错误/超时/5xx 留在队头下轮重试；
+#           4xx 说明 payload 本身不合格，重试一百次也一样 → 出队并明确告警（不静默丢、
+#           也不让一颗坏事件把整条队列堵死）。
+#
+# live 下 sessionId 必须由服务端签发：后端 POST /events 会先查会话存在性，
+# 客户端自带的 uuid 会一路 404 —— 所以 start_or_resume() 会先去换一个回来。
+#
+# 红线：这里只做传输。不落分数、不推剧情、不解释规则 —— 权威永远在服务端。
 signal session_ready(session: Dictionary)
+signal session_established(session_id: String)
 signal event_recorded(envelope: Dictionary, response: Dictionary)
 signal chat_recorded(npc_id: String, message: String)
 signal transport_warning(message: String)
+signal report_ready(report: Dictionary)   # GET /report 的成功回包（整份三层报告）
+signal report_failed(reason: String)      # 拉不到报告的原因（mock 未接 / 404 未生成 / 网络错）
 
 const CONFIG_PATH := "res://data/integration/api_config.json"
 const QUEUE_PATH := "user://workplace_town_api_queue.json"
 const SESSION_PATH := "user://workplace_town_api_session.json"
+# 被后端拒收（4xx）的事件在这里留底，一行一条 JSONL —— 出队是为了不堵队列，
+# 但玩家的选择不能真丢，事后可以从这个文件回捞。
+const REJECTED_PATH := "user://workplace_town_api_rejected.jsonl"
+
+const API_PREFIX := "/api/v1"
+const CLIENT_CONTENT_VERSION := "v1"   # 后端只认这个版本；等于它才允许 live 发包
+const FLUSH_INTERVAL := 2.0            # 重传轮询间隔（秒）
+const REQUEST_TIMEOUT := 8.0           # 单次请求超时（秒）
 
 var _mode := "mock"
 var _base_url := ""
@@ -17,12 +38,39 @@ var _content_version := "v1"
 var _session_id := ""
 var _queue: Array = []
 
+var _http: HTTPRequest
+var _flush_timer: Timer
+var _in_flight := false          # HTTPRequest 同一时刻只允许一个请求在飞，重复 request() 返回 ERR_BUSY
+var _in_flight_kind := ""        # "session" / "event"
+var _session_confirmed := false  # 服务端是否签发过当前 sessionId
+var _last_warning := ""          # 连续相同的告警只报一次，别每 2 秒刷屏
+
 func _ready() -> void:
 	_load_config()
 	_load_local_state()
+	# HTTPRequest 是节点，必须挂在树上才会转发信号。
+	_http = HTTPRequest.new()
+	_http.name = "Http"
+	_http.timeout = REQUEST_TIMEOUT
+	add_child(_http)
+	_http.request_completed.connect(_on_request_completed)
+	# 重传轮询：什么模式都挂着，非 live 时 _flush_next 第一行就返回。
+	_flush_timer = Timer.new()
+	_flush_timer.name = "FlushTimer"
+	_flush_timer.wait_time = FLUSH_INTERVAL
+	_flush_timer.autostart = true
+	add_child(_flush_timer)
+	_flush_timer.timeout.connect(_flush_next)
 
 func start_or_resume() -> Dictionary:
-	if _session_id.is_empty():
+	if _live_ready():
+		# live：sessionId 由服务端签发，客户端自带的 uuid 会被 404。
+		if _session_id.is_empty():
+			_session_id = _uuid_v4()      # 占位，服务端 id 到达后替换
+		if not _session_confirmed:
+			_ensure_session()
+	elif _session_id.is_empty():
+		# mock：保持接入前的行为，本地自己生成 id。
 		_session_id = _uuid_v4()
 		_save_session()
 	var session := {
@@ -45,15 +93,14 @@ func record_event(event_type: String, payload: Dictionary, duration_seconds := 0
 	}
 	_queue.append(envelope)
 	_save_queue()
-	# M4 has not exposed a real server URL. The local response mirrors only the
-	# contract's transport shape; it never derives score or progression locally.
+	# 返回值只镜像契约的传输形状，供调用方做本地反馈（调用方一律忽略它）。
+	# 真正的 accepted / state 以服务端响应为准，走 event_recorded 信号回来。
 	var response := {"eventId": envelope["eventId"], "accepted": true, "duplicate": false, "state": session["state"]}
 	event_recorded.emit(envelope, response)
-	if _mode == "live":
-		if _base_url.is_empty() or _base_url.contains("example.com") or _content_version != "v1":
-			transport_warning.emit("未发送到后端：当前剧情版本或服务地址尚未完成联调，事件已安全保存在本地队列。")
-		else:
-			transport_warning.emit("后端实时发送尚未实现；事件已安全保存在本地队列。")
+	if _mode == "live" and not _live_ready():
+		_warn("未发送到后端：剧情版本或服务地址尚未填好，事件已安全保存在本地队列。")
+	elif _live_ready():
+		_flush_next()
 	return response
 
 func record_npc_chat(npc_id: String, message: String, region_id: String) -> void:
@@ -62,6 +109,177 @@ func record_npc_chat(npc_id: String, message: String, region_id: String) -> void
 
 func pending_event_count() -> int:
 	return _queue.size()
+
+
+## 拉取报告（GET /sessions/{sid}/report）。Batch 3（2026-09-17）：
+## 沿用同一个 HTTPRequest 串行骨架（kind="report"），不开第二套传输。
+## 红线：报告只在服务端算 —— mock 模式下这里就是拿不到报告，如实说，不做本地兜底计算
+## （scoring_cards 不得下发前端，本地没有可算的数据）。
+func fetch_report() -> void:
+	if not _live_ready():
+		report_failed.emit("报告只在服务端生成。当前未连接后端（mode=%s），配好 live 后再来。" % _mode)
+		return
+	if _in_flight:
+		report_failed.emit("上一个请求还在路上，稍等一下再试。")
+		return
+	if not _session_confirmed:
+		# 本地还没换到权威 sessionId：先去要一个，用户稍后再点。
+		_ensure_session()
+		report_failed.emit("正在向服务端要会话，稍等一两秒再点一次。")
+		return
+	_in_flight = true
+	_in_flight_kind = "report"
+	var err := _http.request(
+		"%s%s/sessions/%s/report" % [_base_url, API_PREFIX, _session_id],
+		PackedStringArray(), HTTPClient.METHOD_GET)
+	if err != OK:
+		_in_flight = false
+		_in_flight_kind = ""
+		report_failed.emit("请求未能发出（错误码 %d）。" % err)
+
+## live 是否真的可以发包：mode=live + 地址合规 + 版本等于后端认的那个。
+func _live_ready() -> bool:
+	return _mode == "live" and not _base_url.is_empty() \
+		and not _base_url.contains("example.com") \
+		and _content_version == CLIENT_CONTENT_VERSION
+
+## 串行发送队头事件。HTTPRequest 一次只能有一个请求在飞，所以必须一个一个来。
+func _flush_next() -> void:
+	if not _live_ready() or _in_flight:
+		return
+	if not _session_confirmed:
+		_ensure_session()
+		return
+	if _queue.is_empty():
+		return
+	var envelope: Dictionary = _queue[0]
+	_in_flight = true
+	_in_flight_kind = "event"
+	var headers := PackedStringArray([
+		"Content-Type: application/json",
+		"Idempotency-Key: %s" % String(envelope.get("eventId", "")),
+	])
+	var err := _http.request(
+		"%s%s/sessions/%s/events" % [_base_url, API_PREFIX, _session_id],
+		headers, HTTPClient.METHOD_POST, JSON.stringify(envelope))
+	if err != OK:
+		_in_flight = false
+		_in_flight_kind = ""
+		_warn("请求未能发出（错误码 %d），事件留在本地队列等待重试。" % err)
+
+## 向服务端要一个权威 sessionId。失败不阻塞游戏，下一轮继续试。
+func _ensure_session() -> void:
+	if _in_flight or not _live_ready():
+		return
+	_in_flight = true
+	_in_flight_kind = "session"
+	var err := _http.request(
+		_base_url + API_PREFIX + "/sessions",
+		PackedStringArray(["Content-Type: application/json"]),
+		HTTPClient.METHOD_POST,
+		JSON.stringify({"contentVersion": _content_version}))
+	if err != OK:
+		_in_flight = false
+		_in_flight_kind = ""
+		_warn("建会话请求未能发出（错误码 %d），稍后重试。" % err)
+
+func _on_request_completed(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	var kind := _in_flight_kind
+	_in_flight = false
+	_in_flight_kind = ""
+	var ok := result == HTTPRequest.RESULT_SUCCESS and code >= 200 and code < 300
+
+	if kind == "session":
+		if ok:
+			var parsed = JSON.parse_string(body.get_string_from_utf8())
+			if parsed is Dictionary and parsed.has("sessionId"):
+				_session_id = String(parsed["sessionId"])
+				_session_confirmed = true
+				_save_session()
+				_last_warning = ""
+				session_established.emit(_session_id)
+				_flush_next()
+			else:
+				_warn("后端建会话返回里没有 sessionId，事件继续留在本地队列。")
+		else:
+			_warn("后端未接受建会话（code=%d），事件继续留在本地队列。" % code)
+		return
+
+	if kind == "report":
+		# Batch 3：报告是只读拉取，成败都直接回信号，不碰事件队列。
+		if ok:
+			var report = JSON.parse_string(body.get_string_from_utf8())
+			if report is Dictionary and (report as Dictionary).has("layers"):
+				_last_warning = ""
+				report_ready.emit(report)
+			else:
+				report_failed.emit("报告响应形状不对（缺 layers），请联系排查。")
+		elif code == 404:
+			report_failed.emit("报告还没生成——走完剧情（或服务端结算后）再来。")
+		else:
+			report_failed.emit("拉取报告失败（code=%d）。" % code)
+		return
+
+	if kind != "event":
+		return
+
+	if ok:
+		var sent: Dictionary = _queue.pop_front() if not _queue.is_empty() else {}
+		_save_queue()
+		_last_warning = ""
+		var parsed_body = JSON.parse_string(body.get_string_from_utf8())
+		if parsed_body is Dictionary:
+			event_recorded.emit(sent, parsed_body)
+		_flush_next()          # 队列还有就接着发
+		return
+
+	if code >= 400 and code < 500:
+		# payload 或状态不合格 —— 重试一百次结果一样。出队，但不真丢：
+		# 先落一份隔离日志，再说清楚是哪个事件被拒、为什么。
+		# 否则一颗坏事件会把整条队列永久堵死，后面所有事件跟着积压。
+		var bad: Dictionary = _queue.pop_front() if not _queue.is_empty() else {}
+		_save_queue()
+		_quarantine(bad, code, body)
+		_warn("后端拒收事件「%s」（code=%d）已移出队列并留底隔离日志：%s"
+			% [String(bad.get("eventType", "")), code, _brief_error(body)])
+		if code == 404:
+			# 会话没了（后端换库/重建）→ 作废本地会话，下一轮重新要一个
+			_session_confirmed = false
+			_session_id = ""
+			_save_session()
+		_flush_next()
+		return
+
+	_warn("发送失败（code=%d, result=%d），事件留在本地队列等待重试。" % [code, result])
+
+func _warn(message: String) -> void:
+	if message == _last_warning:
+		return
+	_last_warning = message
+	transport_warning.emit(message)
+
+## 被拒事件留底（JSONL 追加）。写不进去也不能影响主流程 —— 传输层不阻塞游戏。
+func _quarantine(envelope: Dictionary, code: int, body: PackedByteArray) -> void:
+	var record := {
+		"ts": _iso_time(), "code": code, "error": _brief_error(body), "envelope": envelope,
+	}
+	var file: FileAccess = null
+	if FileAccess.file_exists(REJECTED_PATH):
+		file = FileAccess.open(REJECTED_PATH, FileAccess.READ_WRITE)
+		if file != null:
+			file.seek_end()
+	else:
+		file = FileAccess.open(REJECTED_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_line(JSON.stringify(record))
+		file.close()
+
+func _brief_error(body: PackedByteArray) -> String:
+	var parsed = JSON.parse_string(body.get_string_from_utf8())
+	if parsed is Dictionary and parsed.has("error"):
+		return String(parsed["error"])
+	var raw := body.get_string_from_utf8()
+	return raw.substr(0, 120) if not raw.is_empty() else "（无响应体）"
 
 func _load_config() -> void:
 	if not FileAccess.file_exists(CONFIG_PATH):
@@ -79,6 +297,8 @@ func _load_local_state() -> void:
 		var session = JSON.parse_string(session_file.get_as_text())
 		if session is Dictionary:
 			_session_id = String(session.get("sessionId", ""))
+			# 只有服务端签发过的 sessionId 才能直接复用，否则要重新去要一个。
+			_session_confirmed = bool(session.get("confirmed", false))
 	if FileAccess.file_exists(QUEUE_PATH):
 		var queue_file := FileAccess.open(QUEUE_PATH, FileAccess.READ)
 		var saved_queue = JSON.parse_string(queue_file.get_as_text())
@@ -88,7 +308,11 @@ func _load_local_state() -> void:
 func _save_session() -> void:
 	var file := FileAccess.open(SESSION_PATH, FileAccess.WRITE)
 	if file != null:
-		file.store_string(JSON.stringify({"sessionId":_session_id, "contentVersion":_content_version}))
+		file.store_string(JSON.stringify({
+			"sessionId": _session_id,
+			"contentVersion": _content_version,
+			"confirmed": _session_confirmed,
+		}))
 
 func _save_queue() -> void:
 	var file := FileAccess.open(QUEUE_PATH, FileAccess.WRITE)
