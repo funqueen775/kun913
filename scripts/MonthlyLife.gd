@@ -135,6 +135,55 @@ func mark_duel_cleared(level_id: String) -> bool:
 	return true
 
 
+## ---------- 熊友卡（Batch 5 · 机制文档 §6）----------
+## Lv3「伙伴」（好感 ≥40）解锁：① 月度养成搭档协助 ② 训练谷可选角色。
+## 红线：协助只放大**公开资源**（专业能力/产出/生命/精力），绝不碰好感与隐藏测评。
+
+const BUDDY_CONFIG := "res://data/story/buddy_cards.json"
+var _buddy_cards: Array = []
+var _buddy_by_npc := {}
+## 老周「免耗」的每月限次（配置 per_month_limit）。懒初始化：只按 month 比对。
+var _free_assist_month := -1
+var _free_assist_count := 0
+
+
+func _ensure_buddies() -> void:
+	if not _buddy_cards.is_empty():
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(BUDDY_CONFIG))
+	if not (parsed is Dictionary):
+		return
+	for card in (parsed as Dictionary).get("cards", []):
+		if card is Dictionary:
+			_buddy_cards.append(card)
+			_buddy_by_npc[String(card.get("npc_id", ""))] = card
+
+
+## 已解锁的搭档 npc_id 列表（好感 ≥40 = Lv3）。**只回 id，不回分数**。
+func unlocked_buddies() -> Array[String]:
+	var out: Array[String] = []
+	_ensure_buddies()
+	for card: Dictionary in _buddy_cards:
+		if affinity_of(String(card.get("npc_id", ""))) >= 40:
+			out.append(String(card.get("npc_id")))
+	return out
+
+
+## 某 NPC 的熊友卡配置；没有返回 {}（面板据此决定要不要亮出这张卡）。
+func buddy_card_for(npc_id: String) -> Dictionary:
+	_ensure_buddies()
+	return _buddy_by_npc.get(npc_id, {})
+
+
+func buddy_cards() -> Array:
+	_ensure_buddies()
+	return _buddy_cards
+
+
+func is_buddy_unlocked(npc_id: String) -> bool:
+	return unlocked_buddies().has(npc_id)
+
+
 func is_duel_cleared(level_id: String) -> bool:
 	return duel_first_clears.has(level_id)
 
@@ -149,16 +198,39 @@ func add_money(amount: int, _reason := "") -> void:
 
 ## 花 1 点精力做一件事（锚点口径：1 点 = 对应方向 1 点）。
 ## 返回 {ok: bool, text: String}，text 直接给面板当即时反馈。
-func spend_energy(action_id: String) -> Dictionary:
+func spend_energy(action_id: String, buddy_id := "") -> Dictionary:
 	if energy <= 0:
 		return {"ok": false, "text": "这个月的精力用完了。下个月初会补满 3 点。"}
 	# 主线门禁（兜底层）：UI 置灰之外再拦一道，任何消费路径都绕不过。
 	if main_gate.is_valid() and bool(main_gate.call()):
 		return {"ok": false, "text": "本月主线还没过完——先去完成主线事件，再来花精力。"}
+	# 熊友卡协助（机制文档 §6.2）：先整段校验，失败绝不落任何数值。
+	var assist := {}
+	var buddy_name := ""
+	if not String(buddy_id).is_empty():
+		var card := buddy_card_for(String(buddy_id))
+		if card.is_empty():
+			return {"ok": false, "text": "你还拿不出这张熊友卡。"}
+		buddy_name = String(card.get("name", ""))
+		if not unlocked_buddies().has(String(buddy_id)):
+			return {"ok": false, "text": "%s 还没到开口就答应的交情，关系再近一点再说。" % buddy_name}
+		assist = card.get("assist", {})
+		var scope := String(assist.get("action", "*"))
+		if scope != "*" and scope != action_id:
+			return {"ok": false, "text": "%s 在这件事上帮不上忙——他的强项是别处。" % buddy_name}
+		var limit := int(assist.get("per_month_limit", 0))
+		if limit > 0:
+			if _free_assist_month != month:
+				_free_assist_month = month
+				_free_assist_count = 0
+			if _free_assist_count >= limit:
+				return {"ok": false, "text": "%s 这个月已经替你挡过一次了，剩下的自己来。" % buddy_name}
+	var assist_effect := String(assist.get("effect", ""))
+	var boost := int(assist.get("value", 0))
+	var free_action := assist_effect == "free_action"
 	var text := ""
 	match action_id:
 		"grow":
-			energy -= 1
 			skill += 1
 			# S2 的「领悟」在这里兑现：下一个技术类行动额外 +1（hooks.epiphany_flag）
 			if flags.get("epiphany_ready", false):
@@ -167,25 +239,37 @@ func spend_energy(action_id: String) -> Dictionary:
 				text = "你啃完了半本论文。湖边没想通的那件事，这会儿自己接上了。专业能力 +2。"
 			else:
 				text = "你啃完了半本论文，顺手把上周卡住的疑问想通了。专业能力 +1。"
+			if assist_effect == "skill_bonus":
+				skill += boost
 		"produce":
-			energy -= 1
 			output += 1
 			text = "你把手头的活往前推了一大段。本月产出 +1，月底折算成奖金。"
+			if assist_effect == "output_bonus":
+				output += boost
 		"rest":
-			energy -= 1
 			health = mini(HEALTH_MAX, health + 1)
 			text = "你睡了一个不设闹钟的午觉。生命 +1。"
+			if assist_effect == "health_bonus":
+				health = mini(HEALTH_MAX, health + boost)
 		"social":
-			energy -= 1
 			var npc_id: String = SOCIAL_POOL.pick_random()
 			_add_affinity(npc_id, 2)
 			text = "你约 %s 喝了杯咖啡，聊了聊最近的事。关系悄悄近了一点。" % NPC_NAMES.get(npc_id, npc_id)
 		_:
 			return {"ok": false, "text": "没有这个行动。"}
+	if free_action:
+		# 老周：这件事没花你的精力（同月限次，前面已校验）
+		_free_assist_count += 1
+	else:
+		energy -= 1
+	if not assist.is_empty():
+		var assist_text := String(assist.get("text", ""))
+		if not assist_text.is_empty():
+			text += "　" + assist_text
 	state_changed.emit(snapshot())
 	if energy <= 0:
 		energy_exhausted.emit()
-	return {"ok": true, "text": text, "actionId": action_id}
+	return {"ok": true, "text": text, "actionId": action_id, "buddyId": String(buddy_id)}
 
 
 ## 好感度加减（隐藏数值）。同一人连续被约第 3 次起收益减半（收益递减，§11.4）。
@@ -397,6 +481,100 @@ func relation_phrase(npc_id: String, before: int, after: int) -> String:
 			return "和%s，到了能说点真的的地步。" % who
 		_:
 			return "和%s，是能托底的关系了。" % who
+
+
+## ---------- 关系阶段：前台展示（机制文档 §5.4「前台展示关系阶段及进度感」） ----------
+## V5.27 §11.3 定了 Lv1–Lv5 与「记忆墙便签蓝→黄→金渐进」，但此前**没有任何界面读过它**。
+## 本节只做「把档位翻成人话 + 现档称谓」，**一个数字都不外露**——
+## 分数、阈值、解锁条件都不出现在返回值里（free_time_system.json:2 红线）。
+##
+## 档位 → 现档称谓（不是"Lv3"这种编号，而是玩家读得懂的一句话）。
+const RELATION_STAGE_TEXT := {
+	1: "还只是点头之交",
+	2: "能聊两句了",
+	3: "老熟人了",
+	4: "能说点真的",
+	5: "能托底的关系",
+}
+
+## 现档称谓；npc_id 不认识返回空串（宁可不显示，也不要编一个）。
+func relation_stage_name(npc_id: String) -> String:
+	if not NPC_NAMES.has(npc_id):
+		return ""
+	return String(RELATION_STAGE_TEXT.get(affinity_level(affinity_of(npc_id)), ""))
+
+
+## 显示名 → 内部 id。**NPC_NAMES 反过来查**，这样演员表口径仍然只有一处。
+## 用途：剧情便签里只存了角色显示名（"王哥"），记忆墙要拿它反查好感档。
+func relation_key_of_name(display_name: String) -> String:
+	var key := display_name.strip_edges()
+	if key.is_empty():
+		return ""
+	for npc_id in NPC_NAMES.keys():
+		if String(NPC_NAMES[npc_id]) == key:
+			return String(npc_id)
+	return ""
+
+
+## 显示名 → 现档称谓。查不到这个人（如陈工不进关系系统）返回空串。
+func relation_stage_of_name(display_name: String) -> String:
+	var npc_id := relation_key_of_name(display_name)
+	if npc_id.is_empty():
+		return ""
+	return relation_stage_name(npc_id)
+
+
+## 关系一览：给自由周末首屏用的只读快照。
+## 返回 [{id, name, level, stage, pips}]，按 SOCIAL_POOL 顺序（= 机制文档的四人核心 NPC）。
+## pips = 0-5 的档位段数，供界面画「●●●○○」这种进度感；**它不是分数**（只有段数）。
+func relation_overview() -> Array:
+	var rows: Array = []
+	for raw_id in SOCIAL_POOL:
+		var npc_id := String(raw_id)
+		var level := affinity_level(affinity_of(npc_id))
+		rows.append({
+			"id": npc_id,
+			"name": String(NPC_NAMES.get(npc_id, npc_id)),
+			"level": level,
+			"stage": String(RELATION_STAGE_TEXT.get(level, "")),
+			"pips": level,
+		})
+	return rows
+
+
+## ---------- 知心时刻（Lv2 私人故事，V5.27 §11.3 四段） ----------
+
+## 好感门槛（free_time_system.json rules.level_unlocks.Lv2 / hooks.intimate_moment.when）。
+const INTIMATE_MIN_AFFINITY := 40
+## npc_id -> intimate_text（懒加载，只读一份）。
+var _npc_story := {}
+
+
+## 知心时刻正文（该 NPC 的私事独白）。取不到返回空串，调用方自行降级为通用触发句。
+func intimate_text_of(npc_id: String) -> String:
+	_ensure_npc_story()
+	return String(_npc_story.get(npc_id, ""))
+
+
+func _ensure_npc_story() -> void:
+	if not _npc_story.is_empty():
+		return
+	var text := FileAccess.get_file_as_string(FREE_TIME_CONFIG)
+	if text.is_empty():
+		return
+	var parsed = JSON.parse_string(text)
+	if not (parsed is Dictionary):
+		return
+	var npcs = (parsed as Dictionary).get("npcs", {})
+	if not (npcs is Dictionary):
+		return
+	for key in (npcs as Dictionary).keys():
+		var entry = (npcs as Dictionary)[key]
+		if not (entry is Dictionary):
+			continue
+		var line := String((entry as Dictionary).get("intimate_text", ""))
+		if not line.is_empty():
+			_npc_story[String(key)] = line
 
 
 ## 两格 → 组合效果（设计文档 §3.4 两格版）。
@@ -719,9 +897,19 @@ func consume_weekend_echo(file_path: String, month: int, slot_id: String) -> boo
 	return true
 
 
-## 知心时刻触发条件：好感 ≥ 40 且该 NPC 还没用过（free_time_system hooks.intimate_moment）。
+## 知心时刻触发条件（free_time_system hooks.intimate_moment）。
+## 两条路径：
+##   ① 好感够 Lv2 门槛（INTIMATE_MIN_AFFINITY = 40）；
+##   ② D4 夜宵的 hooks.early_secret 命中 → apply_weekend_activity 落了
+##      intimate_early_<npc> 旗标 → **提前解锁**，不再看好感。
+## ⚠ ② 此前是**死旗标**：全库没有任何地方读它，"炭火让人诚实"那条收益
+##   （好感少拿 1 换提前解锁）等于白给。2026-09-17 接上消费者。
 func can_trigger_intimate(npc_id: String) -> bool:
-	return affinity_of(npc_id) >= 40 and not intimate_used.has(npc_id)
+	if intimate_used.has(npc_id):
+		return false
+	if flags.get("intimate_early_" + npc_id, false):
+		return true
+	return affinity_of(npc_id) >= INTIMATE_MIN_AFFINITY
 
 
 func mark_intimate_used(npc_id: String) -> void:

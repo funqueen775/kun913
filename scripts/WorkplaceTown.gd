@@ -2121,6 +2121,8 @@ func _build_memory_wall() -> void:
 	_memory_wall = MEMORY_WALL.new()
 	_memory_wall.name = "MemoryWall"
 	_memory_wall.wall_closed.connect(_on_memory_wall_closed)
+	# 关系档色点的数据源。_build_monthly_life() 在 _ready 里先跑（247 < 251），这里一定拿得到。
+	_memory_wall.setup(_monthly_life)
 	add_child(_memory_wall)
 
 

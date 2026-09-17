@@ -897,7 +897,20 @@ func _memo_payload(choice_id: String, note: Dictionary) -> Dictionary:
 		"text": String(note.get("text", "")),
 		"tone": String(note.get("tone", "gold")),
 		"outcome": _outcome_text(choice_id),
+		"npc": _lead_actor_name(),
 	}
+
+
+## 便签挂靠的角色**显示名**（cast 第一位）。记忆墙拿它反查好感档、在便签角落贴一枚色点。
+## 只存显示名不用 id：NPC 有两套 id 空间（npcs.json 的 wange / MonthlyLife 的 wang_ge），
+## 名字是唯一两边都成立的 join key。独处事件 cast 为空 → 空串 → 墙上就不贴点。
+func _lead_actor_name() -> String:
+	for value in _cast_list():
+		var actor := Dictionary(value)
+		var who := String(actor.get("name", ""))
+		if not who.is_empty():
+			return who
+	return ""
 
 
 func _choice_text(choice_id: String) -> String:

@@ -553,9 +553,56 @@ func _show_slots() -> void:
 	_subtitle.text = "%s　·　周六两格，自己排" % _weather_text()
 	_clear_content()
 	_content.add_child(_body_label("忙完这个月的活，这个周末是你的了。\n两格，给谁、给什么，你自己排——哪一格空着也行。", 17, COLOR_TEXT))
+	_content.add_child(_relation_overview_block())
 	for i in _slots.size():
 		_content.add_child(_make_slot_row(i))
 	_set_footer("就这样过", commit_weekend)
+
+
+## 关系一览（机制文档 §5.4「前台展示关系阶段及进度感」）。
+## 此前 MonthlyLife.affinity_level() 全库**没有任何界面读过**，好感一直是个纯隐藏数。
+## 红线：只出「档位段数 + 现档称谓」两样，分数 / 阈值 / 解锁条件一律不出现。
+func _relation_overview_block() -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(_content_label("你和他们，走到哪儿了", 16, COLOR_TITLE, 660.0))
+	if _life == null:
+		return box
+	for row in _life.relation_overview():
+		box.add_child(_content_label(
+			_relation_line(
+				String(row.get("name", "")),
+				int(row.get("level", 1)),
+				String(row.get("stage", "")),
+			),
+			15, COLOR_SUB, 660.0
+		))
+	return box
+
+
+## 一行的统一形状：「王哥　●●●○○　老熟人了」。段数 = 档位，**不是分数**。
+func _relation_line(name: String, level: int, stage: String) -> String:
+	if stage.is_empty():
+		return ""
+	var filled := clampi(level, 0, 5)
+	return "%s　%s%s　%s" % [name, "●".repeat(filled), "○".repeat(5 - filled), stage]
+
+
+## 本次两格里出现过的那位唯一同行者（显示名）。没有 / 多于一人的话空串 ——
+## 记忆墙据此决定贴不贴「关系档色点」：拿不准就干脆不贴，不猜。
+func _sole_target_name() -> String:
+	var ids: Array = []
+	for i in _slots.size():
+		if slot_is_blank(i):
+			continue
+		for raw in (_slots[i] as Dictionary).get("targets", []):
+			var npc_id := String(raw)
+			if not ids.has(npc_id):
+				ids.append(npc_id)
+	if ids.size() != 1 or _life == null:
+		return ""
+	return String(_life.NPC_NAMES.get(String(ids[0]), ""))
 
 
 func _make_slot_row(index: int) -> HBoxContainer:
@@ -644,17 +691,52 @@ func _decision_intro() -> String:
 	return trigger.replace("{stuck_npc}", npc_name)
 
 
+## 知心时刻的收尾问句。**刻意不用 activity.decision.trigger_text** ——
+## 那句是「对方讲了一件从没说过的事」的通用铺垫，放在真正的独白**之后**就成了复读。
+const INTIMATE_QUESTION := "他停下来，看着你：「你呢？」"
+
+
 func _show_decision() -> void:
-	_title.text = String(ACTIVITY_NAMES.get(String(_activity.get("activity_id", "")), "")) + " · 要紧关头"
-	_subtitle.text = ""
+	var node_id := String(_pending_decision.get("node_id", ""))
+	var intimate := node_id == "d2_intimate_reply"
+	if intimate:
+		_title.text = "知心时刻 · %s" % _target_display_name()
+		_subtitle.text = "私人故事 · 只此一次"
+	else:
+		_title.text = String(ACTIVITY_NAMES.get(String(_activity.get("activity_id", "")), "")) + " · 要紧关头"
+		_subtitle.text = ""
 	_clear_content()
-	_content.add_child(_body_label(_decision_intro(), 18, COLOR_TEXT))
+	if intimate:
+		# V5.27 §11.3 的四段独白原文，整段先摆出来，再问玩家怎么接。
+		var story := _intimate_story()
+		if not story.is_empty():
+			_content.add_child(_body_label(story, 18, COLOR_TEXT))
+		_content.add_child(_body_label(INTIMATE_QUESTION, 18, COLOR_TEXT))
+	else:
+		_content.add_child(_body_label(_decision_intro(), 18, COLOR_TEXT))
 	for option in _pending_decision.get("options", []):
 		var option_id := String(option["option_id"])
 		var text := String(option["text"])
 		var choice := _make_wide_button(text, func(): choose_decision_option(option_id))
 		_content.add_child(choice)
 	_set_footer("", Callable())
+
+
+## 当前决策对象（同行者）的显示名。
+func _target_display_name() -> String:
+	if _life == null or _targets.is_empty():
+		return "同伴"
+	var npc_id := String(_targets[0])
+	return String(_life.NPC_NAMES.get(npc_id, npc_id))
+
+
+## 知心时刻正文（data/story/free_time_system.json → npcs.<id>.intimate_text）。
+## 取不到就返回空串，屏上只留收尾问句 —— **绝不在这里硬编一份备胎文案**，
+## 那样文案一改就两处不一致。
+func _intimate_story() -> String:
+	if _life == null or _targets.is_empty():
+		return ""
+	return String(_life.intimate_text_of(String(_targets[0])))
 
 
 ## B 件 · 在场一幕（§4）：一屏场景 + 2-3 个应答。**不改任何数值** ——
@@ -743,6 +825,8 @@ func _show_ledger() -> void:
 	_content.add_child(_separator())
 	if _life != null:
 		_content.add_child(_body_label(_life.weekend_structure_line(_slots), 16, COLOR_TITLE))
+	for status_line in _relation_status_lines():
+		_content.add_child(_body_label(String(status_line), 15, COLOR_SUB))
 	for phrase in _relation_phrases():
 		_content.add_child(_body_label(String(phrase), 15, COLOR_SUB))
 	for line in _combo.get("lines", []):
@@ -780,6 +864,31 @@ func _relation_phrases() -> Array:
 		for phrase in (entry as Dictionary).get("relations", []):
 			phrases.append(String(phrase))
 	return phrases
+
+
+## 手账页：本次同行者**现在**各处在什么档位（跨档那句另由 _relation_phrases() 出）。
+## 一行一位、跨格去重；查不到档位的不写（陈工不在关系系统里）。
+func _relation_status_lines() -> Array:
+	var lines: Array = []
+	if _life == null:
+		return lines
+	var seen := {}
+	for i in _slots.size():
+		if slot_is_blank(i):
+			continue
+		for raw in (_slots[i] as Dictionary).get("targets", []):
+			var npc_id := String(raw)
+			if seen.has(npc_id):
+				continue
+			seen[npc_id] = true
+			var line := _relation_line(
+				String(_life.NPC_NAMES.get(npc_id, npc_id)),
+				int(_life.affinity_level(_life.affinity_of(npc_id))),
+				String(_life.relation_stage_name(npc_id)),
+			)
+			if not line.is_empty():
+				lines.append(line)
+	return lines
 
 
 ## 手账页的「在场一幕」块：一句当时的画面 + 「记住了你：XXX」。**恒无数字**（红线）。
@@ -826,7 +935,10 @@ func _finish_weekend() -> void:
 		"echoConsumed": false,
 	}
 	if not note.is_empty():
-		memo_requested.emit("weekend_%d" % _month, {"text": note, "tone": "parchment", "npc": ""})
+		# `npc` 存**显示名**（记忆墙拿它反查关系档贴色点）。刻意不用 npc_id：
+		# NPC 在项目里有两套 id 空间（npcs.json 是 wange，MonthlyLife 是 wang_ge），
+		# 名字是唯一两边都成立的 join key。两格同行者不止一人时给空串 → 不贴点。
+		memo_requested.emit("weekend_%d" % _month, {"text": note, "tone": "parchment", "npc": _sole_target_name()})
 	weekend_ledger.emit(record)
 	close()
 
