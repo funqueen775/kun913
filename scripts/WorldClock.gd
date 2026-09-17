@@ -6,16 +6,23 @@ signal main_event_reached(event: Dictionary)
 
 const MINUTES_PER_DAY := 24 * 60
 const DAYS_PER_MONTH := 30
+## 时间不再随真实秒流动：推进完全交给「时段」（做完一件事 → 进入下一个时段）。
+## 想临时做「时间在流逝」的演出时把它打开即可，玩法层不用动。
+const AUTO_FLOW := false
 const MINUTES_PER_REAL_SECOND := 6.0
 ## 四个时段 = 一天的四拍剧情节拍。
 ## night 跨午夜（23:00 → 次日 07:00），所以它的 start > end，
 ## phase_for_minute 里必须按跨零点处理，别当成普通区间。
 const PHASES := [
-	{"id": "dawn", "name": "清晨", "start": 6 * 60},
-	{"id": "day", "name": "白天", "start": 8 * 60},
-	{"id": "dusk", "name": "傍晚", "start": 17 * 60},
-	{"id": "night", "name": "夜晚", "start": 19 * 60},
+	{"id": "morning", "name": "早上", "start": 7 * 60, "end": 9 * 60},
+	{"id": "work", "name": "上班后", "start": 9 * 60, "end": 18 * 60},
+	{"id": "offwork", "name": "下班", "start": 18 * 60, "end": 23 * 60},
+	{"id": "night", "name": "夜晚", "start": 23 * 60, "end": 7 * 60},
 ]
+## 夜晚段起点：过这个点就该回宿舍了（宿舍宵禁与 HUD 提醒共用同一条线）。
+const NIGHT_START_MINUTE := 23 * 60
+## 一觉醒来出门的钟点。
+const WAKE_UP_MINUTE := 7 * 60
 const MAIN_EVENTS := [
 	{
 		"id": "M1-E01", "scoringKey": "E01", "month": 1, "day": 1, "hour": 9,
@@ -150,9 +157,9 @@ const MAIN_EVENTS := [
 	},
 	{
 		"id":"M2-E08", "scoringKey": "none", "month":15, "day":1, "hour":16, "title":"熊熊有招训练对局", "locationId":"E", "location":"E 松风训练谷", "durationMinutes":30, "actTitle":"第二幕 · 真实需求与成本压力", "situation":"weak", "cast":[{"name":"小赵","role":"实习生","pos":"left"}],
-		"story":"训练谷的活动本来只是放松。小赵把一叠妙招卡推到你面前，说今天不谈 KPI，试试看谁更会看局势。", "prompt":"这局你怎么打？", "hint":"本事件是节奏调节，不进入职业测评。",
-		"choices":[{"id":"option_a","text":"抢先出强牌，尽快结束这局。"},{"id":"option_b","text":"留一张牌观察对方的习惯。"},{"id":"option_c","text":"先问规则边界，再决定怎么配合。"}],
-		"outcome":{"option_a":"你赢得干脆，小赵却笑着说下局要换一副牌。","option_b":"你看出了他的假动作。这局结束时，两个人都比开始时更放松。","option_c":"规则讲清后，输赢反而不重要了。你们把这局当成了真正的休息。"}, "memoryNote":{"option_a":{"text":"训练谷里也想抢先","tone":"gray"},"option_b":{"text":"在游戏里先观察","tone":"gold"},"option_c":{"text":"把放松留给了自己","tone":"gold"}}
+		"story":"训练谷的活动本来只是放松。小赵把一叠妙招卡推到你面前，说今天不谈 KPI，试试看谁更会看局势。", "prompt":"要陪他试一局吗？", "hint":"训练谷邀约 · 本事件是节奏调节，不进入职业测评。",
+		"choices":[{"id":"option_a","text":"接下邀请，现在就试一局。"},{"id":"option_b","text":"这次先不了，下次再说。"},{"id":"option_c","text":"把卡收好，晚点自己来练。"}],
+		"outcome":{"option_a":"骰子在手，妙招卡摊开。这一局，就当真正的休息。（进入熊熊有招）","option_b":"小赵把卡收回口袋：行，这局欠着，随时来找我。","option_c":"你把那叠卡揣走了。训练谷的门一直开着。"}, "memoryNote":{"option_a":{"text":"接住了训练谷的邀请","tone":"gold"},"option_b":{"text":"把对局留给了下次","tone":"gray"},"option_c":{"text":"自己偷偷去练了","tone":"gold"}}
 	},
 	{
 		"id":"M3-E09", "scoringKey": "E14", "month":16, "day":1, "hour":23, "title":"连续加班后心悸", "locationId":"G", "location":"G 暖邻康护院", "durationMinutes":40, "actTitle":"第三幕 · 事故与责任", "situation":"strong", "cast":[],
@@ -262,7 +269,7 @@ func _ready() -> void:
 	_emit_time_changed()
 
 func _process(delta: float) -> void:
-	if not running:
+	if not AUTO_FLOW or not running:
 		return
 	advance_minutes(delta * MINUTES_PER_REAL_SECOND)
 
@@ -344,6 +351,30 @@ func complete_main_event(event_id: String) -> bool:
 	_emit_time_changed()
 	return true
 
+
+## 是否存在「时点已过、但还没结算」的主线事件。
+## 用在任何要大步跳过时间的场合之前：有这种事件就说明玩家还没做完选择，
+## 这时候往前跳会把剧情整个划过去，必须先停下来把选择做完。
+func has_overdue_event() -> bool:
+	var next := next_main_event()
+	if next.is_empty():
+		return false
+	return _event_minute(next) <= world_minute
+
+
+## 显式点火：当前时点正好压着一个未完成主线事件时就地触发它。
+## 时间不自动流之后，事件不会被「路过」触发（advance_minutes 只拦跨区间的推进），
+## 所以「开局出门时人已经站在事件时点上」这种情况要靠这里补一枪。
+func trigger_event_at_now() -> bool:
+	var event := _first_blocking_event_between(world_minute, world_minute)
+	if event.is_empty():
+		return false
+	running = false
+	_minute_remainder = 0.0
+	_emit_time_changed()
+	main_event_reached.emit(event)
+	return true
+
 func _first_blocking_event_between(from_minute: int, to_minute: int) -> Dictionary:
 	for event in MAIN_EVENTS:
 		if _completed_main_event_ids.has(String(event["id"])):
@@ -378,20 +409,111 @@ func snapshot() -> Dictionary:
 		"clock": "%02d:%02d" % [hour, minute],
 		"phaseId": phase["id"],
 		"phaseName": phase["name"],
+		"phaseIndex": current_phase_index(),
 	}
 
 ## 一天四拍：按 PHASES 的边界顺序找当前时段。
 ## 夜晚段跨午夜（start > end），所以判定要拆成「≥ start 或 < end」。
 func phase_for_minute(minute_of_day: int) -> Dictionary:
-	if minute_of_day < 6 * 60:
-		return PHASES[3]
-	if minute_of_day < 8 * 60:
-		return PHASES[0]
-	if minute_of_day < 17 * 60:
-		return PHASES[1]
-	if minute_of_day < 19 * 60:
-		return PHASES[2]
-	return PHASES[3]
+	var minute := posmod(minute_of_day, MINUTES_PER_DAY)
+	for phase in PHASES:
+		var start := int(phase["start"])
+		var end := int(phase["end"])
+		if start < end:
+			if minute >= start and minute < end:
+				return phase
+		elif minute >= start or minute < end:
+			return phase
+	return PHASES[0]
+
+
+## 当前时段的序号（0=早上 1=上班后 2=下班 3=夜晚），HUD 与体力面板用它对齐。
+func current_phase_index() -> int:
+	var now := String(phase_for_minute(posmod(world_minute, MINUTES_PER_DAY))["id"])
+	for i in PHASES.size():
+		if String(PHASES[i]["id"]) == now:
+			return i
+	return 0
+
+
+func current_phase() -> Dictionary:
+	return phase_for_minute(posmod(world_minute, MINUTES_PER_DAY))
+
+
+## 时段驱动的推进：把时间拨到「当前时段结束、下一个时段开始」的那一刻。
+## 刻意走 advance_minutes —— 主线守卫在那一层，跨过事件时点会停住并触发剧情，
+## 所以时段推进永远不会把剧情划过去。
+func advance_phase() -> void:
+	var next_start := _next_phase_start(posmod(world_minute, MINUTES_PER_DAY))
+	var target := (world_minute / MINUTES_PER_DAY) * MINUTES_PER_DAY + next_start
+	if target <= world_minute:
+		target += MINUTES_PER_DAY
+	advance_minutes(float(target - world_minute))
+
+
+## 下一个时段的起点分钟数。已经是今天最后一个时段时，返回次日「早上」的起点。
+func _next_phase_start(minute_of_day: int) -> int:
+	for phase in PHASES:
+		var start := int(phase["start"])
+		if start > minute_of_day:
+			return start
+	return int(PHASES[0]["start"])
+
+
+## 睡觉 = 结束本月（2026-09-17 晚用户拍板）：时间直接拨到下一个月 1 日早上。
+## 月度口径下「一个月 ≈ 一天」的节奏：睡醒 → 主线 → 白天养成 → 睡 → 下月；
+## 不再跳「空白日/下个内容日」——每个月都完整留给玩家（精力 3 点/月才花得完）。
+## 守卫与 sleep_until_next_morning 相同：这一觉会跨过未完成主线的时点时，
+## 时间停在事件上把剧情演完，绝不把故事睡过去。
+func sleep_to_next_month(hour: int) -> void:
+	var month_index := world_minute / (DAYS_PER_MONTH * MINUTES_PER_DAY)
+	var day_start := (month_index + 1) * DAYS_PER_MONTH * MINUTES_PER_DAY
+	# 守卫区间放到「下月 1 日全天」而不是只到 7:00：当天挂着的主线（多在 9:00 / 23:00）
+	# 直接停在事件时点上，绝不落到 7:00 让玩家干等（剧情挂起的根因之一）。
+	# 区间只覆盖下月 1 日 —— 更晚的月份由下一次睡觉处理，不越权吞月。
+	var blocker := _first_blocking_event_between(world_minute, day_start + MINUTES_PER_DAY - 1)
+	if not blocker.is_empty():
+		world_minute = _event_minute(blocker)
+		running = false
+		_minute_remainder = 0.0
+		_emit_time_changed()
+		main_event_reached.emit(blocker)
+		return
+	world_minute = day_start + clampi(hour, 0, 23) * 60
+	_minute_remainder = 0.0
+	running = true
+	_emit_time_changed()
+
+
+## 睡醒当天挂着未结算主线事件时，把时间拨到事件时点并就地「点亮」它。
+## 睡觉跨月落在下月 1 日 07:00，而事件多挂在当天 9:00 —— 停钟世界里没人把钟推过去，
+## 不补这一枪，事件门永远不亮、剧情永远不弹（「跳月后剧情挂起」的修复点）。
+## 已压在事件时点上（睡觉守卫拦下的情况）不重复点火。返回是否点了火。
+func fire_due_event_today() -> bool:
+	var day_index := world_minute / MINUTES_PER_DAY
+	for event in MAIN_EVENTS:
+		if _completed_main_event_ids.has(String(event["id"])):
+			continue
+		var event_minute := _event_minute(event)
+		if event_minute / MINUTES_PER_DAY == day_index and event_minute > world_minute:
+			world_minute = event_minute
+			running = false
+			_minute_remainder = 0.0
+			_emit_time_changed()
+			main_event_reached.emit(event)
+			return true
+	return false
+
+
+## 精力门禁判定（2026-09-17 晚用户拍板：当月主线没做完，不能花精力升级）。
+## 口径：下一个未完成主线的时点 ≤ 今天结束 → 锁。
+## 用「今天结束」而不是「本月结束」：月 32 同时挂着 1 日与 18 日两件主线，
+## 18 日的 E17 不该把 1 日做完 E16 之后的精力也锁死。
+func main_event_due() -> bool:
+	var next := next_main_event()
+	if next.is_empty():
+		return false
+	return _event_minute(next) < (world_minute / MINUTES_PER_DAY + 1) * MINUTES_PER_DAY
 
 func _emit_time_changed() -> void:
 	var state := snapshot()

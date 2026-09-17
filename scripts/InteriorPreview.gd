@@ -116,12 +116,12 @@ func set_phase(phase_id: String) -> void:
 	if _shade == null:
 		return
 	var tint_by_phase := {
-		"dawn": Color(0.30, 0.16, 0.05, 0.18),
-		"day": Color(0.04, 0.07, 0.13, 0.08),
-		"dusk": Color(0.30, 0.09, 0.04, 0.25),
+		"morning": Color(0.30, 0.18, 0.06, 0.16),
+		"work": Color(0.04, 0.07, 0.13, 0.08),
+		"offwork": Color(0.30, 0.09, 0.04, 0.25),
 		"night": Color(0.03, 0.07, 0.22, 0.42),
 	}
-	_shade.color = tint_by_phase.get(phase_id, tint_by_phase["day"])
+	_shade.color = tint_by_phase.get(phase_id, tint_by_phase["work"])
 
 func _process(delta: float) -> void:
 	if not _exploration_enabled or not is_open() or _player == null:

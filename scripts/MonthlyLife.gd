@@ -1,14 +1,31 @@
 extends Node
-## 月度生活系统：每月 3 点精力、公开数值（专业能力/生命/产出/金钱）、
+## 生活系统：精力（每月 3 点）、公开数值（专业能力/生命/产出/金钱）、
 ## 月底经济结算、NPC 好感度（隐藏数值）。
 ## 口径来源：
 ## - 《游戏机制与情绪价值设计说明 V1》§4（精力行动 / 生命规则 / 月底经济结算）
+## - data/story/scoring_cards.json `_anchor_params.monthly_energy`（3 点 / 不可结转，测量有效性要求）
 ## - data/story/free_time_system.json v1.3（活动收益 / 好感度 / 收益递减）
+## 2026-09-17 改回月度口径（24 件基准拍板 #2）：精力 = 每月 3 点、**不可结转**，
+## 1 点 = 1 项养成行动；跨天**不再**回满，只在进入新月时发 3 点。
+## 时间推进与精力脱钩：时段推进改由「睡觉跨天 + 主线事件结算」双驱动（WorkplaceTown）。
 ## 刻意不做 autoload：由 WorkplaceTown 实例化后把引用下发给面板，
 ## 探针（build/probe_free_time.gd）也能直接 new 出来测逻辑。
 
 signal state_changed(state: Dictionary)
 
+## 花掉本月最后 1 点精力时发射（2026-09-17 自 EnergyPanel 上移到这里 —— 唯一发源地）。
+## EnergyPanel 行动卡与右上角精力圆钮两条消费路径都经过 spend_energy，
+## WorkplaceTown 监听它弹顶部横幅提示（2026-09-17 晚拍板：只提示，不再跳 22:00）。
+## 月初补满再花完会再发。
+signal energy_exhausted()
+
+## 主线门禁（2026-09-17 晚用户拍板：当月主线没过完，不许花精力升级）。
+## WorkplaceTown 注入 WorldClock.main_event_due 的 Callable——刻意用注入而不是
+## 直接读 autoload，探针（build/probe_*.gd）new 出来测时门禁为空 = 恒不锁。
+var main_gate: Callable = Callable()
+
+## 精力按「月」结算：每月 3 点（scoring_cards._anchor_params.monthly_energy），
+## **不可结转** —— 月底没用完的直接清零，新月重新发 3 点。
 const ENERGY_PER_MONTH := 3
 const HEALTH_MAX := 10
 const START_MONEY := 15000
@@ -28,9 +45,13 @@ const NPC_NAMES := {
 ## 「人际经营」的默认对象池。选人环节 MVP 不做（用户拍板）→ 随机指派。
 const SOCIAL_POOL: Array[String] = ["wang_ge", "xiao_lin", "xiao_zhao", "lao_zhou"]
 
-## 当前精力所属月份（第 1 月开局）。
+## 当前体力所属月份（第 1 月开局）。
 var month := 1
+## 当前体力属于哪一天（对齐 WorldClock.snapshot()["dayIndex"]）。-1 = 还没和世界时钟对过表。
+var day_index := -1
 var energy := ENERGY_PER_MONTH
+## 强制休息标记：生命归零后的那个月，整月不发精力（见 sync / _settle_month）。
+var forced_rest := false
 var skill := 1
 var health := 7
 var output := 0
@@ -45,6 +66,8 @@ var _consecutive_counts := {}
 ## 小旗标（跨事件伏笔的落点）：S2「领悟」、D4 提前讲秘密。
 ## 只存标记不存数值，消费点写在各自的行动里（grow / can_trigger_intimate）。
 var flags := {}
+## 训练谷首通记录（Batch 4）：已首通的 level_id 数组。重复通关无奖励（机制文档 §7.1）。
+var duel_first_clears: Array = []
 
 
 func _ready() -> void:
@@ -56,6 +79,7 @@ func _ready() -> void:
 func snapshot() -> Dictionary:
 	return {
 		"month": month,
+		"dayIndex": day_index,
 		"energy": energy,
 		"energyMax": ENERGY_PER_MONTH,
 		"skill": skill,
@@ -66,15 +90,22 @@ func snapshot() -> Dictionary:
 	}
 
 
-## 世界时钟进入新月份时调用：把跳过的每个月都做一次月底结算，再发新月精力。
-## 生命归 0 的那个月结算后，下个月强制休息：精力只有 1 点（工资照发）。
-func ensure_month(new_month: int) -> void:
+## 世界时钟每次变动都调这里对表（见 WorkplaceTown._on_world_time_changed）。
+## · 跨天 → **不动精力**（月度口径：睡一觉不回精力，精力只在换月时发）。
+## · 跨月 → 把跳过的每个月都补一次月底工资结算、产出清零、发新月精力。
+## 生命归零之后的那个月转入「强制休息」：整月精力 = 0（工资照发、自由周末保留），
+## 下个月结算时生命已回到 4，自然解除、恢复 3 点。
+func sync(new_month: int, new_day_index: int) -> void:
 	var changed := false
 	while month < new_month:
-		var forced_rest := _settle_month()
+		forced_rest = _settle_month()
 		month += 1
 		output = 0
-		energy = 1 if forced_rest else ENERGY_PER_MONTH
+		# 精力不可结转：新月一律重发（强制休息月发 0 点，等于整月禁养成行动）。
+		energy = 0 if forced_rest else ENERGY_PER_MONTH
+		changed = true
+	if day_index != new_day_index:
+		day_index = new_day_index
 		changed = true
 	if changed:
 		state_changed.emit(snapshot())
@@ -92,15 +123,38 @@ func _settle_month() -> bool:
 	if health <= 0:
 		health = 4
 		forced_rest = true
-		last_settlement += " · 身体垮了，下月强制休息（精力只有 1 点，工资照发）"
+		last_settlement += " · 身体垮了，下月强制休息（整月不发精力，工资照发）"
 	return forced_rest
 
 
-## 花 1 点精力做一件月度养成行动（机制文档 §4.1：1 点精力只做一件事）。
+## 训练谷首通标记。返回 true = 这次是首次（调用方此时才发奖）。
+func mark_duel_cleared(level_id: String) -> bool:
+	if duel_first_clears.has(level_id):
+		return false
+	duel_first_clears.append(level_id)
+	return true
+
+
+func is_duel_cleared(level_id: String) -> bool:
+	return duel_first_clears.has(level_id)
+
+
+## 场外入账（训练谷首通奖励等）：立即生效，不走月底结算。
+func add_money(amount: int, _reason := "") -> void:
+	if amount == 0:
+		return
+	money += amount
+	state_changed.emit(snapshot())
+
+
+## 花 1 点精力做一件事（锚点口径：1 点 = 对应方向 1 点）。
 ## 返回 {ok: bool, text: String}，text 直接给面板当即时反馈。
 func spend_energy(action_id: String) -> Dictionary:
 	if energy <= 0:
-		return {"ok": false, "text": "这个月的精力已经用完了，等下个月吧。"}
+		return {"ok": false, "text": "这个月的精力用完了。下个月初会补满 3 点。"}
+	# 主线门禁（兜底层）：UI 置灰之外再拦一道，任何消费路径都绕不过。
+	if main_gate.is_valid() and bool(main_gate.call()):
+		return {"ok": false, "text": "本月主线还没过完——先去完成主线事件，再来花精力。"}
 	var text := ""
 	match action_id:
 		"grow":
@@ -129,6 +183,8 @@ func spend_energy(action_id: String) -> Dictionary:
 		_:
 			return {"ok": false, "text": "没有这个行动。"}
 	state_changed.emit(snapshot())
+	if energy <= 0:
+		energy_exhausted.emit()
 	return {"ok": true, "text": text, "actionId": action_id}
 
 
