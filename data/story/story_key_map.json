@@ -1,230 +1,339 @@
 {
-  "_readme": "Godot 叙事编号 → 引擎测评节点键的正式映射。人工逐条确认（对照选项语义，不是标题相似度），禁止用脚本自动生成。align 字段：ok = 三个选项与打分卡一一对应，可直接接；non_scoring = Godot 自创事件，只落日志不进测评；pending_rewrite = 至少一个选项在打分卡里没有对应，必须先改剧情文案才能接（**2026-09-16 起本表已无 pending_rewrite 条目，字段保留以备后续新增剧情**）。scoringKey = null 表示不进测评。options 是「Godot 槽位 → 打分卡选项字母」，允许乱序（例：M1-E02 的 option_a 对应卡的 B）。",
-  "_why": "Godot 的 M1-E01 是「幕-叙事序号」，引擎的 E01 是「排期表序号」。两套编号回答不同问题，硬统一会让六幕结构在代码里散架，所以走双编号 + 本映射表。客户端始终只认自己的 id。",
-  "version": "2.0",
-  "updatedAt": "2026-09-16",
-
-  "events": {
-    "M1-E01": {
-      "scoringKey": "E01",
-      "align": "ok",
-      "title": "新员工手册",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" }
-    },
-    "M1-E02": {
-      "scoringKey": "E04",
-      "align": "ok",
-      "title": "技术选型",
-      "options": { "option_a": "B", "option_b": "C", "option_c": "A" },
-      "_v2": "2026-09-16 对齐：Godot option_b 改写为「先找王哥聊聊他当年踩过的坑，再定路线。」→ 落在卡的 C（E04 唯一的协作锚点，N+2/S+1 保住了）。"
-    },
-    "M1-E03": {
-      "scoringKey": "E05",
-      "align": "ok",
-      "title": "评测集要不要建",
-      "options": { "option_a": "A", "option_b": "C", "option_c": "B" }
-    },
-    "M1-E04": {
-      "scoringKey": "E03",
-      "align": "ok",
-      "title": "AI 代码标注",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16 对齐：Godot option_c 改写为「笼统说『参考了工具』，不细说。」→ 落在卡的 C（半诚实灰色档，删了就没有中间态）。"
-    },
-    "M2-E05": {
-      "scoringKey": "E08",
-      "align": "ok",
-      "title": "客户临时加需求",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16 对齐：Godot option_c 由正面选项（小范围验证）改为「先口头答应，回头再说。」→ 落在卡的 C。原 c 更专业，但必须让位给卡的标定。"
-    },
-    "M2-E06": {
-      "scoringKey": "E09",
-      "align": "ok",
-      "title": "Token 成本爆了",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" }
-    },
-    "M2-E07": {
-      "scoringKey": "E10",
-      "align": "ok",
-      "title": "保证不胡说",
-      "options": { "option_a": "C", "option_b": "A", "option_c": "B" }
-    },
-    "M2-E08": {
-      "scoringKey": null,
-      "align": "non_scoring",
-      "title": "熊熊有招训练对局",
-      "options": {},
-      "_todo": "Godot 自创，事件里已声明「本事件是节奏调节，不进入职业测评」。只落日志。**24 件里唯一一件不进测评的。**"
-    },
-    "M3-E09": {
-      "scoringKey": "E14",
-      "align": "ok",
-      "title": "连续加班后心悸",
-      "options": { "option_a": "B", "option_b": "A", "option_c": "C" }
-    },
-    "M3-E10": {
-      "scoringKey": "E17",
-      "align": "ok",
-      "title": "客户现场 Demo 翻车",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16 对齐：Godot option_c 由正面选项（展示边界共同复测）改为「说是网络抖了一下，重启试试。」→ 落在卡的 C（硬着头皮演完）。`coverup_demo` 的埋雷端由此坐实在本件的 option_c。"
-    },
-    "M3-E11": {
-      "scoringKey": "E18",
-      "align": "ok",
-      "title": "压测结果与预期冲突",
-      "options": { "option_a": "A", "option_b": "C", "option_c": "B" }
-    },
-    "M3-E12": {
-      "scoringKey": "E19",
-      "align": "ok",
-      "title": "Agent 出错了算谁的",
-      "options": { "option_a": "C", "option_b": "B", "option_c": "A" },
-      "_v2": "2026-09-16 对齐：Godot option_c 改写为「拿日志证明是产品侧规则导致的，不是模型本身的问题。」→ 落在卡的 A。原 a/b 语义本就对（a→C 甩锅、b→B 认流程），只是顺序错位。"
-    },
-    "M4-E13": {
-      "scoringKey": "E23",
-      "align": "ok",
-      "title": "重构路线",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16 对齐：**改的是打分卡，不是 Godot** —— 卡的 C 由「外包」改为「拆出高风险链路，边交付边替换」并重标六维（O+1/S+1/N+1、risk 0、H−1、life−1、prof+1、bonus achieved）。理由：「外包」出现在「重构路线」这道题里语义站不住，Godot 那版才是现代重构实践。**全库唯一一处为对齐 Godot 而动的测评标定**（已获拍板）。"
-    },
-    "M4-E14": {
-      "scoringKey": "E24",
-      "align": "ok",
-      "title": "要不要全自动",
-      "options": { "option_a": "C", "option_b": "A", "option_c": "B" },
-      "_soft": "⚠ 历史遗留的软弱对齐：Godot option_c「先灰度开放，让用户能看到理由并申请复核」与卡的 B「拒绝全自动」并非同一决策，option_b 与卡的 A 也只是同族。本轮未在待改清单里，故保持 ok 不动 —— 但**建议后续复核这一件**（它现在是 E24 唯一的选项语义折扣）。"
-    },
-    "M4-E15": {
-      "scoringKey": "E28",
-      "align": "ok",
-      "title": "实习生的署名",
-      "options": { "option_a": "B", "option_b": "A", "option_c": "C" },
-      "_v2": "2026-09-16 起 E28.C「不管」同时是 `habitual_yield` 的埋雷端（原埋雷端 E31.B 已随裁件归档）。"
-    },
-    "M4-E16": {
-      "scoringKey": "E29",
-      "align": "ok",
-      "title": "核心知识文档化",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16 对齐（改 Godot 两处）：option_b「写一篇，但关键判断留在自己脑子里。」→ 卡的 B；option_c「先记着，下个迭代再写。」→ 卡的 C。原 c「封进脚本不让人接触」其实更接近卡的 B，已被替换。"
-    },
-    "M5-E17": {
-      "scoringKey": "E39",
-      "align": "ok",
-      "title": "副业边界",
-      "options": { "option_a": "C", "option_b": "A", "option_c": "B" },
-      "_v2": "2026-09-16 对齐（只改一处措辞）：option_c 改为「先向公司报备边界，确认不涉业务后再接。」→ 明确落在卡的 B（接但严格避嫌）。成本最低的一条。"
-    },
-    "M5-E18": {
-      "scoringKey": "E32",
-      "align": "ok",
-      "title": "Agent 该有人设吗",
-      "options": { "option_a": "C", "option_b": "A", "option_c": "B" }
-    },
-    "M5-E19": {
-      "scoringKey": "E33",
-      "align": "ok",
-      "title": "吹哨两难",
-      "options": { "option_a": "B", "option_b": "A", "option_c": "C" },
-      "_v2": "2026-09-16 对齐（只改一处措辞）：option_a 改为「先私下反馈，不走正式渠道。」→ 落在卡的 B（匿名反馈）。b→A、c→C 不动。"
-    },
-    "M5-E20": {
-      "scoringKey": "E35",
-      "align": "ok",
-      "title": "终局答辩",
-      "options": { "option_a": "B", "option_b": "A", "option_c": "C" },
-      "_v2": "2026-09-16 对齐：Godot option_c 由「强调个人判断」改为「讲团队和带出来的人。」→ 落在卡的 C。原方向与卡相反。"
-    },
-    "M6-E21": {
-      "scoringKey": "E40",
-      "align": "ok",
-      "title": "交接人不照做",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16（v2.0）：由 non_scoring 转为打分卡。新写卡 E40 顶替原本 scoringKey:none 的浪费位（24 件基准拍板 (b) 方案）。⚠ **Godot 侧 `M6-E21` 的 scoringKey 仍需由 none 改为 E40**（`scripts/WorldClock.gd`，见本表 `_pending_handoff`）。"
-    },
-    "M6-E22": {
-      "scoringKey": "E41",
-      "align": "ok",
-      "title": "谁来定义成功",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16（v2.0）：由 non_scoring 转为打分卡（新卡 E41）。本件 A 同时是 `coverup_demo` 的新兑现端。⚠ 同上：Godot 侧 scoringKey 需由 none 改为 E41。"
-    },
-    "M6-E23": {
-      "scoringKey": "E42",
-      "align": "ok",
-      "title": "把故事说到哪一步",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16（v2.0）：由 non_scoring 转为打分卡（新卡 E42）。本件 A 同时是 `ai_undisclosed` 的新兑现端 + `data_risk` 的新埋雷端。⚠ 同上：Godot 侧 scoringKey 需由 none 改为 E42。"
-    },
-    "M6-E24": {
-      "scoringKey": "C5",
-      "align": "ok",
-      "title": "传承与新局终局答辩",
-      "options": { "option_a": "A", "option_b": "B", "option_c": "C" },
-      "_v2": "2026-09-16 对齐：成就节点 C5 并入本件（用户拍板），卡改为 act 6 主线终局卡、去掉 type/light_decision，三个选项与 Godot 文案逐字对齐（原 C5.A「从头讲清楚，包括当年踩过的坑」的语义并入卡的 B）。"
-    }
+ "_readme": "Godot 叙事编号 → 引擎测评节点键的正式映射。人工逐条确认（对照选项语义，不是标题相似度），禁止用脚本自动生成。align 字段：ok = 三个选项与打分卡一一对应，可直接接；non_scoring = Godot 自创事件，只落日志不进测评；pending_rewrite = 至少一个选项在打分卡里没有对应，必须先改剧情文案才能接（**2026-09-16 起本表已无 pending_rewrite 条目，字段保留以备后续新增剧情**）。scoringKey = null 表示不进测评。options 是「Godot 槽位 → 打分卡选项字母」，允许乱序（例：M1-E02 的 option_a 对应卡的 B）。",
+ "_why": "Godot 的 M1-E01 是「幕-叙事序号」，引擎的 E01 是「排期表序号」。两套编号回答不同问题，硬统一会让六幕结构在代码里散架，所以走双编号 + 本映射表。客户端始终只认自己的 id。",
+ "version": "2.0",
+ "updatedAt": "2026-09-16",
+ "events": {
+  "M1-E01": {
+   "scoringKey": "E01",
+   "align": "ok",
+   "title": "新员工手册",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   }
   },
-
-  "playableOrder": {
-    "_note": "可连续承接的 Godot 事件顺序 = 24 件全部（含 non_scoring 的 M2-E08；它 scoringKey 为 null，构建 playable_engine 时会被自动过滤，所以放进列表无害）。**24 件全部对齐后，本列表已等价于打分卡的全量在册 schedule**，顺序校验仍然有效：缺件不会卡死链路，错位仍会被挡住。顺序 = Godot 叙事顺序（六幕 × 4 件）。",
-    "_version": "2.0",
-    "list": [
-      "M1-E01",
-      "M1-E02",
-      "M1-E03",
-      "M1-E04",
-      "M2-E05",
-      "M2-E06",
-      "M2-E07",
-      "M2-E08",
-      "M3-E09",
-      "M3-E10",
-      "M3-E11",
-      "M3-E12",
-      "M4-E13",
-      "M4-E14",
-      "M4-E15",
-      "M4-E16",
-      "M5-E17",
-      "M5-E18",
-      "M5-E19",
-      "M5-E20",
-      "M6-E21",
-      "M6-E22",
-      "M6-E23",
-      "M6-E24"
-    ]
+  "M1-E02": {
+   "scoringKey": "E04",
+   "align": "ok",
+   "title": "技术选型",
+   "options": {
+    "option_a": "B",
+    "option_b": "C",
+    "option_c": "A"
+   },
+   "_v2": "2026-09-16 对齐：Godot option_b 改写为「先找王哥聊聊他当年踩过的坑，再定路线。」→ 落在卡的 C（E04 唯一的协作锚点，N+2/S+1 保住了）。"
   },
-
-  "coverage": {
-    "_note": "覆盖度对账用，不上报不进报告。24 = 23 已对齐（进测评）+ 1 不进测评（M2-E08）。",
-    "godotEvents": 24,
-    "aligned": 23,
-    "pendingRewrite": 0,
-    "nonScoring": 1,
-    "scoringNodes": 23,
-    "scoringNodesTotal": 23,
-    "scoringCardsVersion": "3.0",
-    "missingNodes": {
-      "_note": "24 件基准下不再进测评的卡（= `scoring_cards.json` 的 `_archived.ids`）。**数据仍在打分卡文件里**，只是从 `_index` 摘出，不进任何统计。要复活某张卡，把它加回 `_index` 并在这里删掉即可。",
-      "archived": [
-        "E02", "E06", "E07", "E11", "E12", "E13", "E15", "E16", "E20", "E21",
-        "E22", "E25", "E26", "E27", "E30", "E31", "E34", "E36", "E37", "E38",
-        "C1", "C2", "C3", "C4"
-      ],
-      "count": 24
-    }
+  "M1-E03": {
+   "scoringKey": "E05",
+   "align": "ok",
+   "title": "评测集要不要建",
+   "options": {
+    "option_a": "A",
+    "option_b": "C",
+    "option_c": "B"
+   }
   },
-
-  "_pending_handoff": {
-    "_note": "本表 2026-09-16 完成「23/0/1」重写后，工作区里还有几处需要同步 —— 都在**另一个会话正在改的文件**里，故本表只登记、不代改（避免钻进对方的写入窗口）。",
-    "1_worldclock_scoringKey": "`scripts/WorldClock.gd`：M6-E21/E22/E23 的 `scoringKey` 仍是 `\"none\"`，需改为 `\"E40\"`/`\"E41\"`/`\"E42\"`。改完之前，`backend/api/e2e_story_flow.py` 的「Godot 源码 scoringKey 与映射表逐条一致」会失败。",
-    "2_e2e_non_scoring_expectation": "`backend/api/e2e_story_flow.py` L207：`non_scoring` 期望值仍是 {M2-E08, M6-E21, M6-E22, M6-E23}，需缩成 {M2-E08}。同文件 L11-17 的文档串与 L14 的「未对齐 10 件」也已过期。",
-    "3_selftest_playable_order": "`backend/api/selftest.py` L111 / L207：断言「第一件走完后的下一件是 M1-E03」「前两件走完后下一件是 M2-E06」——那是旧 9 件 playableOrder 的口径；扩到 24 件后应改为 M1-E02 / M1-E03。文件顶部 L8-9 的「第 1-8 件静默记到别的事件名下」说明也已成为历史。",
-    "4_constants_radar": "`backend/engine_core/app/core/constants.py`：雷达满分口径 40/33/33/31/23/14 与 `validators.py:299` 的提示都写着「按 scoring_cards v2.9 实算」→ 裁到 23 件后必须重算。",
-    "5_report_thresholds": "`backend/engine_core/app/report/__init__.py`：大五 n<5、SDT n<5、每场景 n≥3 的样本门槛在 23 件下会大面积触发，需实测后下调或减模块。"
+  "M1-E04": {
+   "scoringKey": "E03",
+   "align": "ok",
+   "title": "AI 代码标注",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐：Godot option_c 改写为「笼统说『参考了工具』，不细说。」→ 落在卡的 C（半诚实灰色档，删了就没有中间态）。"
+  },
+  "M2-E05": {
+   "scoringKey": "E08",
+   "align": "ok",
+   "title": "客户临时加需求",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐：Godot option_c 由正面选项（小范围验证）改为「先口头答应，回头再说。」→ 落在卡的 C。原 c 更专业，但必须让位给卡的标定。"
+  },
+  "M2-E06": {
+   "scoringKey": "E09",
+   "align": "ok",
+   "title": "Token 成本爆了",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   }
+  },
+  "M2-E07": {
+   "scoringKey": "E10",
+   "align": "ok",
+   "title": "保证不胡说",
+   "options": {
+    "option_a": "C",
+    "option_b": "A",
+    "option_c": "B"
+   }
+  },
+  "M2-E08": {
+   "scoringKey": null,
+   "align": "non_scoring",
+   "title": "熊熊有招训练对局",
+   "options": {},
+   "_todo": "Godot 自创，事件里已声明「本事件是节奏调节，不进入职业测评」。只落日志。**24 件里唯一一件不进测评的。**"
+  },
+  "M3-E09": {
+   "scoringKey": "E14",
+   "align": "ok",
+   "title": "连续加班后心悸",
+   "options": {
+    "option_a": "B",
+    "option_b": "A",
+    "option_c": "C"
+   }
+  },
+  "M3-E10": {
+   "scoringKey": "E17",
+   "align": "ok",
+   "title": "客户现场 Demo 翻车",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐：Godot option_c 由正面选项（展示边界共同复测）改为「说是网络抖了一下，重启试试。」→ 落在卡的 C（硬着头皮演完）。`coverup_demo` 的埋雷端由此坐实在本件的 option_c。"
+  },
+  "M3-E11": {
+   "scoringKey": "E18",
+   "align": "ok",
+   "title": "压测结果与预期冲突",
+   "options": {
+    "option_a": "A",
+    "option_b": "C",
+    "option_c": "B"
+   }
+  },
+  "M3-E12": {
+   "scoringKey": "E19",
+   "align": "ok",
+   "title": "Agent 出错了算谁的",
+   "options": {
+    "option_a": "C",
+    "option_b": "B",
+    "option_c": "A"
+   },
+   "_v2": "2026-09-16 对齐：Godot option_c 改写为「拿日志证明是产品侧规则导致的，不是模型本身的问题。」→ 落在卡的 A。原 a/b 语义本就对（a→C 甩锅、b→B 认流程），只是顺序错位。"
+  },
+  "M4-E13": {
+   "scoringKey": "E23",
+   "align": "ok",
+   "title": "重构路线",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐：**改的是打分卡，不是 Godot** —— 卡的 C 由「外包」改为「拆出高风险链路，边交付边替换」并重标六维（O+1/S+1/N+1、risk 0、H−1、life−1、prof+1、bonus achieved）。理由：「外包」出现在「重构路线」这道题里语义站不住，Godot 那版才是现代重构实践。**全库唯一一处为对齐 Godot 而动的测评标定**（已获拍板）。"
+  },
+  "M4-E14": {
+   "scoringKey": "E24",
+   "align": "ok",
+   "title": "要不要全自动",
+   "options": {
+    "option_a": "C",
+    "option_b": "A",
+    "option_c": "B"
+   },
+   "_soft": "⚠ 历史遗留的软弱对齐：Godot option_c「先灰度开放，让用户能看到理由并申请复核」与卡的 B「拒绝全自动」并非同一决策，option_b 与卡的 A 也只是同族。本轮未在待改清单里，故保持 ok 不动 —— 但**建议后续复核这一件**（它现在是 E24 唯一的选项语义折扣）。"
+  },
+  "M4-E15": {
+   "scoringKey": "E28",
+   "align": "ok",
+   "title": "实习生的署名",
+   "options": {
+    "option_a": "B",
+    "option_b": "A",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 起 E28.C「不管」同时是 `habitual_yield` 的埋雷端（原埋雷端 E31.B 已随裁件归档）。"
+  },
+  "M4-E16": {
+   "scoringKey": "E29",
+   "align": "ok",
+   "title": "核心知识文档化",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐（改 Godot 两处）：option_b「写一篇，但关键判断留在自己脑子里。」→ 卡的 B；option_c「先记着，下个迭代再写。」→ 卡的 C。原 c「封进脚本不让人接触」其实更接近卡的 B，已被替换。"
+  },
+  "M5-E17": {
+   "scoringKey": "E39",
+   "align": "ok",
+   "title": "副业边界",
+   "options": {
+    "option_a": "C",
+    "option_b": "A",
+    "option_c": "B"
+   },
+   "_v2": "2026-09-16 对齐（只改一处措辞）：option_c 改为「先向公司报备边界，确认不涉业务后再接。」→ 明确落在卡的 B（接但严格避嫌）。成本最低的一条。"
+  },
+  "M5-E18": {
+   "scoringKey": "E32",
+   "align": "ok",
+   "title": "Agent 该有人设吗",
+   "options": {
+    "option_a": "C",
+    "option_b": "A",
+    "option_c": "B"
+   }
+  },
+  "M5-E19": {
+   "scoringKey": "E33",
+   "align": "ok",
+   "title": "吹哨两难",
+   "options": {
+    "option_a": "B",
+    "option_b": "A",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐（只改一处措辞）：option_a 改为「先私下反馈，不走正式渠道。」→ 落在卡的 B（匿名反馈）。b→A、c→C 不动。"
+  },
+  "M5-E20": {
+   "scoringKey": "E35",
+   "align": "ok",
+   "title": "终局答辩",
+   "options": {
+    "option_a": "B",
+    "option_b": "A",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐：Godot option_c 由「强调个人判断」改为「讲团队和带出来的人。」→ 落在卡的 C。原方向与卡相反。"
+  },
+  "M6-E21": {
+   "scoringKey": "E40",
+   "align": "ok",
+   "title": "交接人不照做",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16（v2.0）：由 non_scoring 转为打分卡。新写卡 E40 顶替原本 scoringKey:none 的浪费位（24 件基准拍板 (b) 方案）。✅ 2026-09-17 Godot 侧 `scripts/WorldClock.gd` 的 scoringKey 已由 none 改为 E40。"
+  },
+  "M6-E22": {
+   "scoringKey": "E41",
+   "align": "ok",
+   "title": "谁来定义成功",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16（v2.0）：由 non_scoring 转为打分卡。新写卡 E41 顶替原本 scoringKey:none 的浪费位（24 件基准拍板 (b) 方案）。✅ 2026-09-17 Godot 侧 `scripts/WorldClock.gd` 的 scoringKey 已由 none 改为 E41。"
+  },
+  "M6-E23": {
+   "scoringKey": "E42",
+   "align": "ok",
+   "title": "把故事说到哪一步",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16（v2.0）：由 non_scoring 转为打分卡。新写卡 E42 顶替原本 scoringKey:none 的浪费位（24 件基准拍板 (b) 方案）。✅ 2026-09-17 Godot 侧 `scripts/WorldClock.gd` 的 scoringKey 已由 none 改为 E42。"
+  },
+  "M6-E24": {
+   "scoringKey": "C5",
+   "align": "ok",
+   "title": "传承与新局终局答辩",
+   "options": {
+    "option_a": "A",
+    "option_b": "B",
+    "option_c": "C"
+   },
+   "_v2": "2026-09-16 对齐：成就节点 C5 并入本件（用户拍板），卡改为 act 6 主线终局卡、去掉 type/light_decision，三个选项与 Godot 文案逐字对齐（原 C5.A「从头讲清楚，包括当年踩过的坑」的语义并入卡的 B）。"
   }
+ },
+ "playableOrder": {
+  "_note": "可连续承接的 Godot 事件顺序 = 24 件全部（含 non_scoring 的 M2-E08；它 scoringKey 为 null，构建 playable_engine 时会被自动过滤，所以放进列表无害）。**24 件全部对齐后，本列表已等价于打分卡的全量在册 schedule**，顺序校验仍然有效：缺件不会卡死链路，错位仍会被挡住。顺序 = Godot 叙事顺序（六幕 × 4 件）。",
+  "_version": "2.0",
+  "list": [
+   "M1-E01",
+   "M1-E02",
+   "M1-E03",
+   "M1-E04",
+   "M2-E05",
+   "M2-E06",
+   "M2-E07",
+   "M2-E08",
+   "M3-E09",
+   "M3-E10",
+   "M3-E11",
+   "M3-E12",
+   "M4-E13",
+   "M4-E14",
+   "M4-E15",
+   "M4-E16",
+   "M5-E17",
+   "M5-E18",
+   "M5-E19",
+   "M5-E20",
+   "M6-E21",
+   "M6-E22",
+   "M6-E23",
+   "M6-E24"
+  ]
+ },
+ "coverage": {
+  "_note": "覆盖度对账用，不上报不进报告。24 = 23 已对齐（进测评）+ 1 不进测评（M2-E08）。",
+  "godotEvents": 24,
+  "aligned": 23,
+  "pendingRewrite": 0,
+  "nonScoring": 1,
+  "scoringNodes": 23,
+  "scoringNodesTotal": 23,
+  "scoringCardsVersion": "3.0",
+  "missingNodes": {
+   "_note": "24 件基准下不再进测评的卡（= `scoring_cards.json` 的 `_archived.ids`）。**数据仍在打分卡文件里**，只是从 `_index` 摘出，不进任何统计。要复活某张卡，把它加回 `_index` 并在这里删掉即可。",
+   "archived": [
+    "E02",
+    "E06",
+    "E07",
+    "E11",
+    "E12",
+    "E13",
+    "E15",
+    "E16",
+    "E20",
+    "E21",
+    "E22",
+    "E25",
+    "E26",
+    "E27",
+    "E30",
+    "E31",
+    "E34",
+    "E36",
+    "E37",
+    "E38",
+    "C1",
+    "C2",
+    "C3",
+    "C4"
+   ],
+   "count": 24
+  }
+ },
+ "_pending_handoff": {
+  "_note": "本表 2026-09-16 完成「23/0/1」重写后遗留的同步项。✅ 1/2/3 已于 2026-09-17 收口（WorldClock 的 scoringKey + 两套自检的旧断言）；未结的只剩 4/5，两者都要等产品口径拍板，不是代码能单方面定的。",
+  "1_worldclock_scoringKey": "✅ 已收口 2026-09-17：`scripts/WorldClock.gd` 的 M6-E21/E22/E23 的 scoringKey 已改为 E40/E41/E42。",
+  "2_e2e_non_scoring_expectation": "✅ 已收口 2026-09-17：`e2e_story_flow.py` 的 non_scoring 期望缩成 {M2-E08}；文档串里的旧「未对齐 10 件」同步改掉。",
+  "3_selftest_playable_order": "✅ 已收口 2026-09-17：`selftest.py` 的推进断言改为 24 件口径（M1-E01→M1-E02→M1-E03→M1-E04，决策数 2→3）；另新增 ⑦b 用临时映射表守住「未对齐 → 409」这条回归，以及把 C1 临时补回引擎登记表来保住成就推进通道的验证。",
+  "4_constants_radar": "⚠ 未结：`backend/engine_core/app/core/constants.py` 的雷达满分口径 40/33/33/31/23/14 是按 39 件实算的 → 裁到 23 件后必须重算。属产品口径，需策划拍板后再动（已在 constants.py 里留注释登记）。",
+  "5_report_thresholds": "⚠ 未结：`backend/engine_core/app/report/__init__.py` 的大五 n<5、SDT n<5、每场景 n≥3 的样本门槛，在 23 件下会大面积触发。留到 Batch 3 实测后决定「下调门槛」还是「减模块」。"
+ }
 }
