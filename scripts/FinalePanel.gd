@@ -40,10 +40,13 @@ var _bears: Array = []          # relation_overview() 输出：[{id,name,level,s
 var _farewell: Dictionary = {}   # npc_id -> 实际渲染的告别台词（供探针断言）
 var _badge: Dictionary = {}      # npc_id -> 档色（Color，供探针断言）
 var _replay_titles: Array = []   # 六幕标题（供探针断言）
+var _replay_head: String = "你走过的六幕"  # 回放条小标题（数据里给了就用数据的）
 var _on_view_report: Callable = Callable()
 
 var _panel: Panel
 var _content: VBoxContainer
+var _scroll: ScrollContainer
+var _replay_strip: HBoxContainer  # 供探针断言「不横向溢出」
 var _report_btn: Button
 
 
@@ -73,7 +76,8 @@ func _build_static() -> void:
 
 	_panel = Panel.new()
 	_panel.position = Vector2(180, 56)
-	_panel.size = Vector2(1560, 948)
+	# 高度留够：内容高约 710，滚动区 = 高 - 220；压到 948 时会顶破 → 右缘挂一条多余滚动条。
+	_panel.size = Vector2(1560, 996)
 	_panel.add_theme_stylebox_override("panel", _style(COLOR_PAPER, COLOR_WOOD, 12, 7))
 	add_child(_panel)
 
@@ -92,16 +96,20 @@ func _build_static() -> void:
 	scroll.size = Vector2(_panel.size.x - 56, _panel.size.y - 220)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_panel.add_child(scroll)
+	_scroll = scroll
 
 	_content = VBoxContainer.new()
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.custom_minimum_size.x = scroll.size.x - 24
-	_content.add_theme_constant_override("separation", 22)
+	_content.add_theme_constant_override("separation", 14)
 	scroll.add_child(_content)
 
 	_report_btn = _button("查看我的职业报告")
 	_report_btn.position = Vector2(_panel.size.x - 340, _panel.size.y - 78)
 	_report_btn.size = Vector2(300, 52)
+	_report_btn.add_theme_stylebox_override("normal", _style(Color("e8dcc0"), COLOR_BORDER, 8, 2))
+	_report_btn.add_theme_stylebox_override("hover", _style(Color("f0e6cf"), COLOR_ACCENT, 8, 2))
+	_report_btn.add_theme_stylebox_override("pressed", _style(Color("ded0ad"), COLOR_ACCENT, 8, 2))
 	_report_btn.pressed.connect(_on_report_pressed)
 	_panel.add_child(_report_btn)
 
@@ -122,6 +130,7 @@ func _load_farewell() -> void:
 		return
 	var cfg: Dictionary = parsed
 	_replay_titles = Array(cfg.get("acts", []))
+	_replay_head = String(cfg.get("replay_title", _replay_head))
 	var bears_cfg: Dictionary = cfg.get("bears", {})
 	for row in _bears:
 		var d: Dictionary = row
@@ -141,23 +150,28 @@ func _build_content() -> void:
 
 
 ## ① 六幕回放条：六段幕标题，纯叙事，不出现月份数字。
+## ⚠ 段宽必须按可用宽度反算：写死 238 会凑出 6×238+5×14=1498 > 内容宽 1480 →
+##   第六幕被右边缘裁掉，而纯数据断言查不出来（所以探针额外断言「不溢出」）。
 func _build_replay() -> void:
-	var head := _label("你走过的六幕", 20, COLOR_INK)
+	var head := _label(_replay_head, 20, COLOR_INK)
 	_content.add_child(head)
-	var strip := HBoxContainer.new()
-	strip.add_theme_constant_override("separation", 14)
+	_replay_strip = HBoxContainer.new()
+	_replay_strip.add_theme_constant_override("separation", 14)
+	var count: int = maxi(_replay_titles.size(), 1)
+	var seg_w: int = int(floor((_content.custom_minimum_size.x - 14.0 * float(count - 1)) / float(count)))
 	for t in _replay_titles:
 		var seg := Panel.new()
-		seg.custom_minimum_size = Vector2(238, 64)
+		seg.custom_minimum_size = Vector2(seg_w, 64)
 		seg.add_theme_stylebox_override("panel", _style(Color("ece0c6"), COLOR_BORDER, 6, 2))
 		var lab := _label(String(t), 15, COLOR_INK)
-		lab.set_anchors_preset(Control.PRESET_CENTER)
-		lab.position = Vector2(10, 20)
-		lab.size = Vector2(218, 40)
+		# 用 FULL_RECT 预设让文字填满段格再双向居中；别再手动 position+size，
+		# 那样会先按 CENTER 锚点算偏移、矩形对不上，文字会被上/下裁掉。
+		lab.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		seg.add_child(lab)
-		strip.add_child(seg)
-	_content.add_child(strip)
+		_replay_strip.add_child(seg)
+	_content.add_child(_replay_strip)
 
 
 ## ② 人格卡徽章条：四枚档色点 + 关系档人话，即「四位同仁眼中的你」。
@@ -190,11 +204,11 @@ func _build_bear_cards() -> void:
 		var dd: Dictionary = d
 		var npc_id := String(dd.get("id", ""))
 		var card := Panel.new()
-		card.custom_minimum_size = Vector2(_content.custom_minimum_size.x, 96)
+		card.custom_minimum_size = Vector2(_content.custom_minimum_size.x, 88)
 		card.add_theme_stylebox_override("panel", _style(Color("f0e6cf"), COLOR_BORDER, 8, 3))
 		var inner := HBoxContainer.new()
-		inner.position = Vector2(18, 14)
-		inner.size = Vector2(card.custom_minimum_size.x - 36, 68)
+		inner.position = Vector2(18, 13)
+		inner.size = Vector2(card.custom_minimum_size.x - 36, 66)
 		inner.add_theme_constant_override("separation", 14)
 
 		var dot := ColorRect.new()
