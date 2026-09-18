@@ -15,6 +15,7 @@ const MESSAGE_INBOX := preload("res://scripts/MessageInboxPanel.gd")
 ## 「你的处境」常驻页（Batch 6 / V5.27 §2.4 明示原则，最高优先级红线）。
 ## 数值全由服务端下发，本地只渲染。
 const STANDING_PANEL := preload("res://scripts/StandingPanel.gd")
+const FINALE_PANEL := preload("res://scripts/FinalePanel.gd")
 const LEDGER_BOOK := preload("res://scripts/WeekendLedgerBook.gd")
 ## 设置弹窗（2026-09-17 UI 打磨）：操作说明 + 退出游戏收编在这里。
 const SETTINGS_PANEL := preload("res://scripts/SettingsPanel.gd")
@@ -193,6 +194,7 @@ var _unread_dot: Panel
 ## 页面内容全来自服务端下发（ApiClient.server_state），本地不估算。
 var _standing_panel
 var _standing_dot: Panel
+var _finale
 ## 开页前世界时钟是不是在跑。这一页是「随时能翻」的，翻的时候别让宵禁把人拽走。
 var _standing_resume_clock := false
 ## 周末手账册（§6.2）：16 页，读 user://workplace_town_weekends.jsonl。同一个停钟待遇。
@@ -2516,6 +2518,9 @@ func _on_story_outcome_acknowledged(event_id: String, choice_id: String, duratio
 		_interior_preview.enable_exploration()
 	# 补一次宵禁检查：23:00 撞上主线事件时，先让玩家把结果看完再送回宿舍。
 	_check_curfew(WorldClock.snapshot())
+	# 终局答辩（第 48 月）结算完 → 进入终局演出（六幕回放 + 四熊告别 + 报告交棒）。
+	if event_id == "M6-E24":
+		_open_finale()
 
 ## 训练谷面板：按需实例化一次（同 free_time_panel 惯例）。
 ## 奖励落账在面板内部走 MonthlyLife.add_money；reward_earned 信号留给对局遥测（暂缓）。
@@ -2526,6 +2531,16 @@ func _open_training_valley() -> void:
 		add_child(_training_panel)
 	if _monthly_life != null:
 		_training_panel.open(_monthly_life.month)
+
+
+## 终局演出（Batch 5 第 3 轮 · 6E）：M6-E24 结算后由 _on_story_outcome_acknowledged 触发。
+## 报告交棒交给 FinalePanel 默认的「查看我的职业报告」按钮（直接实例化 ReportPanel.open()）。
+func _open_finale() -> void:
+	if _finale == null:
+		_finale = FINALE_PANEL.new()
+		add_child(_finale)
+	if _monthly_life != null:
+		_finale.setup(_monthly_life.relation_overview())
 
 
 func _on_decision_opened(event_id: String) -> void:
