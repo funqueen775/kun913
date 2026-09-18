@@ -100,6 +100,9 @@ class GameState:
     promotion_windows: list[dict] = field(default_factory=list)
     consecutive_promotion_failures: int = 0
     crisis_talks: list[dict] = field(default_factory=list)
+    # 已做过「月末尾巴」结算的月份（跑批逐月自然覆盖；服务层逐事件跳跃，靠它补）。
+    # 幂等锚：关卡/生存轨都只允许同一月结算一次，重放或重复上报不会翻倍。
+    settled_months: list[int] = field(default_factory=list)
 
     # ---------------- 生存轨
     survival_state: str = "stable"

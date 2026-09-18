@@ -67,6 +67,7 @@ sys.path.insert(0, str(_ENGINE_ROOT))
 from app.core.loader import load  # noqa: E402
 from app.core import constants as C  # noqa: E402
 from app.engine import promotion as pr  # noqa: E402
+from app.engine import survival as sv  # noqa: E402
 from app.engine import timeline as tl  # noqa: E402
 from app.engine.settlement import normalize_mainline, settle  # noqa: E402
 from app.engine.state import DecisionRecord, GameState  # noqa: E402
@@ -266,35 +267,53 @@ class Engine:
         choice = normalize_mainline(self.reg, engine_key, option)
         result = settle(st, choice, self.reg, month=month,
                         hesitation_ms=hesitation_ms, switch_count=switch_count)
-        result["promotionWindows"] = self.settle_promotion_windows(st)
+        # 月末尾巴（补齐跨过的月份：考核窗 + 生存轨）。
+        # 返回值里只留 promotionWindows —— 生存轨的迁移结果归 _session_state
+        # 下发（那里才是「你的处境」页读的地方），事件回包不必再多一份。
+        tails = self.settle_months_tail(st)
+        result["promotionWindows"] = [t["promotion"] for t in tails if "promotion" in t]
         return result
 
-    def settle_promotion_windows(self, st: GameState) -> list[dict]:
-        """补齐「已跨过但还没结算」的考核窗（第 6/12/18/24/30/36/42 月）。
+    def settle_months_tail(self, st: GameState) -> list[dict]:
+        """补齐「已跨过但还没做月末尾巴」的月份（含考核窗 + 生存轨）。
 
-        跑批路径（simulation.py）是**逐月**循环，考核月自然命中一次；
+        跑批路径（simulation.run）是**逐月**循环，月末的东西每月自然命中一次；
         服务层是**逐事件跳跃**推进 —— 月份取自事件排期 sched_month，
-        相邻两件事之间可能跨过 1-3 个月，考核月会被跳过去。
-        这里在每次结算后，按月份升序把跨过的窗补上。
+        相邻两件事之间可能跨过 1-3 个月，中间的月份会被整个跳过去。
+        这里在每次结算后，按月份升序把跨过的月份补齐。
 
-        为什么补结算是对的：每个窗结算时 promotion.settle_window 会把
-        window_cumulative 清零，所以下一个窗拿到的恰好是「自上个窗以来」
-        的累积，与跑批逐个窗结算的语义一致。
+        月末尾巴的顺序照跑批 simulation.run 的月末段（第 212-236 行）：
+            ① 考核窗：survival.raise_flags → promotion.settle_window
+            ② 生存轨：survival.monthly_tick
+        两者不可换序：raise_flags 读的是 window_flags，而 settle_window 会把它清零。
 
-        幂等：已结算的月份记在 st.promotion_windows 里，而 state 落库 →
-        重放 / 重复上报不会把同一个窗结算两次。
+        为什么补是对的：
+          - settle_window 结算后会重置 window_cumulative / window_flags，
+            所以补一个窗拿到的恰好是「自上个窗以来」的累积，与跑批语义一致；
+          - monthly_tick 每月只让 months_since_mistake +1，逐月补与连续推进等价，
+            「连续 6 个月无失误自动回升一级」的自我修复也因此不会在跳月时被吃掉。
 
-        ⚠ 刻意**不接** survival.raise_flags：跑批在 settle_window 前调它，
-        把窗内隐瞒类 flag 记一次失误。但生存轨整体（monthly_tick 自我修复）
-        在服务层根本没接 —— 只记失误、不修复，会让 strikes 单向累积恶化。
-        留待生存轨整条接入时一起做，这里不欠新债。
+        幂等锚是 st.settled_months（**落库**，不是内存）→ 重放 / 重复上报
+        不会把同一个月跑两遍，这也是它与 promotion.promotion_windows 的区别。
+
+        ⚠ 2026-09-18 前这里只补考核窗，生存轨整条没接 —— 结果是「只记失误、不修复」，
+        strikes 单向累积恶化。现在补齐整条月末尾巴。
         """
-        settled = {w.get("month") for w in st.promotion_windows}
+        done = set(st.settled_months)
         out: list[dict] = []
-        for m in C.PROMOTION_MONTHS:
-            if m <= st.month and m not in settled:
-                out.append(pr.settle_window(st, m))
-                settled.add(m)
+        for m in range(1, st.month + 1):
+            if m in done:
+                continue
+            done.add(m)
+            st.settled_months.append(m)
+            rec: dict = {"month": m}
+            if m in C.PROMOTION_MONTHS:
+                # ① 窗结算前先看本窗有没有新增隐瞒（生存轨的「输入」）
+                sv.raise_flags(st, m)
+                rec["promotion"] = pr.settle_window(st, m)
+            # ② 生存轨月度推进：状态迁移 + 自我修复
+            rec["survival"] = sv.monthly_tick(st, m)
+            out.append(rec)
         return out
 
     def next_undone(self, st: GameState) -> str | None:
@@ -369,12 +388,71 @@ class Service:
             "completedActivityIds": [],
             "unlockedRegionIds": sorted(set(regions)),
             "energy": st.life,
+            # 职级是**服务端-gameplay 权威值**（2026-09-17 拍板：口径只留一份）。
+            # Godot 只负责显示，本地不算 —— 否则同一个东西会有两份会漂移的真相。
+            "level": st.level,
+            # 下一次考评落在第几个月。**服务端算**：Godot 不必再抄一份考核月日历，
+            # 否则 §2.3 的七个窗会在两边各写一遍，改一处忘一处。
+            # None（全部考完）时缺席而不是给 0 —— 「没有下一次了」不该显示成「第 0 月」。
+            **({"nextAssessmentMonth": m} if (m := next((x for x in C.PROMOTION_MONTHS
+                                                        if x > st.month), None)) else {}),
             "npcAffinity": dict(st.npc_affinity),
+            # 显示要用的是这一个（只有 Lv 称号），不是上面那个 0-100 原始分。
+            # npcAffinity 是契约既有字段、给 NPC 记忆的性格推断用，**UI 不读它** ——
+            # free_time_system.json 的红线是「好感对玩家隐藏」。
+            "npcRelationStage": self._relation_stages(st),
+            "survivalState": self._survival_view(st),
             "flags": {f: True for f in st.flags},
             "scoreSummary": {"decisions": float(st.seq)},
             # 版本号跟打分卡走，别写死 —— 硬编码会在换版后骗人
             "scoringVersion": "v" + str(self.engine.reg.version.get("scoring_cards", "?")),
         }
+
+    @staticmethod
+    def _relation_stages(st: GameState) -> dict[str, str]:
+        """引擎侧 npc_level(int) → 契约的 "Lv1".."Lv5" 字符串。
+
+        没有关系系统的 NPC（陈工 relation:false）本来就不在 npc_level 里，
+        下发自然是缺席 —— 正好对上契约「NPCs without a relation system are absent」。
+        """
+        return {k: f"Lv{int(v)}" for k, v in st.npc_level.items() if int(v) >= 1}
+
+    @staticmethod
+    def _survival_view(st: GameState) -> dict:
+        """生存轨的玩家可见视图（剧情册 §2.4 明示原则，最高优先级红线）。
+
+        三件套缺一不可：现在叫什么、为什么会走到这里、还剩多少余地。
+        ⚠ 全部是行为语言：**不出现 strike 计数、不出现阈值**
+        （§2.3「阈值数字永不出现」+ §2.4「用文字，不用数字和血条」）。
+        因此自我修复的进度也只给一句话的分档，不给「还剩 N 个月」。
+        """
+        state = st.survival_state
+        recent = list(st.incidents[-5:])
+        view = {
+            "state": state,
+            "label": C.SURVIVAL_CN.get(state, state),
+            # 逐条引具体事件编号（§2.4 要求：「第 3 月的 PR、第 19 月的事故」）
+            "reasons": [f"第 {i.get('month', '?')} 月 · {C.reason_cn(str(i.get('reason', '')))}"
+                        for i in recent],
+        }
+        # 降级必预警（§2.4 铁律 3）：不存在跳变死亡，进危急必须说清下一步
+        view["warning"] = {
+            "observation": "再出一次岔子，就会有人正式来找你谈。",
+            "critical": "再一次重大失误，就会被叫去正式谈话。",
+            "last_talk": "谈话已经约下了 —— 该决定怎么走。",
+            "exited": "这条路已经走完。",
+        }.get(state, "")
+        # 自我修复的余地也说清楚（§2.4 保护条款：连续 6 个月无失误回升一级）
+        clean = int(st.months_since_mistake)
+        if clean <= 0:
+            view["healingLine"] = ""
+        elif clean <= 2:
+            view["healingLine"] = "出了那件事之后，还没稳住太久。"
+        elif clean <= 4:
+            view["healingLine"] = "连着几个月干净，气氛缓过来了。"
+        else:
+            view["healingLine"] = "快翻篇了 —— 再稳几个月，之前的账就不提了。"
+        return view
 
     def session_response(self, sid: str, content_version: str, st: GameState) -> dict:
         return {"sessionId": sid, "contentVersion": content_version,

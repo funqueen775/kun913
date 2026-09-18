@@ -426,7 +426,51 @@ def main() -> int:
           isinstance(zero, dict) and zero.get("n") == 0 and zero.get("line") == "",
           str(zero))
 
-    # ---- ⑭ 未知会话 404
+    # ---- ⑮ 职级与生存轨下发（2026-09-18）
+    # 数值权威在服务端：Godot 只显示、本地不算（2026-09-17 拍板，口径只留一份）。
+    # 这段同时守住两条红线：§2.3「阈值数字永不出现」、§2.4「用文字，不用数字和血条」。
+    code, s4 = c.req("POST", "/api/v1/sessions", {"contentVersion": "v1"})
+    st_raw4 = (s4.get("state") or {}) if code == 201 else {}
+    check("建会话就下发 level（职级显示的唯一来源）",
+          isinstance(st_raw4.get("level"), int) and 1 <= st_raw4["level"] <= C.LEVEL_MAX,
+          str(st_raw4.get("level")))
+    check("建会话就下发 npcRelationStage 且是 LvN 形式",
+          all(isinstance(v, str) and v.startswith("Lv")
+              for v in (st_raw4.get("npcRelationStage") or {}).values()),
+          str(st_raw4.get("npcRelationStage")))
+    sv4 = st_raw4.get("survivalState") or {}
+    check("新会话生存轨 state=stable 且 label 非空",
+          sv4.get("state") == "stable" and bool(sv4.get("label")), str(sv4))
+    check("生存轨下发不含 strikes 计数（§2.4 用文字不用数字）",
+          "strikes" not in sv4, str(sv4))
+
+    # 事故原因在 incidents 里是机器口径（带 flag 名与阈值），下发前必须过翻译。
+    probe = srv.Engine.state_from_json(svc.store.get_session(sid3)["state_json"])
+    probe.incidents = [{"month": 24, "reason": "隐瞒类 flag：blame_shift", "severity": 1},
+                       {"month": 30, "reason": "风险累积引爆事故（risk_cumulative>=5）",
+                        "severity": 1}]
+    edge = srv.Service._survival_view(probe)
+    joined = " / ".join(edge.get("reasons") or [])
+    check("事故原因翻译成行为语言（flag 名不外露）", "flag" not in joined, joined)
+    check("事故原因不外露内部字段与阈值（risk_cumulative）",
+          "risk_cumulative" not in joined, joined)
+    # 降级必预警：进危急必须明示下一步是什么，不存在跳变死亡
+    probe.survival_state = "critical"
+    warn = srv.Service._survival_view(probe).get("warning", "")
+    check("危急状态明示「再一次重大失误将触发正式谈话」", "谈话" in warn, warn)
+    # 自我修复的余地要说得出，但只能给一句话的分档、不能给「还剩 N 个月」
+    check("自我修复进度给的是句子而不是计数",
+          isinstance(edge.get("healingLine"), str), str(edge.get("healingLine")))
+
+    # 月末尾巴幂等：跳并肩 opportunities 不错乱，重复推进不得把同一个月跑第二遍
+    before = (len(st3.promotion_windows), st3.survival_strikes, list(st3.settled_months))
+    svc.engine.settle_months_tail(st3)
+    after = (len(st3.promotion_windows), st3.survival_strikes, list(st3.settled_months))
+    check("月末尾巴幂等：重复调用不重复结算", before == after, f"{before} → {after}")
+    check("月末尾巴按稳态记录了已结算月份", len(st3.settled_months) == st3.month,
+          f"settled={len(st3.settled_months)} month={st3.month}")
+
+    # ---- ⑯ 未知会话 404
     code, _ = c.req("GET", f"/api/v1/sessions/{uuid.uuid4()}")
     check("未知会话 404", code == 404)
 

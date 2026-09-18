@@ -8,6 +8,8 @@
 """
 
 # ---------------------------------------------------------------- 六维（隐藏账本）
+import re
+
 DIM_KEYS = ("S", "O", "N", "H", "D", "risk")
 DIM_CN = {
     "S": "技能",
@@ -130,6 +132,39 @@ SURVIVAL_CN = {
 }
 NEWBIE_PROTECT_MONTHS = 12      # 前 12 个月不进危急
 SELF_HEAL_MONTHS = 6            # 连续 6 个月无新增失误 → 自动回升一级
+
+# ---------------------------------------------------------------- 玩家可见表述
+# 剧情册 §2.4 明示原则（最高优先级红线）：每次处境变化都要看得见、说得出原因，
+# 但也要求「用行为语言」，§2.3 另有一条「阈值数字永不出现」。
+# incidents 存的是引擎内部口径（带 flag 名、risk_cumulative>=5 这类字段名与阈值），
+# **下发前端前必须过这一层翻译**，否则等于把书签破例漏给玩家。
+CONCEAL_CN = {
+    "ai_undisclosed": "AI 帮了忙这件事，你没有说明",
+    "blame_shift": "把问题推给了别人",
+    "data_risk": "数据里的风险，你压着没上报",
+}
+
+_INCIDENT_RULES = (
+    # incidents 里的机器口径                → 玩家读到的那句话
+    (re.compile(r"^隐瞒类 flag：(\w+)$"),
+     lambda m: CONCEAL_CN.get(m.group(1), m.group(1))),
+    (re.compile(r"^风险累积引爆事故（.*）$"),
+     lambda _m: "之前埋下的雷，终究炸了"),
+)
+
+
+def reason_cn(reason: str) -> str:
+    """事故原因 → 玩家可见口径。
+
+    匹配不上时**原样返回**：宁可让一句生硬的内部措辞漏出去（肉眼可查、随即可修），
+    也不擅自改写成「可能其实发生了别的事」—— 编出来的明示比不明示更糟。
+    """
+    raw = reason or ""
+    for pattern, render in _INCIDENT_RULES:
+        m = pattern.match(raw)
+        if m:
+            return render(m)
+    return raw
 
 # ---------------------------------------------------------------- 自由活动
 FREE_TIME_CADENCE = 3

@@ -218,6 +218,46 @@ components:
           additionalProperties:
             type: string
             enum: [Lv1, Lv2, Lv3, Lv4, Lv5]
+        survivalState:
+          type: object
+          description: >
+            Survival track as the player may see it (story doc V5.27 §2.4, highest-priority
+            Explicitness rule): what it is called, why it got here, and how much room is
+            left. Text only — never a strike count and never a bar.
+          properties:
+            state:
+              type: string
+              enum: [stable, observation, critical, last_talk, exited]
+            label: { type: string, example: 稳定 }
+            reasons:
+              type: array
+              description: >
+                Behavioural-language entries referencing the concrete incident month, e.g.
+                "第 24 月 · 把问题推给了别人". Internal flag names and thresholds must
+                never appear here (§2.3 no-thresholds rule).
+              items: { type: string }
+            warning:
+              type: string
+              description: >
+                Empty while stable. Non-empty whenever degraded: spells out what the next
+                mistake triggers, so there is no death by ambush.
+            healingLine:
+              type: string
+              description: Sentence-form progress toward self-repair; deliberately not a countdown.
+        level:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: >
+            Current rank L1-L7, issued by the server. The client renders it and never
+            computes or mirrors it — one authoritative copy only (2026-09-17 decision).
+        nextAssessmentMonth:
+          type: integer
+          minimum: 1
+          description: >
+            Next staff assessment month. Computed server-side so the client never has to
+            keep its own copy of the assessment calendar. Absent once every window has
+            passed — "there isn't a next one" must not read as month 0.
         flags: { type: object, additionalProperties: true }
         scoreSummary: { type: object, additionalProperties: { type: number } }
         scoringVersion: { type: string, example: v1 }
