@@ -29,7 +29,7 @@ const COLOR_DOT_FULL := Color("ef9f27")
 const COLOR_DOT_EMPTY := Color(0.353, 0.227, 0.141)
 const COLOR_LINE := Color(0.831, 0.604, 0.298, 0.35)
 
-const CARD_SIZE := Vector2(560, 560)
+const CARD_SIZE := Vector2(560, 632)
 
 ## 四个动作（id 与 MonthlyLife.spend_energy 的入参一致）。
 const ACTIONS := [
@@ -52,6 +52,11 @@ var _dots: Array[Panel] = []
 var _count_label: Label
 var _note_label: Label
 var _buttons: Array[Button] = []
+## 熊友卡搭档协助（Batch 5 §6.2）：空串 = 自己上，不叫人。
+var _selected_buddy := ""
+var _buddy_title: Label
+var _buddy_row: HBoxContainer
+var _buddy_chips := {}
 
 
 func setup(life) -> void:
@@ -193,12 +198,24 @@ func _build_content() -> void:
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_card.add_child(divider)
 
+	# 搭档协助（Batch 5 · 机制文档 §6.2）：Lv3「伙伴」后可选一名同事，
+	# 同一次行动只结算一名、只放大公开资源。没解锁时不摆空位，只留一行说明。
+	_buddy_title = _label("搭档协助", 15, COLOR_SUB)
+	_buddy_title.position = Vector2(34, 170)
+	_buddy_title.size = Vector2(CARD_SIZE.x - 68.0, 20)
+	_card.add_child(_buddy_title)
+	_buddy_row = HBoxContainer.new()
+	_buddy_row.position = Vector2(32, 194)
+	_buddy_row.size = Vector2(CARD_SIZE.x - 64.0, 34)
+	_buddy_row.add_theme_constant_override("separation", 8)
+	_card.add_child(_buddy_row)
+
 	# 4 张动作卡：整卡可点，左图标圆 + 动作名 + 副文本。
 	var card_x := 32.0
 	var card_w := CARD_SIZE.x - 64.0
 	for i in ACTIONS.size():
 		var action: Dictionary = ACTIONS[i]
-		var y := 176.0 + 86.0 * i
+		var y := 240.0 + 86.0 * i
 		var card_button := Button.new()
 		card_button.position = Vector2(card_x, y)
 		card_button.size = Vector2(card_w, 74)
@@ -241,11 +258,12 @@ func _build_content() -> void:
 
 	# 反馈便签：点完动作在这里说一句人话。
 	_note_label = _label("", 15, COLOR_SUB)
-	_note_label.position = Vector2(34, 524)
+	_note_label.position = Vector2(34, 596)
 	_note_label.size = Vector2(CARD_SIZE.x - 68.0, 24)
 	_note_label.clip_text = true
 	_note_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_card.add_child(_note_label)
+	_rebuild_buddy_chips()
 
 
 ## 点一张动作卡 = 花 1 点精力（MonthlyLife.spend_energy 是唯一消费通路，
@@ -253,7 +271,7 @@ func _build_content() -> void:
 func _on_action_pressed(action_id: String) -> void:
 	if _life == null:
 		return
-	var result: Dictionary = _life.spend_energy(action_id)
+	var result: Dictionary = _life.spend_energy(action_id, _selected_buddy)
 	if not bool(result.get("ok", false)):
 		# 拒绝原因直接用 MonthlyLife 的话（精力用完 / 主线没过完，两条分支文案都在那）。
 		_note_label.text = String(result.get("text", "这个月的 3 点用完了，下个月初补满"))
@@ -292,6 +310,79 @@ func _refresh(_state: Dictionary = {}) -> void:
 		button.disabled = no_energy or main_locked
 	if main_locked:
 		_note_label.text = "本月主线还没过完——先去完成主线事件，再来花精力。"
+	_rebuild_buddy_chips()
+
+
+## ---------- 熊友卡搭档协助（Batch 5 §6.2）----------
+
+## 重列搭档 chips：「自己」+ 已解锁（Lv3）的同事。没解锁任何同事时只剩「自己」，
+## 标题带一句人话（不暴露好感数值/等级）。
+func _rebuild_buddy_chips() -> void:
+	if _buddy_row == null:
+		return
+	var options: Array = [{"id": "", "name": "自己"}]
+	if _life != null:
+		for npc_id: String in _life.unlocked_buddies():
+			var card: Dictionary = _life.buddy_card_for(npc_id)
+			options.append({"id": npc_id, "name": String(card.get("name", npc_id))})
+	# 选中项若已不在列表（理论上不会），退回「自己」
+	var ids: Array = []
+	for opt: Dictionary in options:
+		ids.append(String(opt["id"]))
+	if not ids.has(_selected_buddy):
+		_selected_buddy = ""
+	for child in _buddy_row.get_children():
+		child.queue_free()
+	_buddy_chips.clear()
+	if options.size() <= 1:
+		_buddy_title.text = "搭档协助 · 关系到「伙伴」后，会有人愿意搭把手"
+	else:
+		_buddy_title.text = "搭档协助 · 同一次行动只叫一人，只加成公开数值"
+	var chip_w := int((CARD_SIZE.x - 64.0 - 8.0 * (options.size() - 1)) / options.size())
+	for opt: Dictionary in options:
+		var chip := Button.new()
+		chip.text = String(opt["name"])
+		chip.custom_minimum_size = Vector2(chip_w, 34)
+		chip.add_theme_font_override("font", FONT)
+		chip.add_theme_font_size_override("font_size", 16)
+		chip.focus_mode = Control.FOCUS_NONE
+		chip.pressed.connect(_on_buddy_chip_pressed.bind(String(opt["id"])))
+		_buddy_row.add_child(chip)
+		_buddy_chips[String(opt["id"])] = chip
+	_apply_buddy_styles()
+
+
+func _apply_buddy_styles() -> void:
+	for id: String in _buddy_chips.keys():
+		var chip: Button = _buddy_chips[id]
+		if id == _selected_buddy:
+			chip.add_theme_stylebox_override("normal", _button_style(COLOR_CHIP, Color("ffe0a0"), 10))
+			chip.add_theme_stylebox_override("hover", _button_style(COLOR_CHIP, Color("ffe0a0"), 10))
+			chip.add_theme_color_override("font_color", COLOR_CHIP_TEXT)
+		else:
+			chip.add_theme_stylebox_override("normal", _button_style(COLOR_CARD, COLOR_BORDER, 10))
+			chip.add_theme_stylebox_override("hover", _button_style(COLOR_CARD_HOVER, Color("ffc453"), 10))
+			chip.add_theme_color_override("font_color", COLOR_TEXT)
+
+
+func _on_buddy_chip_pressed(buddy_id: String) -> void:
+	_selected_buddy = buddy_id
+	_apply_buddy_styles()
+	if buddy_id.is_empty():
+		_note_label.text = "这次自己上。"
+		return
+	var card: Dictionary = _life.buddy_card_for(buddy_id)
+	var assist: Dictionary = card.get("assist", {})
+	var scope := String(assist.get("action", "*"))
+	var where := "任何一件事" if scope == "*" else _action_name(scope)
+	_note_label.text = "%s 会在「%s」上搭把手。" % [String(card.get("name", "")), where]
+
+
+func _action_name(action_id: String) -> String:
+	for action: Dictionary in ACTIONS:
+		if String(action["id"]) == action_id:
+			return String(action["label"])
+	return action_id
 
 
 ## ---------- 交互与样式工具（同 SettingsPanel 基线） ----------

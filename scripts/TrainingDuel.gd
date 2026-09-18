@@ -11,11 +11,14 @@ const CONFIG_PATH := "res://data/story/training_valley.json"
 
 ## 白名单：snapshot() 只允许出现这些顶层键（probe_training_duel 会断言）
 const SNAPSHOT_KEYS := [
-	"level_id", "opponent", "hp", "max_hp", "hands", "actor", "phase",
+	"level_id", "partner_id", "opponent", "hp", "max_hp", "hands", "actor", "phase",
 	"rounds_done", "over", "winner", "current_roll", "last_turn", "turn_count",
 ]
 
 var level: Dictionary = {}
+## 熊友搭档（Batch 5 §6.3）：{"npc_id","name","ability","value"}；空 = 自己上。
+## 四个旋钮只作用玩家侧：hand_bonus / hand_cap_bonus / damage_bonus / guard_bonus。
+var _partner: Dictionary = {}
 var rng: RandomNumberGenerator
 
 var max_hp := 20
@@ -50,23 +53,33 @@ static func load_config() -> Dictionary:
 
 
 ## 建一局。rng 由调用方注入（探针用固定种子复现骰运）。
-static func create(p_level: Dictionary, p_rng: RandomNumberGenerator) -> TrainingDuel:
+## partner 可选：{"npc_id","name","ability","value"}，能力只作用玩家侧。
+static func create(p_level: Dictionary, p_rng: RandomNumberGenerator, p_partner := {}) -> TrainingDuel:
 	var cfg := load_config()
 	var d: TrainingDuel = new()
 	d.level = p_level
 	d.rng = p_rng
 	d._rules = cfg.get("rules", {})
+	d._partner = p_partner if p_partner is Dictionary else {}
 	var rules: Dictionary = d._rules
 	d.max_hp = int(rules.get("hp", 20))
 	d.hp = {"player": d.max_hp, "opponent": d.max_hp}
 	for card: Dictionary in cfg.get("cards", []):
 		d.cards_by_id[String(card.get("id"))] = card
 		d.pool.append(String(card.get("id")))
-	var cap := int(rules.get("start_hand", 3))
-	for i in cap:
+	var base_hand := int(rules.get("start_hand", 3))
+	for i in base_hand + d._ability_value("hand_bonus"):
 		d.hands["player"].append(d._draw_one())
+	for i in base_hand:
 		d.hands["opponent"].append(d._draw_one())
 	return d
+
+
+## 搭档能力（只玩家侧）。name 不匹配就返回 0，等于没有加成。
+func _ability_value(name: String) -> int:
+	if String(_partner.get("ability", "")) != name:
+		return 0
+	return int(_partner.get("value", 0))
 
 
 func _draw_one() -> String:
@@ -140,6 +153,9 @@ func play_defend_card(card_id: String) -> bool:
 	hand.erase(card_id)
 	if String(card.get("effect", "")) == "reduce_3":
 		_guard = int(_rules.get("guard_reduce", 3))
+		# 搭档「留一手」只给玩家侧（老周）
+		if defender_id() == "player":
+			_guard += _ability_value("guard_bonus")
 	_settle()
 	return true
 
@@ -153,6 +169,9 @@ func pass_defend() -> void:
 ## ── 结算 ─────────────────────────────────────────────────────
 func _settle() -> void:
 	var raw := (current_roll + _extra_total) * (2 if _double else 1)
+	# 搭档「进攻性格」只给玩家侧（小林）
+	if actor == "player":
+		raw += _ability_value("damage_bonus")
 	var damage: int = maxi(raw - _guard, 0)
 	var def_id := defender_id()
 	hp[def_id] = maxi(int(hp[def_id]) - damage, 0)
@@ -195,7 +214,9 @@ func _maybe_draw() -> void:
 	if every <= 0 or rounds_done % every != 0:
 		return
 	for side in ["player", "opponent"]:
-		if hands[side].size() < cap:
+		# 搭档「细心兜底」只放宽玩家侧上限（小赵）
+		var side_cap: int = cap + (_ability_value("hand_cap_bonus") if side == "player" else 0)
+		if hands[side].size() < side_cap:
 			hands[side].append(_draw_one())
 
 
@@ -294,6 +315,7 @@ func ai_auto_defend() -> void:
 func snapshot() -> Dictionary:
 	return {
 		"level_id": String(level.get("id", "")),
+		"partner_id": String(_partner.get("npc_id", "")),
 		"opponent": String(level.get("opponent", "")),
 		"hp": hp.duplicate(),
 		"max_hp": max_hp,
