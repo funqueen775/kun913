@@ -10,6 +10,11 @@ const INTERIOR_PREVIEW := preload("res://scripts/InteriorPreview.gd")
 const DORM_ROOM := preload("res://scripts/DormRoom.gd")
 const STORY_EVENT_PANEL := preload("res://scripts/StoryEventPanel.gd")
 const MEMORY_WALL := preload("res://scripts/MemoryWallPanel.gd")
+## 消息匣（Batch 5）：NPC 主动消息的收件箱 —— 「有人记得我」的落点。
+const MESSAGE_INBOX := preload("res://scripts/MessageInboxPanel.gd")
+## 「你的处境」常驻页（Batch 6 / V5.27 §2.4 明示原则，最高优先级红线）。
+## 数值全由服务端下发，本地只渲染。
+const STANDING_PANEL := preload("res://scripts/StandingPanel.gd")
 const LEDGER_BOOK := preload("res://scripts/WeekendLedgerBook.gd")
 ## 设置弹窗（2026-09-17 UI 打磨）：操作说明 + 退出游戏收编在这里。
 const SETTINGS_PANEL := preload("res://scripts/SettingsPanel.gd")
@@ -181,6 +186,15 @@ var _story_event: Dictionary = {}
 var _memory_wall
 ## 开墙前世界时钟是不是在跑。关上要还原，否则玩家会莫名发现时间不走了。
 var _wall_resume_clock := false
+## 消息匣面板 + 「信」钮上的未读红点。
+var _message_inbox
+var _unread_dot: Panel
+## 「你的处境」常驻页（Batch 6）+ 「处」钮上的处境警示点。
+## 页面内容全来自服务端下发（ApiClient.server_state），本地不估算。
+var _standing_panel
+var _standing_dot: Panel
+## 开页前世界时钟是不是在跑。这一页是「随时能翻」的，翻的时候别让宵禁把人拽走。
+var _standing_resume_clock := false
 ## 周末手账册（§6.2）：16 页，读 user://workplace_town_weekends.jsonl。同一个停钟待遇。
 var _ledger_book
 var _ledger_resume_clock := false
@@ -249,6 +263,8 @@ func _ready() -> void:
 	_build_interior_preview()
 	_build_story_event_panel()
 	_build_memory_wall()
+	_build_message_inbox()
+	_build_standing_panel()
 	_build_dorm_room()
 	# 开局就站在宿舍里：黑屏 + 唯一一个「离开宿舍」。
 	_enter_dorm(false)
@@ -1353,6 +1369,8 @@ func _build_hud_button_row(layer: CanvasLayer) -> void:
 		{"glyph": "账", "tip": "周末手账 · 翻看走过的每个周末", "caption": "周末手账", "cb": _open_ledger_book},
 		{"glyph": "忆", "tip": "记忆墙 · 回看一路攒下的便签", "caption": "记忆墙", "cb": _open_memory_wall},
 		{"glyph": "力", "tip": "本月精力 · 花 1 点做一件事", "caption": "本月精力", "cb": _open_energy_modal},
+		{"glyph": "信", "tip": "消息匣 · 谁在这时候想起了你", "caption": "消息匣", "cb": _open_message_inbox},
+		{"glyph": "处", "tip": "你的处境 · 现在站在哪里、为什么", "caption": "你的处境", "cb": _open_standing},
 	]
 	for i in defs.size():
 		var button := _make_circle_button(
@@ -1367,7 +1385,33 @@ func _build_hud_button_row(layer: CanvasLayer) -> void:
 		button.mouse_entered.connect(_show_hud_button_caption.bind(String(defs[i]["caption"])))
 		button.mouse_exited.connect(_on_circle_button_hover.bind(button, 1.0))
 		button.mouse_exited.connect(_hide_hud_button_caption)
-		if String(defs[i]["glyph"]) == "设":
+		if String(defs[i]["glyph"]) == "信":
+			# 未读红点：有消息没人看时才亮。圆钮本身只有 48px，红点挂右上角探出去一点。
+			_unread_dot = Panel.new()
+			_unread_dot.position = Vector2(32, -3)
+			_unread_dot.size = Vector2(14, 14)
+			var dot_style := StyleBoxFlat.new()
+			dot_style.bg_color = Color("e5503f")
+			dot_style.set_corner_radius_all(7)
+			_unread_dot.add_theme_stylebox_override("panel", dot_style)
+			_unread_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_unread_dot.visible = false
+			button.add_child(_unread_dot)
+		elif String(defs[i]["glyph"]) == "处":
+			# 处境警示点：处境一旦不是「稳定」，这颗点就亮 —— 被叫去谈话这件事
+			# 不能等玩家自己想起来翻页才知道。颜色分两级（观察=琥珀 / 危急以上=红），
+			# 但**颜色只是快读的辅助**，语义永远有页面上的文字兜着（§2.4）。
+			_standing_dot = Panel.new()
+			_standing_dot.position = Vector2(32, -3)
+			_standing_dot.size = Vector2(14, 14)
+			var sdot_style := StyleBoxFlat.new()
+			sdot_style.bg_color = Color("e0a63c")
+			sdot_style.set_corner_radius_all(7)
+			_standing_dot.add_theme_stylebox_override("panel", sdot_style)
+			_standing_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_standing_dot.visible = false
+			button.add_child(_standing_dot)
+		elif String(defs[i]["glyph"]) == "设":
 			_settings_button = button
 		elif String(defs[i]["glyph"]) == "账":
 			_ledger_book_button = button
@@ -2116,6 +2160,18 @@ func _build_story_event_panel() -> void:
 	add_child(_story_event_panel)
 
 
+## 消息匣：挂在 MonthlyLife 上（消息在跨月时生成），面板常驻、按需显隐。
+func _build_message_inbox() -> void:
+	_message_inbox = MESSAGE_INBOX.new()
+	_message_inbox.name = "MessageInbox"
+	_message_inbox.setup(_monthly_life)
+	_message_inbox.inbox_closed.connect(_on_message_inbox_closed)
+	add_child(_message_inbox)
+	# 跨月生成消息 → 亮红点。_build_monthly_life() 在 _ready 里先跑，这里拿得到实例。
+	_monthly_life.message_arrived.connect(_on_message_arrived)
+	_refresh_message_badge()
+
+
 ## 心湖记忆墙。数据在磁盘上，所以它是常驻节点 —— 不依附于任何一次剧情事件。
 func _build_memory_wall() -> void:
 	_memory_wall = MEMORY_WALL.new()
@@ -2139,9 +2195,111 @@ func _open_memory_wall() -> void:
 
 
 func _on_memory_wall_closed() -> void:
-	if _wall_resume_clock:
-		WorldClock.set_running(true)
+	# 关墙即把标记消费掉 —— 手账册 / 精力弹窗 / 处境页三个同类面板都是这么写的，
+	# 只有这里漏了（原先靠 _refresh_message_badge() 里一行误置的赋值兜着，
+	# 结果一来消息就把标记清了 → 时钟不恢复）。标记不清的后果是：
+	# 下一次开墙若时钟本来就在停（例如深夜宵禁态），关墙时会被误判成
+	# 「刚才是我停的」而把时钟放回跑步态，等于凭空给时间。
+	var resume := _wall_resume_clock
 	_wall_resume_clock = false
+	if resume:
+		WorldClock.set_running(true)
+
+
+## ---------- 消息匣（Batch 5 · NPC 主动消息） ----------
+
+func _open_message_inbox() -> void:
+	if _message_inbox == null or _monthly_life == null:
+		return
+	if _message_inbox.is_open():
+		return
+	_message_inbox.open()
+	# 打开即已读：红点清零。世界时钟不停——消息是短读，不像一墙便签要慢慢看。
+	_monthly_life.mark_messages_read()
+	_refresh_message_badge()
+
+
+func _on_message_inbox_closed() -> void:
+	_refresh_message_badge()
+
+
+## 新月有人想起你 → 亮红点。
+func _on_message_arrived() -> void:
+	_refresh_message_badge()
+
+
+func _refresh_message_badge() -> void:
+	if _unread_dot == null:
+		return
+	# ⚠ 类型必须写死：_monthly_life 是弱类型成员（理由同 _memory_wall），
+	# 经它的调用返回值推断不出类型，`:=` 会让整个 WorkplaceTown.gd 解析失败 ——
+	# 而报错只说「Cannot infer the type of "n"」，真凶在这个三元表达式里。
+	var n: int = _monthly_life.unread_message_count() if _monthly_life != null else 0
+	_unread_dot.visible = n > 0
+	# ⚠ 这里原有一行 `_wall_resume_clock = false`，2026-09-18 删除。
+	# 那是**记忆墙**的「关墙后要不要把时钟放回去」锚，归 _open_memory_wall /
+	# _on_memory_wall_closed 管。夹在本函数里等于：开墙期间但凡来一条消息（或点开
+	# 消息匣），关墙时时钟就再也不恢复了 —— 表现是「时间莫名不走了」，极难归因。
+
+
+## ---------- 你的处境（Batch 6 · V5.27 §2.4 明示原则） ----------
+
+## 常驻一页，随时能翻（§2.4「随时能查」）。内容全渲染服务端下发的字段，
+## 本地一个数都不算 —— 口径只留服务端一份（2026-09-17 拍板）。
+func _build_standing_panel() -> void:
+	_standing_panel = STANDING_PANEL.new()
+	_standing_panel.name = "StandingPanel"
+	_standing_panel.standing_closed.connect(_on_standing_closed)
+	add_child(_standing_panel)
+	# 每次服务端回包都会刷新权威状态 → 顺手更新警示点。
+	# 接 event_recorded 而不是 session_ready：后者一个会话只发一次，
+	# 而处境是**会变的**（第 N 月埋了雷，就要当场亮）。
+	ApiClient.event_recorded.connect(_on_standing_state_refreshed)
+	_refresh_standing_badge()
+
+
+func _open_standing() -> void:
+	if _standing_panel == null:
+		return
+	if _standing_panel.is_open():
+		return
+	# 翻这一页时停钟：处境是要慢慢读的，不该读到一半被宵禁拽回宿舍。
+	_standing_resume_clock = WorldClock.running
+	if _standing_resume_clock:
+		WorldClock.set_running(false)
+	# 月份取世界时钟（玩家眼里的「现在第几月」），
+	# 职级与处境取服务端（结算权威）。两者在跳月时会有差 —— 这是对的：
+	# 账要等主线结算才算，而日历已经翻过去了。
+	_standing_panel.open(ApiClient.server_state(), int(WorldClock.snapshot().get("month", 0)))
+
+
+func _on_standing_closed() -> void:
+	if _standing_resume_clock:
+		WorldClock.set_running(true)
+		_standing_resume_clock = false
+
+
+## 服务端回包后刷新警示点（信号回调带两个参数，用不上）。
+func _on_standing_state_refreshed(_envelope: Dictionary, _response: Dictionary) -> void:
+	_refresh_standing_badge()
+
+
+## 「处」钮上的点：处境不再是「稳定」就亮。
+## 只做提示，不含任何数字 —— 想知道为什么，点进去看那一页。
+func _refresh_standing_badge() -> void:
+	if _standing_dot == null:
+		return
+	var view := Dictionary(ApiClient.server_state().get("survivalState", {}))
+	var state_name := String(view.get("state", ""))
+	var lit := state_name in ["observation", "critical", "last_talk"]
+	_standing_dot.visible = lit
+	if not lit:
+		return
+	var style := _standing_dot.get_theme_stylebox("panel")
+	if style is StyleBoxFlat:
+		# 观察给琥珀（还没到悬崖边），危急及以上给红（再一步就是正式谈话）。
+		var dot_color := Color("e0a63c") if state_name == "observation" else Color("e5503f")
+		(style as StyleBoxFlat).bg_color = dot_color
 
 
 ## 周末手账册（§6.2）：16 页，已过是卡、未到是「还没到」的空格。

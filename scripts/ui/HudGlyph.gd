@@ -23,8 +23,22 @@ func _draw() -> void:
 			_draw_book()
 		"设":
 			_draw_gear()
+		"信":
+			_draw_envelope()
+		"处":
+			_draw_steps()
 		_:
 			_draw_gear()
+
+
+## 信 = 信封：NPC 主动消息的收件箱（机制文档 §2「有人记得我」）。
+## 外框 + V 形封口，封口线用中间色——和手账本的记录线同一套配色。
+func _draw_envelope() -> void:
+	draw_rect(Rect2(11, 15, 26, 19), COLOR_MAIN, false, 2.5)
+	var flap := PackedVector2Array([
+		Vector2(11, 15), Vector2(24, 26), Vector2(37, 15),
+	])
+	draw_polyline(flap, COLOR_MID, 2.0, true)
 
 
 ## 力 = 闪电：能量/精力的通用符号，橙填充 + 深棕描边。
@@ -57,6 +71,27 @@ func _draw_book() -> void:
 	draw_arc(Vector2(28, 12), 2.4, 0, TAU, 20, COLOR_ACCENT, 2.0, true)
 	for y in [20, 25, 30]:
 		draw_line(Vector2(19.5, float(y)), Vector2(28.5, float(y)), COLOR_MID, 2.0)
+
+
+## 处 = 阶梯：三级台阶 + 最高一级上的小圆点（你站在哪儿）。
+## 「你的处境」这一页的隐喻：稳定 / 观察 / 危急本来就是一级级上去的，
+## 而且看得见自己在哪一级 —— 正对剧情册 §2.4 的明示原则。
+## ⚠ 顶点顺序必须是「绕一圈的简单多边形」：8 个点首尾相接、不许有共线重叠的边。
+## 2026-09-18 首版写成 6 点且缺底边，draw_colored_polygon 直接报
+## "Invalid polygon data, triangulation failed"（三角化失败，图标整只不画）。
+func _draw_steps() -> void:
+	var treads := PackedVector2Array([
+		Vector2(11, 35), Vector2(11, 30),
+		Vector2(20, 30), Vector2(20, 22),
+		Vector2(29, 22), Vector2(29, 14),
+		Vector2(38, 14), Vector2(38, 35),
+	])
+	draw_colored_polygon(treads, COLOR_MAIN)
+	var outline := treads.duplicate()
+	outline.append(treads[0])
+	draw_polyline(outline, COLOR_OUTLINE, 2.0, true)
+	# 站在最高一级上的那个点：底边正好贴住台阶面（y=14）。
+	draw_circle(Vector2(33.5, 11.0), 3.0, COLOR_ACCENT)
 
 
 ## 设 = 齿轮：8 齿 + 盘体 + 中心孔，设置的通用符号。

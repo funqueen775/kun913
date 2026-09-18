@@ -1,0 +1,147 @@
+{
+  "_readme": "NPC 主动消息（机制文档 §2「有人记得我」+ V5.27 §11.8/§11.9）。四类触发：state 状态 / relation 关系 / story 剧情 / memory 记忆。红线：① 消息里不能出现好感分数、等级数字、测评结论——只说人话；② 训练谷邀约必须由共同经历引出，不许凭空出现；③ 冷却 + 优先级防止 NPC 同时轰炸（机制文档 §5）。",
+  "rules": {
+    "per_npc_cooldown_months": 3,
+    "max_per_month": 2,
+    "priority": {
+      "state": 3,
+      "memory": 2,
+      "story": 2,
+      "relation": 1
+    },
+    "_priority_note": "数字大的先发。同优先级按 messages 数组内的声明顺序（先声明者先发）。裁剪在「每月最多 2 条」时生效。",
+    "_cooldown_note": "同一个 NPC 两次发消息之间至少隔 3 个月（含跨月）。训练谷邀约 exempt_cooldown=true，因为它解锁玩法、不能被冷却挡住。"
+  },
+  "messages": [
+    {
+      "id": "wange_state_low_health",
+      "npc": "wang_ge",
+      "kind": "state",
+      "text": "你脸色不对。活是干不完的——今天先收个尾，剩下的明天再说。",
+      "when": { "health_max": 3 }
+    },
+    {
+      "id": "wange_state_forced_rest",
+      "npc": "wang_ge",
+      "kind": "state",
+      "text": "听说你这个月被摁着休息了。别觉得丢人，我年轻时被摁过两次。",
+      "when": { "forced_rest": true }
+    },
+    {
+      "id": "wange_memory_epiphany",
+      "npc": "wang_ge",
+      "kind": "memory",
+      "text": "上次那件事你处理得干净。我没当面夸你，是因为我以为你知道。",
+      "when": { "tags_any": ["湖边想通", "啃完论文", "自己接上"] }
+    },
+    {
+      "id": "wange_relation_lv3_review",
+      "npc": "wang_ge",
+      "kind": "relation",
+      "text": "下周的评审我带你去。不是因为你准备好了——是再不去就晚了。",
+      "when": { "level_min": 3 }
+    },
+    {
+      "id": "wange_story_duel_d3",
+      "npc": "wang_ge",
+      "kind": "story",
+      "text": "真事故不能重来，训练里可以。来一局？",
+      "when": { "month_min": 19 },
+      "unlocks_duel": "D3_wangge",
+      "exempt_cooldown": true
+    },
+
+    {
+      "id": "xiaolin_state_silent_meeting",
+      "npc": "xiao_lin",
+      "kind": "state",
+      "text": "你今天开会一句话没说。是被我逼急了，还是真没想法？",
+      "when": { "health_max": 3 }
+    },
+    {
+      "id": "xiaolin_memory_schedule",
+      "npc": "xiao_lin",
+      "kind": "memory",
+      "text": "还记得那次排期吗？我当时说「先上再说」。现在轮到我问你：还上吗？",
+      "when": { "tags_any": ["排期冲突", "先上再说", "顶回去"] }
+    },
+    {
+      "id": "xiaolin_relation_lv3_lunch",
+      "npc": "xiao_lin",
+      "kind": "relation",
+      "text": "我一般不跟开发吃饭。跟你吃，是因为你会反驳我。",
+      "when": { "level_min": 3 }
+    },
+    {
+      "id": "xiaolin_story_duel_d2",
+      "npc": "xiao_lin",
+      "kind": "story",
+      "text": "你总说开发难，这次站到我这边试试？",
+      "when": { "month_min": 17 },
+      "unlocks_duel": "D2_xiaolin",
+      "exempt_cooldown": true
+    },
+
+    {
+      "id": "xiaozhao_state_tired",
+      "npc": "xiao_zhao",
+      "kind": "state",
+      "text": "哥你今天说话有气无力的……我给你带了杯咖啡。不是讨好你啊。",
+      "when": { "health_max": 3 }
+    },
+    {
+      "id": "xiaozhao_memory_log_promise",
+      "npc": "xiao_zhao",
+      "kind": "memory",
+      "text": "你答应过教我看日志的。不算不算——你还没兑现呢。",
+      "when": { "tags_any": ["答应教", "带新人", "承诺"] }
+    },
+    {
+      "id": "xiaozhao_relation_lv3_nervous",
+      "npc": "xiao_zhao",
+      "kind": "relation",
+      "text": "我发现我跟你说话不紧张了。这是不是就叫进步？",
+      "when": { "level_min": 3 }
+    },
+    {
+      "id": "xiaozhao_story_duel_d1",
+      "npc": "xiao_zhao",
+      "kind": "story",
+      "text": "上次多亏你帮我把信息理顺了，陪我试一局？",
+      "when": { "month_min": 15 },
+      "unlocks_duel": "D1_xiaozhao",
+      "exempt_cooldown": true
+    },
+
+    {
+      "id": "laozhou_state_overhold",
+      "npc": "lao_zhou",
+      "kind": "state",
+      "text": "你这个月硬撑了很久。撑不是本事——知道什么时候松手才是。",
+      "when": { "health_max": 3 }
+    },
+    {
+      "id": "laozhou_memory_signature",
+      "npc": "lao_zhou",
+      "kind": "memory",
+      "text": "那次的事你没当众掀桌。我记着。",
+      "when": { "flags_any": ["E28_signature_taken", "signature_taken"] }
+    },
+    {
+      "id": "laozhou_relation_lv4_interfere",
+      "npc": "lao_zhou",
+      "kind": "relation",
+      "text": "那个需求别接。理由我不能说全——但你听我一次。",
+      "when": { "level_min": 4 }
+    },
+    {
+      "id": "laozhou_story_duel_d4",
+      "npc": "lao_zhou",
+      "kind": "story",
+      "text": "方案没有绝对答案，但你得知道什么时候该压。我年轻时也丢过一次署名——后来明白了，压对了是本事。",
+      "when": { "month_min": 26 },
+      "unlocks_duel": "D4_laozhou",
+      "exempt_cooldown": true
+    }
+  ]
+}

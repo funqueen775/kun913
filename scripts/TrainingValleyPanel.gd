@@ -29,6 +29,8 @@ var _config: Dictionary = {}
 var _levels: Array = []
 var _duel                    # TrainingDuel 实例
 var _level: Dictionary = {}
+## 本局搭档（熊友卡 §6.3）；空 = 自己上。规则核心只认 ability/value 两个键。
+var _partner: Dictionary = {}
 var _in_duel := false
 var _busy := false           # AI 回合计时中，锁输入
 
@@ -83,15 +85,27 @@ func _show_select() -> void:
 	_duel_box.hide()
 	_content.show()
 	_clear_content()
-	var partner := _body_label("搭档：本次用你自己的角色。熊友搭档 Lv3 后解锁。", 14, COLOR_SUB)
+	# ⚠ 类型必须写死：_life 是弱类型成员，经它的调用返回值推断不出类型，
+	# `:=` 会让本文件解析失败，并连带 WorkplaceTown.gd 报「Compilation failed」——
+	# 报错指到 WorkplaceTown 头上，真凶在这里。
+	var buddy_n: int = _life.unlocked_buddies().size() if _life != null else 0
+	var partner_text := "搭档：已解锁 %d 位熊友，进关卡时可挑一个（不能挑该关对手本人）。" % buddy_n
+	if buddy_n == 0:
+		partner_text = "搭档：本次用你自己的角色。关系到「伙伴」后，就有人能陪你上场。"
+	var partner := _body_label(partner_text, 14, COLOR_SUB)
 	_content.add_child(partner)
 	for level_v: Dictionary in _levels:
 		var id := String(level_v.get("id"))
-		var unlocked: bool = _month >= int(level_v.get("unlock_month", 99))
+		# V5.27 §11.9：关卡由共同经历引出 —— 收到邀约消息才算开放。
+		# 月份兜底保留：消息系统万一没触发，关卡不能永久锁死（临时口径，见 _unlock_note）。
+		var invited: bool = _life != null and _life.is_duel_unlocked(id)
+		var unlocked: bool = invited or _month >= int(level_v.get("unlock_month", 99))
 		var cleared: bool = _life != null and _life.is_duel_cleared(id)
 		var sub := "%s · %s" % [String(level_v.get("opponent")), String(level_v.get("context"))]
 		if not unlocked:
-			sub += "｜未开放：%s" % String(level_v.get("unlock_hint"))
+			sub += "｜还没人约你：%s" % String(level_v.get("invite_hint", "等共同经历过后再说"))
+		elif invited:
+			sub += "｜受邀开放"
 		elif cleared:
 			sub += "｜已首通"
 		else:
@@ -112,7 +126,53 @@ func _style_icon(style: String) -> String:
 
 
 func _on_level_pressed(level: Dictionary) -> void:
+	_show_partner_pick(level)
+
+
+## ---------- 搭档选择（熊友卡 §6.3）----------
+## 候选 = 「自己」+ 已解锁 Lv3 的同事；**排除该关对手本人**（文档原文：
+## 进入某位 NPC 对应的关卡时，不能选择该 NPC 本人作为自己的角色）。
+func _buddy_options(opponent_name: String) -> Array:
+	var out: Array = [{"id": "", "name": "自己", "desc": "不叫人，本局按基础规则打。"}]
+	if _life == null:
+		return out
+	for npc_id: String in _life.unlocked_buddies():
+		var card: Dictionary = _life.buddy_card_for(npc_id)
+		var who := String(card.get("name", npc_id))
+		if who == opponent_name:
+			continue
+		var duel: Dictionary = card.get("duel", {})
+		var partner := {
+			"npc_id": npc_id,
+			"name": who,
+			"ability": String(duel.get("ability", "")),
+			"value": int(duel.get("value", 0)),
+		}
+		out.append({"id": npc_id, "name": who, "desc": String(duel.get("desc", "")), "partner": partner})
+	return out
+
+
+func _show_partner_pick(level: Dictionary) -> void:
 	_level = level
+	_in_duel = false
+	_title.text = "%s · 选搭档" % String(level.get("name"))
+	_subtitle.text = "对手：%s　（不能选他本人当搭档）" % String(level.get("opponent"))
+	_duel_box.hide()
+	_content.show()
+	_clear_content()
+	var head := _body_label("这局谁陪你上场？", 16, COLOR_SUB)
+	_content.add_child(head)
+	for opt: Dictionary in _buddy_options(String(level.get("opponent"))):
+		var icon := "自" if String(opt["id"]).is_empty() else "搭"
+		var btn := _make_card(icon, String(opt["name"]), String(opt.get("desc", "")),
+			_on_partner_pressed.bind(level, opt.get("partner", {})), false)
+		_content.add_child(btn)
+	_set_footer("返回关卡列表", _back_to_select)
+
+
+func _on_partner_pressed(level: Dictionary, partner) -> void:
+	_level = level
+	_partner = partner if partner is Dictionary else {}
 	_start_duel()
 
 
@@ -121,7 +181,7 @@ func _on_level_pressed(level: Dictionary) -> void:
 func _start_duel() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	_duel = DUEL.create(_level, rng)
+	_duel = DUEL.create(_level, rng, _partner)
 	_in_duel = true
 	_busy = false
 	_title.text = "%s · %s" % [String(_level.get("name")), String(_level.get("opponent"))]

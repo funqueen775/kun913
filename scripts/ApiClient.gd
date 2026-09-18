@@ -37,6 +37,10 @@ var _base_url := ""
 var _content_version := "v1"
 var _session_id := ""
 var _queue: Array = []
+## 服务端最近一次下发的会话状态。**职级与处境的唯一权威来源**（2026-09-17 拍板）：
+## Godot 只负责显示，本地不算也不镜像一份，否则同一个东西会有两份会漂移的真相。
+## 没接到之前留空 —— 消费方按「还不知道」降级，绝不本地估算一个看起来像的值。
+var _server_state: Dictionary = {}
 
 var _http: HTTPRequest
 var _flush_timer: Timer
@@ -73,13 +77,32 @@ func start_or_resume() -> Dictionary:
 		# mock：保持接入前的行为，本地自己生成 id。
 		_session_id = _uuid_v4()
 		_save_session()
+	# 有服务端状态就用它，没有才退回本地占位形状（首次握手是异步的，
+	# 第一次调用拿不到很正常；session_established 之后自然就接上了）。
+	var initial: Dictionary = {"chapterId":"M1", "currentNodeId":"M1-E01", "unlockedRegionIds":["A", "H"]}
 	var session := {
 		"sessionId": _session_id,
 		"contentVersion": _content_version,
-		"state": {"chapterId":"M1", "currentNodeId":"M1-E01", "unlockedRegionIds":["A", "H"]}
+		"state": _server_state.duplicate(true) if not _server_state.is_empty() else initial,
 	}
 	session_ready.emit(session)
 	return session
+
+
+## 服务端下发的最新会话状态（只读副本）。空字典 = 还没接到服务端任何回包，
+## 或者当前是 mock 模式 —— 调用方要按「还不知道」处理，不要编。
+func server_state() -> Dictionary:
+	return _server_state.duplicate(true)
+
+
+## 每次拿到服务端回包都刷新权威状态。302 重定向之外的所有成功响应都带 state。
+func _absorb_state(response: Dictionary) -> void:
+	var state = response.get("state", {})
+	if state is Dictionary and not (state as Dictionary).is_empty():
+		_server_state = (state as Dictionary).duplicate(true)
+	var sid := String(response.get("sessionId", ""))
+	if not sid.is_empty():
+		_session_id = sid
 
 ## 连接状态：会话是否已被服务端签发过。UI 拿它显示「已连接/未连接」，
 ## 探针拿它判断还需不需要等 session_established —— 那个信号每个会话只会发一次。
@@ -219,6 +242,7 @@ func _on_request_completed(result: int, code: int, _headers: PackedStringArray, 
 		if ok:
 			var parsed = JSON.parse_string(body.get_string_from_utf8())
 			if parsed is Dictionary and parsed.has("sessionId"):
+				_absorb_state(parsed)
 				_session_id = String(parsed["sessionId"])
 				_session_confirmed = true
 				_save_session()
@@ -262,6 +286,8 @@ func _on_request_completed(result: int, code: int, _headers: PackedStringArray, 
 		_last_warning = ""
 		var parsed_body = JSON.parse_string(body.get_string_from_utf8())
 		if parsed_body is Dictionary:
+			# 服务端算完会回权威 state（职级 / 处境跟着这一跳更新）
+			_absorb_state(parsed_body)
 			event_recorded.emit(sent, parsed_body)
 		_flush_next()          # 队列还有就接着发
 		return
