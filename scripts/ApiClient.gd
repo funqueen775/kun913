@@ -81,15 +81,41 @@ func start_or_resume() -> Dictionary:
 	session_ready.emit(session)
 	return session
 
+## 连接状态：会话是否已被服务端签发过。UI 拿它显示「已连接/未连接」，
+## 探针拿它判断还需不需要等 session_established —— 那个信号每个会话只会发一次。
+func is_session_confirmed() -> bool:
+	return _session_confirmed
+
+## 当前会话 id。未确认时是本地占位值（服务端不认），确认后是服务端签发的权威 id。
+func current_session_id() -> String:
+	return _session_id
+
+## 契约硬要求：每个事件的 payload.regionId 必须是 A–H 单字母，缺了或错了会被服务端 400 拒收
+## （server.py post_event）。与其让每个埋点各自兜底 —— FreeTimePanel 有、WorkplaceTown 好几处
+## 没有，漏一个就静默丢一批事件 —— 统一在传输层补齐：先认 regionId，再从 zone / locationId
+## 这类同义字段推断，都落空才退回总部 "A"。宁可标成总部，也不要发空串让整条事件被隔离。
+## 2026-09-18：隔离日志里 112 条事件正是这么丢的（node_enter 传空串、explore_click 缺字段）。
+static func normalize_region_id(payload: Dictionary) -> String:
+	for key in ["regionId", "zone", "locationId", "region", "zoneId"]:
+		var raw := String(payload.get(key, "")).strip_edges()
+		if raw.is_empty():
+			continue
+		var code := raw.split("_")[0].to_upper()
+		if code.length() == 1 and "ABCDEFGH".contains(code):
+			return code
+	return "A"
+
 func record_event(event_type: String, payload: Dictionary, duration_seconds := 0) -> Dictionary:
 	var session := start_or_resume()
+	var safe_payload: Dictionary = payload.duplicate(true)
+	safe_payload["regionId"] = normalize_region_id(safe_payload)
 	var envelope := {
 		"eventId": _uuid_v4(),
 		"eventType": event_type,
 		"contentVersion": _content_version,
 		"clientTime": _iso_time(),
 		"durationSeconds": maxi(0, duration_seconds),
-		"payload": payload.duplicate(true),
+		"payload": safe_payload,
 	}
 	_queue.append(envelope)
 	_save_queue()
@@ -215,7 +241,14 @@ func _on_request_completed(result: int, code: int, _headers: PackedStringArray, 
 			else:
 				report_failed.emit("报告响应形状不对（缺 layers），请联系排查。")
 		elif code == 404:
-			report_failed.emit("报告还没生成——走完剧情（或服务端结算后）再来。")
+			# 404 有两种可能：报告真没生成，或 sessionId 已失效（后端换库/重建过）。
+			# 后者必须作废本地会话重新握手 —— 否则 _session_confirmed 一直为真，
+			# 每次点「我的报告」都拿废 id 去问，玩家会永远卡在同一句提示上。
+			_session_confirmed = false
+			_session_id = ""
+			_save_session()
+			_ensure_session()
+			report_failed.emit("服务端不认当前会话（后端可能重建过），已重新连接，稍等一两秒再点一次。")
 		else:
 			report_failed.emit("拉取报告失败（code=%d）。" % code)
 		return
