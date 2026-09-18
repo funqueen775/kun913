@@ -24,6 +24,10 @@ signal energy_exhausted()
 ## 直接读 autoload，探针（build/probe_*.gd）new 出来测时门禁为空 = 恒不锁。
 var main_gate: Callable = Callable()
 
+## NPC 主动消息规则核心（Batch 5）。走 preload 不用 class_name：
+## 全局类缓存只在编辑器扫描时才刷新，探针直接 --script 跑会报「Identifier not declared」。
+const NPC_MESSAGES := preload("res://scripts/NpcMessageSystem.gd")
+
 ## 精力按「月」结算：每月 3 点（scoring_cards._anchor_params.monthly_energy），
 ## **不可结转** —— 月底没用完的直接清零，新月重新发 3 点。
 const ENERGY_PER_MONTH := 3
@@ -69,6 +73,19 @@ var flags := {}
 ## 训练谷首通记录（Batch 4）：已首通的 level_id 数组。重复通关无奖励（机制文档 §7.1）。
 var duel_first_clears: Array = []
 
+## ---------- NPC 主动消息（Batch 5 · 机制文档 §2「有人记得我」） ----------
+## 收到的消息（按到达顺序）。每条 {id, npc, npc_name, kind, text, month, read, unlocks_duel?}。
+var messages: Array = []
+## 由邀约消息解锁的训练谷关卡 id（V5.27 §11.9：关卡由共同经历引出，不凭空开放）。
+var duel_unlocks: Array = []
+## 累积的记忆标签 —— 记忆类消息的燃料（「旧承诺被重新提起」要有的可提）。
+var memory_tags: Array = []
+var _sent_messages := {}          # {msg_id: 发送月份}：once 去重
+var _last_msg_month_by_npc := {}  # {npc_id: 上次发送月份}：冷却
+
+## 有新的主动消息到达 —— HUD「信」钮的红点靠它刷新。
+signal message_arrived()
+
 
 func _ready() -> void:
 	randomize()
@@ -103,6 +120,8 @@ func sync(new_month: int, new_day_index: int) -> void:
 		output = 0
 		# 精力不可结转：新月一律重发（强制休息月发 0 点，等于整月禁养成行动）。
 		energy = 0 if forced_rest else ENERGY_PER_MONTH
+		# 新月第一件事：看有没有人想起你。forced_rest 在这里已是「新月」的状态。
+		_refresh_messages()
 		changed = true
 	if day_index != new_day_index:
 		day_index = new_day_index
@@ -133,6 +152,80 @@ func mark_duel_cleared(level_id: String) -> bool:
 		return false
 	duel_first_clears.append(level_id)
 	return true
+
+
+## ---------- NPC 主动消息（机制文档 §2「有人记得我」） ----------
+
+## 新月第一件事：问一次「这个月谁会想起你」。
+## 规则与文案全在 NpcMessageSystem（纯函数），这里只喂局面、存结果、兑现邀约解锁。
+func _refresh_messages() -> void:
+	var levels := {}
+	for npc_id in affinity.keys():
+		levels[String(npc_id)] = affinity_level(int(affinity[npc_id]))
+	var ctx := {
+		"month": month,
+		"health": health,
+		"forced_rest": forced_rest,
+		"levels": levels,
+		"flags": flags,
+		"memory_tags": memory_tags,
+		"cleared_duels": duel_first_clears,
+		"sent": _sent_messages,
+		"last_month_by_npc": _last_msg_month_by_npc,
+		"npc_names": NPC_NAMES,
+	}
+	var fresh: Array = NPC_MESSAGES.generate(ctx)
+	for entry in fresh:
+		var msg: Dictionary = entry
+		var msg_id := String(msg.get("id", ""))
+		if msg_id.is_empty():
+			continue
+		_sent_messages[msg_id] = month
+		_last_msg_month_by_npc[String(msg.get("npc", ""))] = month
+		messages.append(msg)
+		# 训练谷邀约：收到才算开放（V5.27 §11.9 —— 关卡由共同经历引出）。
+		var unlocks := String(msg.get("unlocks_duel", ""))
+		if not unlocks.is_empty() and not duel_unlocks.has(unlocks):
+			duel_unlocks.append(unlocks)
+	if not fresh.is_empty():
+		message_arrived.emit()
+
+
+## 未读条数（HUD 红点用）。
+func unread_message_count() -> int:
+	var n := 0
+	for msg in messages:
+		if not bool((msg as Dictionary).get("read", false)):
+			n += 1
+	return n
+
+
+## 打开消息面板时调用：全部标为已读（红点清零）。
+func mark_messages_read() -> void:
+	for i in messages.size():
+		var msg: Dictionary = messages[i]
+		msg["read"] = true
+		messages[i] = msg
+
+
+## 某条消息是否收到过（训练谷关卡解锁判定用）。
+func has_received_message(msg_id: String) -> bool:
+	return _sent_messages.has(msg_id)
+
+
+## 训练谷关卡是否开放：收到邀约即开。
+## 月份兜底（unlock_month）由界面侧判 —— 消息系统万一没触发，关卡不能永久锁死。
+func is_duel_unlocked(level_id: String) -> bool:
+	return duel_unlocks.has(level_id)
+
+
+## 累积记忆标签（事件选项的 memory_tags）。记忆类消息靠它才有「旧事」可提。
+func remember_tags(tags: Array) -> void:
+	for t in tags:
+		var s := String(t)
+		if s.is_empty() or memory_tags.has(s):
+			continue
+		memory_tags.append(s)
 
 
 ## ---------- 熊友卡（Batch 5 · 机制文档 §6）----------
@@ -776,9 +869,11 @@ func apply_decision_option(activity: Dictionary, option: Dictionary, target_npc:
 	elif aff_delta != null and not target_npc.is_empty():
 		var actual3 := _add_affinity(target_npc, int(aff_delta))
 		lines.append("%s 好感 %+d" % [NPC_NAMES.get(target_npc, target_npc), actual3])
-	var memory_tags = option.get("memory_tags")
-	if memory_tags is Array:
-		for tag in memory_tags:
+	var tag_list = option.get("memory_tags")
+	if tag_list is Array:
+		# 累积进记忆墙的「旧事」池 —— 记忆类主动消息靠它才有可提的旧承诺。
+		remember_tags(tag_list)
+		for tag in tag_list:
 			lines.append("记住了你：%s" % String(tag))
 	var feedback := String(option.get("instant_feedback", ""))
 	state_changed.emit(snapshot())
@@ -794,6 +889,7 @@ func apply_encounter_option(option: Dictionary) -> Dictionary:
 	var tags: Array[String] = []
 	var raw_tags = option.get("memory_tags")
 	if raw_tags is Array:
+		remember_tags(raw_tags as Array)
 		for tag in (raw_tags as Array):
 			tags.append(String(tag))
 	for tag in tags:

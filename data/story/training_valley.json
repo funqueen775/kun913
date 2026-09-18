@@ -53,7 +53,7 @@
       "desc": "本次受到的伤害减少 3 点，最低为 0。现在防还是留给更狠的一击？"
     }
   ],
-  "_unlock_note": "四关真开放 = 幕末 NPC 主动邀约（V5.27 §11.9，依赖 Batch 5 NPC 主动消息）。unlock_month 是 MVP 临时口径：到月即解锁，等 Batch 5 落地后换成事件驱动。",
+  "_unlock_note": "四关真开放 = 收到对应邀约消息（V5.27 §11.9，2026-09-18 已由 Batch 5 主动消息落地）：invite_message_id 指向 data/story/npc_messages.json 里的 story 类消息，收到即 duel_unlocks 里解锁。unlock_month 降级为兜底——消息万一没触发，到月仍开放，避免关卡永久锁死。unlock_hint 已废弃（界面改读 invite_hint），保留字段仅为兼容旧引用。",
   "levels": [
     {
       "id": "D1_xiaozhao",
@@ -62,6 +62,8 @@
       "ai_style": "teaching",
       "unlock_month": 15,
       "unlock_hint": "M2-E08 邀约（第 15 月）",
+      "invite_message_id": "xiaozhao_story_duel_d1",
+      "invite_hint": "等小赵开口约你（第一幕之后）",
       "first_clear_reward": 600,
       "context": "信息同步与协作节奏演练",
       "intro": "小赵把一叠妙招卡推到你面前：今天不谈 KPI，试试看谁更会看局势。",
@@ -75,6 +77,8 @@
       "ai_style": "aggressive",
       "unlock_month": 17,
       "unlock_hint": "第 17 月起开放（临时口径）",
+      "invite_message_id": "xiaolin_story_duel_d2",
+      "invite_hint": "等小林开口约你（第二幕上线之后）",
       "first_clear_reward": 800,
       "context": "开发与业务视角交换演练",
       "intro": "小林提出交换立场：你总说开发有开发的难处，那这次你站到我这边试试？",
@@ -88,6 +92,8 @@
       "ai_style": "steady",
       "unlock_month": 19,
       "unlock_hint": "第 19 月起开放（临时口径）",
+      "invite_message_id": "wange_story_duel_d3",
+      "invite_hint": "等王哥开口约你（第三幕救火之后）",
       "first_clear_reward": 1000,
       "context": "故障处置优先级演练",
       "intro": "王哥以复盘的口吻邀请你：真事故不能重来，训练里可以。把刚才的优先级再跑一遍。",
@@ -101,6 +107,8 @@
       "ai_style": "tactical",
       "unlock_month": 26,
       "unlock_hint": "第 26 月起开放（临时口径）",
+      "invite_message_id": "laozhou_story_duel_d4",
+      "invite_hint": "等老周开口约你（第四幕重构之后）",
       "first_clear_reward": 1500,
       "context": "资源、风险与长期价值综合演练",
       "intro": "老周不评价你之前的结论，只说：方案没有绝对答案，但你得知道什么时候该压，什么时候该留。",
