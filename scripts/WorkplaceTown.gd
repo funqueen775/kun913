@@ -20,7 +20,7 @@ const LEDGER_BOOK := preload("res://scripts/WeekendLedgerBook.gd")
 ## 设置弹窗（2026-09-17 UI 打磨）：操作说明 + 退出游戏收编在这里。
 const SETTINGS_PANEL := preload("res://scripts/SettingsPanel.gd")
 const MONTHLY_LIFE := preload("res://scripts/MonthlyLife.gd")
-const ENERGY_PANEL := preload("res://scripts/EnergyModalPanel.gd")
+const LIFE_PANEL := preload("res://scripts/LifePanel.gd")
 ## 圆钮矢量图标（2026-09-17 晚：单字圆钮换图形，用户嫌字丑）。
 const HUD_GLYPH := preload("res://scripts/ui/HudGlyph.gd")
 const FREE_TIME_PANEL := preload("res://scripts/FreeTimePanel.gd")
@@ -131,7 +131,6 @@ var _last_viewport_size := Vector2.ZERO
 ## 玩家自由缩放的倍率（相对基础缩放），范围钳在 [MAP_ZOOM_MIN_FACTOR, MAP_ZOOM_MAX_FACTOR]。
 ## _update_camera 与 _apply_camera_cover 的目标 zoom 都要乘它，两边保持一致才不会互相打架。
 var _map_zoom_factor := 1.0
-var _map_zoom_hint: Label
 ## 鼠标拖动平移：按住左键拖动时，相机脱离玩家、按拖动量反向移动（地图跟着手走）。
 ## 松手后**保持**在当前视角不回弹 —— 拖动是"我去看看别处"；等玩家一有移动输入再滑回身上。
 var _pan_offset := Vector2.ZERO
@@ -194,6 +193,9 @@ var _unread_dot: Panel
 ## 页面内容全来自服务端下发（ApiClient.server_state），本地不估算。
 var _standing_panel
 var _standing_dot: Panel
+## 「生活」钮本体 + 自由周末红点（本月的周末就绪未安排时亮，见 _weekend_ready_month）。
+var _life_button: Button
+var _weekend_dot: Panel
 var _finale
 ## 开页前世界时钟是不是在跑。这一页是「随时能翻」的，翻的时候别让宵禁把人拽走。
 var _standing_resume_clock := false
@@ -219,13 +221,16 @@ var _last_hovered_choice_id := ""
 var _training_panel
 ## 月度生活系统：每月 3 点精力 / 公开数值 / 月底结算 / 好感度（见 scripts/MonthlyLife.gd）。
 var _monthly_life
-## 精力弹窗（居中模态，点「力」圆钮打开）与自由周末面板。
-var _energy_panel
-## 精力弹窗开着时世界时钟是否在跑（同设置弹窗的停钟待遇，关上还原）。
-var _energy_resume_clock := false
+## 「生活」面板（居中模态，点「生」圆钮打开：精力 / 周末 / 熊友三 Tab）与自由周末面板。
+var _life_panel
+## 生活面板开着时世界时钟是否在跑（同设置弹窗的停钟待遇，关上还原）。
+var _life_resume_clock := false
 var _free_time_panel
 ## 已经开过自由周末的月份（每 3 个月一次：第 3/6/9…月）。
 var _weekend_done_months: Array[int] = []
+## 自由周末已就绪的月份：提示 toast 已弹、生活钮红点挂着；
+## 结算完（_on_weekend_closed）或跨月作废时清掉。2026-09-18 拍板：不再自动弹周末面板。
+var _weekend_ready_month := -1
 ## 地面引导线（见 scripts/ui/GroundGuideLine.gd）。写弱类型：理由同 _memory_wall。
 var _guide_line
 ## 自由活动选定的区域 code（空 = 本周末没有目的地）。由自由周末面板回传。
@@ -385,7 +390,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_dorm.handle_key(event.keycode)
 			return
 		if _interior_preview != null and _interior_preview.is_open():
-			if event.keycode == KEY_ESCAPE or event.keycode == KEY_Q:
+			# Q 只在人真走到门口（提示亮着）时生效；ESC 仍可随时退出。
+			if event.keycode == KEY_ESCAPE:
+				_exit_zone()
+			elif event.keycode == KEY_Q and _interior_preview.is_door_prompt_active():
 				_exit_zone()
 			return
 		if event.keycode == KEY_F3:
@@ -478,16 +486,9 @@ func _set_map_zoom(value: float) -> void:
 	if is_equal_approx(clamped, _map_zoom_factor):
 		return
 	_map_zoom_factor = clamped
-	_update_zoom_hint()
 	# 视野大小变了，可移动范围也跟着变，平移偏移要重新钳一次，
 	# 否则缩小后相机会被相机 limit 钉在边上，玩家再移动时有一段"空转"。
 	_clamp_pan_offset()
-
-
-func _update_zoom_hint() -> void:
-	if _map_zoom_hint == null:
-		return
-	_map_zoom_hint.text = "滚轮 / 双指缩放  ·  拖动平移  ·  %d%%" % roundi(_map_zoom_factor * 100.0)
 
 
 ## 室内 / 剧情面板打开时不给缩放与拖动：那些界面盖住了地图，
@@ -1336,31 +1337,13 @@ func _build_hud() -> void:
 	# 右上角功能圆钮排（记忆墙 / 周末手账 / 设置），退出游戏收进设置弹窗。
 	_build_hud_button_row(layer)
 	_build_settings_panel()
-	# 自由缩放的操作提示 + 当前倍率。放左下角摇杆上方：
-	# 右上角被「第一幕」时间面板占着，放那里会被整块盖住。
-	# 字号必须够大 + 伪粗体：18px 的 Regular 中文横画只有 1px 宽，
-	# 外面套 3px 描边后亮色笔画整根被吃掉，整行看上去是一团暗色。
-	var zoom_font := FontVariation.new()
-	zoom_font.base_font = CHINESE_FONT
-	zoom_font.variation_embolden = 0.55
-	_map_zoom_hint = Label.new()
-	_map_zoom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_map_zoom_hint.position = Vector2(44, -228)
-	_map_zoom_hint.size = Vector2(460, 32)
-	_map_zoom_hint.add_theme_font_override("font", zoom_font)
-	_map_zoom_hint.add_theme_font_size_override("font_size", 20)
-	_map_zoom_hint.add_theme_color_override("font_color", Color(1.0, 0.94, 0.76, 0.92))
-	_map_zoom_hint.add_theme_color_override("font_outline_color", Color("18202b"))
-	_map_zoom_hint.add_theme_constant_override("outline_size", 3)
-	layer.add_child(_map_zoom_hint)
-	_update_zoom_hint()
 	_build_mobile_joystick(layer)
 
 
 ## ---------- 右上角功能圆钮排（2026-09-17 UI 打磨） ----------
 
-## 圆钮行的 y 起点：时间面板（y 26..234）正下方。48px 圆 + 8px 间距，一行 4 颗
-## （设/账/忆/力）；点「力」开精力弹窗选动作（2026-09-17 第三批拍板）。
+## 圆钮行的 y 起点：时间面板（y 26..234）正下方。48px 圆 + 8px 间距，一行 6 颗
+## （设/账/忆/生/信/处）；点「生」开生活面板（精力/周末/熊友，2026-09-18 拍板）。
 const HUD_CIRCLE_ROW_Y := 250.0
 const HUD_CIRCLE_SIZE := 48.0
 
@@ -1370,7 +1353,7 @@ func _build_hud_button_row(layer: CanvasLayer) -> void:
 		{"glyph": "设", "tip": "设置 · 操作说明 / 退出游戏", "caption": "设置", "cb": _open_settings},
 		{"glyph": "账", "tip": "周末手账 · 翻看走过的每个周末", "caption": "周末手账", "cb": _open_ledger_book},
 		{"glyph": "忆", "tip": "记忆墙 · 回看一路攒下的便签", "caption": "记忆墙", "cb": _open_memory_wall},
-		{"glyph": "力", "tip": "本月精力 · 花 1 点做一件事", "caption": "本月精力", "cb": _open_energy_modal},
+		{"glyph": "生", "tip": "生活 · 精力 / 周末 / 熊友", "caption": "生活", "cb": _open_life_panel},
 		{"glyph": "信", "tip": "消息匣 · 谁在这时候想起了你", "caption": "消息匣", "cb": _open_message_inbox},
 		{"glyph": "处", "tip": "你的处境 · 现在站在哪里、为什么", "caption": "你的处境", "cb": _open_standing},
 	]
@@ -1399,6 +1382,20 @@ func _build_hud_button_row(layer: CanvasLayer) -> void:
 			_unread_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			_unread_dot.visible = false
 			button.add_child(_unread_dot)
+		elif String(defs[i]["glyph"]) == "生":
+			# 自由周末红点：本月的周末就绪了还没安排时亮（2026-09-18 拍板：
+			# 周末不再自动弹窗，改红点 + 进月 toast 提醒）。结算完或跨月作废即灭。
+			_life_button = button
+			_weekend_dot = Panel.new()
+			_weekend_dot.position = Vector2(32, -3)
+			_weekend_dot.size = Vector2(14, 14)
+			var wdot_style := StyleBoxFlat.new()
+			wdot_style.bg_color = Color("e5503f")
+			wdot_style.set_corner_radius_all(7)
+			_weekend_dot.add_theme_stylebox_override("panel", wdot_style)
+			_weekend_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_weekend_dot.visible = false
+			button.add_child(_weekend_dot)
 		elif String(defs[i]["glyph"]) == "处":
 			# 处境警示点：处境一旦不是「稳定」，这颗点就亮 —— 被叫去谈话这件事
 			# 不能等玩家自己想起来翻页才知道。颜色分两级（观察=琥珀 / 危急以上=红），
@@ -1419,9 +1416,9 @@ func _build_hud_button_row(layer: CanvasLayer) -> void:
 			_ledger_book_button = button
 		elif String(defs[i]["glyph"]) == "忆":
 			_memory_wall_button = button
-		# 「力」钮不存成员变量：弹窗实例在 _build_monthly_life 里，见 _open_energy_modal。
-	# （2026-09-17 第三批拍板）旧的 4 颗精力动作圆钮已删：整块精力模块收进
-	# 一颗「力」钮，点开居中模态弹窗（EnergyModalPanel）再选要做什么。
+		# 「生」钮存成员变量 _life_button：红点挂它上面；面板实例在 _build_monthly_life 里。
+	# （2026-09-18 拍板）旧的「力」精力钮已改「生」生活钮：精力/周末/熊友三 Tab
+	# 合进一颗圆钮（LifePanel），周末不再自动弹窗、改 toast + 红点提醒。
 	_hud_button_caption = Label.new()
 	_hud_button_caption.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_hud_button_caption.position = Vector2(-410, HUD_CIRCLE_ROW_Y + HUD_CIRCLE_SIZE + 8)
@@ -1534,15 +1531,24 @@ func _on_settings_closed() -> void:
 	_settings_resume_clock = false
 
 
+## 左下角虚拟摇杆（触屏/鼠标共用）。2026-09-18 用户反馈：整体放大到 220，
+## 内部尺寸全部按底盘比例推，改大小只动 JOYSTICK_SIZE 一个数。
+const JOYSTICK_SIZE := 220.0
+
 func _build_mobile_joystick(layer: CanvasLayer) -> void:
+	var half := JOYSTICK_SIZE * 0.5
+	var base_radius := half * 0.867   # 底盘外圈（原 150 盘时 65）
+	var knob_radius := half * 0.333   # 中心旋钮（原 25）
+	var travel := half * 0.733        # 旋钮最大位移（原 55）
+	var center := Vector2(half, half)
 	var joystick := Control.new()
-	joystick.position = Vector2(44, 875)
-	joystick.size = Vector2(150, 150)
+	joystick.position = Vector2(44, 1080.0 - JOYSTICK_SIZE - 50.0)
+	joystick.size = Vector2(JOYSTICK_SIZE, JOYSTICK_SIZE)
 	joystick.mouse_filter = Control.MOUSE_FILTER_STOP
 	joystick.draw.connect(func():
-		joystick.draw_circle(Vector2(75, 75), 65, Color(0.11, 0.16, 0.21, 0.40))
-		joystick.draw_arc(Vector2(75, 75), 65, 0, TAU, 40, Color(1, 1, 1, 0.58), 3)
-		joystick.draw_circle(Vector2(75, 75) + _touch_vector * 38, 25, Color(1, 1, 1, 0.78))
+		joystick.draw_circle(center, base_radius, Color(0.11, 0.16, 0.21, 0.40))
+		joystick.draw_arc(center, base_radius, 0, TAU, 40, Color(1, 1, 1, 0.58), 3)
+		joystick.draw_circle(center + _touch_vector * travel, knob_radius, Color(1, 1, 1, 0.78))
 	)
 	joystick.gui_input.connect(func(event):
 		if event is InputEventScreenTouch or event is InputEventMouseButton:
@@ -1551,7 +1557,7 @@ func _build_mobile_joystick(layer: CanvasLayer) -> void:
 				_touch_vector = Vector2.ZERO
 		if event is InputEventScreenDrag or event is InputEventMouseMotion:
 			if _touch_active:
-				_touch_vector = (joystick.get_local_mouse_position() - Vector2(75, 75)).limit_length(55) / 55.0
+				_touch_vector = (joystick.get_local_mouse_position() - center).limit_length(travel) / travel
 		joystick.queue_redraw()
 	)
 	layer.add_child(joystick)
@@ -1902,12 +1908,14 @@ func _build_monthly_life() -> void:
 	# 弹窗按钮置灰。判定在 WorldClock.main_event_due，用 Callable 注入——
 	# MonthlyLife 刻意不依赖 autoload，探针才能直接 new 出来测。
 	_monthly_life.main_gate = _main_event_gate
-	# 精力弹窗（2026-09-17 第三批拍板）：右上角只留一颗「力」钮，点开居中模态弹窗选动作。
-	_energy_panel = ENERGY_PANEL.new()
-	_energy_panel.setup(_monthly_life)
-	_energy_panel.main_gate = _main_event_gate
-	_energy_panel.closed.connect(_on_energy_modal_closed)
-	add_child(_energy_panel)
+	# 生活面板（2026-09-18 拍板）：右上角只留一颗「生」钮，精力/周末/熊友三 Tab 合一；
+	# 周末不再自动弹窗，就绪时 toast + 红点，玩家点进来自己安排。
+	_life_panel = LIFE_PANEL.new()
+	_life_panel.setup(_monthly_life)
+	_life_panel.main_gate = _main_event_gate
+	_life_panel.closed.connect(_on_life_panel_closed)
+	_life_panel.weekend_requested.connect(_on_life_weekend_requested)
+	add_child(_life_panel)
 	_free_time_panel = FREE_TIME_PANEL.new()
 	_free_time_panel.setup(_monthly_life)
 	_free_time_panel.weekend_closed.connect(_on_weekend_closed)
@@ -1928,6 +1936,11 @@ func _on_free_zone_focused(zone_label: String) -> void:
 func _on_weekend_closed(month: int) -> void:
 	if not _weekend_done_months.has(month):
 		_weekend_done_months.append(month)
+	# 周末安排完了：摘红点、清就绪标记，生活面板「周末」页翻到「已过完」。
+	if _weekend_ready_month == month:
+		_weekend_ready_month = -1
+	_refresh_weekend_dot()
+	_refresh_life_panel_context()
 	# 收束即清理目的地引导（2026-09-17）：残留曾让任务卡和地面线在周末过完后
 	# 继续喊「周末目的地 · 跟着地面指引走」，把玩家骗到已过完的区域踩空。
 	# 先把目的地捕获下来，收尾时若人正好还站在那里，补一句周末余韵。
@@ -1984,22 +1997,63 @@ func _maybe_show_sunday_sit() -> bool:
 	return true
 
 
-## 每 3 个月一个自由周末（第 3/6/9…月）。进月时若该月没有待结算的主线事件
-## （或主线已结完），就弹自由周末；本月还有主线时先推主线，主线结完自然轮到周末。
+## 自由周末触发（2026-09-18 改版）：不再自动弹面板。每 3 个月一次（第 3/6/9…月），
+## 进月时若该月没有待结算的主线事件（或主线已结完），就弹一条顶部 toast +
+## 「生活」钮挂红点，玩家点开生活面板的「周末」页自己安排。
+## 玩家无视到跨月 = 这个周末作废（month 变了条件不再满足，红点随 _weekend_ready_month 清理）。
 func _maybe_open_weekend(snapshot: Dictionary) -> void:
-	if _free_time_panel == null or _monthly_life == null:
+	if _monthly_life == null:
 		return
 	var month := int(snapshot["month"])
 	if month % 3 != 0 or _weekend_done_months.has(month):
+		_clear_stale_weekend_ready(month)
 		return
-	if _in_dorm or _free_time_panel.is_open():
+	if _in_dorm or (_free_time_panel != null and _free_time_panel.is_open()):
 		return
 	var next_event := WorldClock.next_main_event()
 	if not next_event.is_empty() and int(next_event["month"]) == month:
 		return
-	# 开面板期间世界时钟停住：周末是要慢慢挑的，不该边挑边被宵禁拽走。
-	WorldClock.set_running(false)
-	_free_time_panel.open_for_month(month)
+	if _weekend_ready_month != month:
+		_weekend_ready_month = month
+		_refresh_weekend_dot()
+		_show_reminder_toast("这个月有自由周末", "点右上角「生活」钮，安排这两天怎么过")
+	_refresh_life_panel_context()
+
+
+## 跨月作废清理：红点挂的月份不再是当前月份（也没结算过）→ 摘掉。
+func _clear_stale_weekend_ready(current_month: int) -> void:
+	if _weekend_ready_month != -1 and _weekend_ready_month != current_month \
+			and not _weekend_done_months.has(_weekend_ready_month):
+		_weekend_ready_month = -1
+		_refresh_weekend_dot()
+
+
+## 「生活」钮红点：周末就绪未安排时亮，其余时候灭。
+func _refresh_weekend_dot() -> void:
+	if _weekend_dot != null:
+		_weekend_dot.visible = _weekend_ready_month != -1
+
+
+## 把周末状态推给生活面板（ready / done / locked / none + 下一个周末的月份）。
+## ⚠ 面板不反查小镇内部状态：探针可以直接 new 面板喂数据。
+func _refresh_life_panel_context() -> void:
+	if _life_panel == null:
+		return
+	var month := int(WorldClock.snapshot().get("month", 1))
+	var state := "none"
+	var weekend_month := -1
+	var next_month := month + (3 - month % 3) if month % 3 != 0 else month + 3
+	if month % 3 == 0:
+		if _weekend_done_months.has(month):
+			state = "done"
+		elif _weekend_ready_month == month:
+			state = "ready"
+			weekend_month = month
+			next_month = month
+		else:
+			state = "locked"
+			next_month = month
+	_life_panel.set_weekend_state(state, weekend_month, next_month)
 
 
 func _on_world_time_changed(snapshot: Dictionary) -> void:
@@ -2009,6 +2063,7 @@ func _on_world_time_changed(snapshot: Dictionary) -> void:
 	if _time_hud != null:
 		_time_hud.set_time(snapshot)
 	_maybe_open_weekend(snapshot)
+	_refresh_life_panel_context()
 	if _interior_preview != null and _interior_preview.is_open():
 		_interior_preview.set_phase(String(snapshot.get("phaseId", "work")))
 	_check_curfew(snapshot)
@@ -2080,6 +2135,33 @@ func _refresh_objective_hint() -> void:
 	_refresh_guide_line(true)
 
 
+## 从事件 cast 里取一位联系人显示名（跳过玩家小熊本人），取不到返回空串。
+## cast 有两种历史格式：字符串 id（去 speakers 查显示名）/ 直接带 name 的字典；
+## 空 cast（M3-E09 心悸、M5-E17 副业边界这类独角事件）返回空串。
+## 只服务于任务卡的「谁找你」—— 事件标题是剧情，绝不从这里出去（2026-09-18 拍板）。
+func _event_contact_name(event: Dictionary) -> String:
+	var cast_v = event.get("cast", [])
+	if not (cast_v is Array) or (cast_v as Array).is_empty():
+		return ""
+	for member_v in (cast_v as Array):
+		var display := ""
+		if member_v is String:
+			if String(member_v) == "xiaoxiong":
+				continue
+			var speaker = event.get("speakers", {}).get(String(member_v), {})
+			if speaker is Dictionary:
+				display = String(speaker.get("name", ""))
+			else:
+				display = String(member_v)
+		elif member_v is Dictionary:
+			display = String(member_v.get("name", ""))
+			if display == "小熊":
+				continue
+		if display != "":
+			return display
+	return ""
+
+
 ## 按优先级决定任务卡上写什么。优先级必须与 _resolve_guide_target 保持一致：
 ## 夜晚该睡 > 到点主线 > 自由活动 > 未到点主线 > 主线已完结。
 func _apply_objective_content() -> void:
@@ -2099,9 +2181,13 @@ func _apply_objective_content() -> void:
 	var snapshot := WorldClock.snapshot()
 	if not next_event.is_empty() and _is_event_due(next_event, snapshot):
 		var due_zone := _zone_by_code(String(next_event.get("locationId", "")))
+		# 任务卡只说 who/when/where，不说 what（2026-09-18 用户拍板）：
+		# 事件标题是剧情，提前亮出来等于预告牌。标题的揭示时刻 = 到场弹出事件面板那一刻。
+		var contact := _event_contact_name(next_event)
+		var who: String = "%s找你" % contact if contact != "" else "有件事等你"
 		_set_objective(
 			"主线 · 现在就去做",
-			String(next_event.get("title", "")),
+			who,
 			"已到点 · 去 %s 区跟着地面指引走" % String(due_zone.get("code", "?")),
 			"%s 区" % String(due_zone.get("code", "?")),
 			true
@@ -2124,15 +2210,13 @@ func _apply_objective_content() -> void:
 	var upcoming_zone := _zone_by_code(String(next_event.get("locationId", "")))
 	var event_month := int(next_event.get("month", 1))
 	var months_left := event_month - int(snapshot.get("month", 1))
+	# 同上：大标题只给日期（日历式），剧情标题留给事件面板当场揭示。
 	var when := "第 %d 月 %02d 日" % [event_month, int(next_event.get("day", 1))]
-	if months_left > 0:
-		when += " · 还有 %d 个月" % months_left
-	else:
-		when += " · 本月内"
+	var left: String = "还有 %d 个月" % months_left if months_left > 0 else "本月内"
 	_set_objective(
 		"下一个主线",
-		String(next_event.get("title", "")),
-		"%s · 到点后地面才会出现指引线" % when,
+		when,
+		"%s · 到点后地面才会出现指引线" % left,
 		"%s 区" % String(upcoming_zone.get("code", "?")),
 		false
 	)
@@ -2604,22 +2688,35 @@ func _contract_choice_id(event_id: String, choice_id: String) -> String:
 	return choice_id
 
 
-## ---------- 精力弹窗开关（2026-09-17 第三批拍板：整模块收进一颗「力」钮） ----------
+## ---------- 生活面板开关（2026-09-18 拍板：精力/周末/熊友三 Tab 合一，见 LifePanel.gd） ----------
 
-## 点「力」圆钮 → 打开居中模态弹窗（见 EnergyModalPanel.gd）。
-## 停钟照 _open_settings 的模式：开着弹窗时世界时钟停住，关上还原；
+## 点「生」圆钮 → 打开居中模态生活面板。
+## 停钟照 _open_settings 的模式：开着面板时世界时钟停住，关上还原；
 ## MonthlyLife 的 energy_exhausted 信号不经过这里，照样能触发跳晚 + 横幅。
-func _open_energy_modal() -> void:
-	if _energy_panel == null or _monthly_life == null:
+func _open_life_panel() -> void:
+	if _life_panel == null or _monthly_life == null:
 		return
-	_energy_resume_clock = WorldClock.running
-	if _energy_resume_clock:
+	_refresh_life_panel_context()
+	_life_resume_clock = WorldClock.running
+	if _life_resume_clock:
 		WorldClock.set_running(false)
-	_energy_panel.open()
+	_life_panel.open()
 
 
-## 弹窗关闭回调：还原停钟（含花完最后 1 点后的 0.8s 自动关弹窗）。
-func _on_energy_modal_closed() -> void:
-	if _energy_resume_clock:
+## 面板关闭回调：还原停钟（含花完最后 1 点后的 0.8s 自动关面板）。
+func _on_life_panel_closed() -> void:
+	if _life_resume_clock:
 		WorldClock.set_running(true)
-		_energy_resume_clock = false
+		_life_resume_clock = false
+
+
+## 生活面板「周末」页点「去安排」：关生活面板（恢复停钟），再按原周末待遇
+## 停表 + 打开自由周末面板（周末是要慢慢挑的，不该边挑边被宵禁拽走）。
+## 结算完 _on_weekend_closed 里统一恢复时钟。
+func _on_life_weekend_requested(weekend_month: int) -> void:
+	if _free_time_panel == null or _monthly_life == null:
+		return
+	if _life_panel != null and _life_panel.is_open():
+		_life_panel.close()
+	WorldClock.set_running(false)
+	_free_time_panel.open_for_month(weekend_month)
