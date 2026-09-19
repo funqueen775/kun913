@@ -32,7 +32,7 @@ __pycache__/
 *.sqlite
 *.sqlite3
 
-# 本地隔离区（AI 会话产生的旧文件；** 前缀让它覆盖所有子目录，如 web/.trash/）
+# 本地隔离区（AI 会话产生的旧文件；** 前缀让它覆盖所有子目录，如 scripts/.trash/）
 .trash/
 **/.trash/
 

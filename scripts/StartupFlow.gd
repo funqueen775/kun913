@@ -75,12 +75,10 @@ const CAST := [
 	["小赵", "实习生", "H 区 · 慢生活园", "d8885b", "常在被帮助的位置，深夜会停一拍。"],
 ]
 
-## 标题页菜单：文本 / 是否可进入（false = 占位，还没接）
-const MAIN_MENU := [
-	["继续游戏", true],
-	["开始新游戏", true],
-	["加载游戏", true],
-]
+## 标题页菜单：三个主按钮的文案（从上到下）。各自接什么行为见 _title_screen() 内的 match。
+## 【2026-09-18 诚实化】原来三项的「是否可进入」全是 true 且全接 _start_intro，
+## 「继续 / 加载」点下去和新游戏一模一样。现在行为按有没有存档区分，见主按钮循环。
+const MAIN_MENU := ["继续游戏", "开始新游戏", "加载游戏"]
 const SUB_MENU := [
 	["我的报告", true],
 	["游戏设置", false],
@@ -152,11 +150,27 @@ func _title_screen() -> void:
 	column.add_child(_divider())
 	column.add_child(_spacer(26))
 
-	# 三个主按钮：等宽竖排
+	# 三个主按钮：等宽竖排。
+	# 【2026-09-18 诚实化】行为按钮位区分，不再三个全接 _start_intro：
+	#   继续游戏   → 有存档（profile 文件在）才亮：跳过导览直接进小镇；没存档置灰。
+	#   开始新游戏 → 恒亮：走导览三页再进小镇。
+	#   加载游戏   → 恒灰：还没有读档系统（多存档位），tooltip 说明。
+	# ⚠ 置灰按钮不连 pressed —— disabled 状态下 Godot 本来就不派发点击，连了也没用。
+	var has_save := FileAccess.file_exists(PROFILE_PATH)
 	for i in MAIN_MENU.size():
-		var main_item: Array = MAIN_MENU[i]
-		var main_btn := _button(main_item[0], "primary")
-		main_btn.pressed.connect(_start_intro if main_item[1] else _placeholder)
+		var main_btn := _button(String(MAIN_MENU[i]), "primary")
+		match i:
+			0:
+				main_btn.disabled = not has_save
+				if has_save:
+					main_btn.pressed.connect(_continue_game)
+				else:
+					main_btn.tooltip_text = "还没有存档，先开始一局新游戏"
+			1:
+				main_btn.pressed.connect(_start_intro)
+			2:
+				main_btn.disabled = true
+				main_btn.tooltip_text = "读档暂未开放"
 		if i > 0:
 			column.add_child(_spacer(16))
 		column.add_child(main_btn)
@@ -452,6 +466,13 @@ func _footer(frame: Panel) -> void:
 	frame.add_child(next)
 
 func _start_intro() -> void: _mode = "intro"; _page = 0; _rebuild()
+
+## 继续游戏：跳过导览直接进小镇，不重写 profile（保留上次开局留下的文件）。
+## ⚠ 当前存档粒度只有「玩过没有」——真正的进度续玩（currentNodeId / 月份 / 精力落盘）
+##   是方案 B 的活，别把这条当成已经能续上中途进度。
+func _continue_game() -> void:
+	get_tree().change_scene_to_file("res://Main.tscn")
+
 func _back() -> void: _mode = "title"; _rebuild()
 func _go_page(index: int) -> void: _page = clampi(index, 0, PAGES.size() - 1); _rebuild()
 func _placeholder() -> void: pass

@@ -15,6 +15,8 @@ var kind := "设"
 
 func _draw() -> void:
 	match kind:
+		"生":
+			_draw_heart()
 		"力":
 			_draw_bolt()
 		"忆":
@@ -39,6 +41,25 @@ func _draw_envelope() -> void:
 		Vector2(11, 15), Vector2(24, 26), Vector2(37, 15),
 	])
 	draw_polyline(flap, COLOR_MID, 2.0, true)
+
+
+## 生 = 爱心：「生活」钮（精力 / 周末 / 熊友三页合一，2026-09-18 拍板）。
+## 爱心 = 生活与关系的总隐喻：两圆一三角拼成，橙填充 + 深棕描边。
+## ⚠ 两个圆的描边只画外弧，避免和三角的交叠线打架（draw_arc 的起止角算过）。
+func _draw_heart() -> void:
+	var left := Vector2(18.5, 19.5)
+	var right := Vector2(29.5, 19.5)
+	draw_circle(left, 6.2, COLOR_ACCENT)
+	draw_circle(right, 6.2, COLOR_ACCENT)
+	var tip := PackedVector2Array([
+		Vector2(12.7, 22.5), Vector2(35.3, 22.5), Vector2(24.0, 37.0),
+	])
+	draw_colored_polygon(tip, COLOR_ACCENT)
+	var outline := tip.duplicate()
+	outline.append(tip[0])
+	draw_polyline(outline, COLOR_OUTLINE, 2.0, true)
+	draw_arc(left, 6.2, PI * 0.75, PI * 1.9, 16, COLOR_OUTLINE, 2.0, true)
+	draw_arc(right, 6.2, PI * 1.1, PI * 2.25, 16, COLOR_OUTLINE, 2.0, true)
 
 
 ## 力 = 闪电：能量/精力的通用符号，橙填充 + 深棕描边。

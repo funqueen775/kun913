@@ -7,10 +7,11 @@ signal player_message_submitted(npc_id: String, message: String)
 const FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const PAPER_DOLL := preload("res://scripts/PaperDoll64Sprite.gd")
 const OFFICE_NPC := preload("res://scripts/OfficeNpcWalker.gd")
-const INTERIOR_BOUNDS := Rect2(560, 420, 820, 300)
-# 门口感应区：活动区底部一大片（临时室内图统一把大门画在房间正下方），走进来弹出「返回小镇」提示。
-# 2026-09-18 用户反馈范围要大：放宽到 x 970±210、y 620..720（活动区底部约 1/3）。
-const DOOR_AREA := Rect2(760, 620, 420, 100)
+const INTERIOR_BOUNDS := Rect2(560, 420, 820, 580)
+# 门口感应区：真实场景图的大门统一画在画面底部中央（云栖科技丘的玻璃挡板缺口实测在
+# 屏幕 x 730..1190、y 865..915）。移动边界必须延伸到门口，玩家才能真的走到门口，
+# 而不是被 y=720 的隐形墙挡住。范围取缺口左右各留余量、y 850..990（含门前走道）。
+const DOOR_AREA := Rect2(720, 850, 480, 140)
 const PLAYER_SPEED := 260.0
 const TALK_DISTANCE := 165.0
 # 室内背景已换为完整场景图，角色保持可辨识但不遮挡家具与动线。

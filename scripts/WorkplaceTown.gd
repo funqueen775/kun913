@@ -24,6 +24,8 @@ const LIFE_PANEL := preload("res://scripts/LifePanel.gd")
 ## 圆钮矢量图标（2026-09-17 晚：单字圆钮换图形，用户嫌字丑）。
 const HUD_GLYPH := preload("res://scripts/ui/HudGlyph.gd")
 const FREE_TIME_PANEL := preload("res://scripts/FreeTimePanel.gd")
+## 周末到达演出（2026-09-18 晚新链路）：目的区进门后全屏场景图 + 底部逐字文字。
+const WEEKEND_SCENE_PANEL := preload("res://scripts/WeekendScenePanel.gd")
 const TRAINING_PANEL := preload("res://scripts/TrainingValleyPanel.gd")
 const GROUND_GUIDE := preload("res://scripts/ui/GroundGuideLine.gd")
 const CHINESE_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
@@ -231,10 +233,24 @@ var _weekend_done_months: Array[int] = []
 ## 自由周末已就绪的月份：提示 toast 已弹、生活钮红点挂着；
 ## 结算完（_on_weekend_closed）或跨月作废时清掉。2026-09-18 拍板：不再自动弹周末面板。
 var _weekend_ready_month := -1
+## 2026-09-18 晚改版：周末月进月自动弹一次规划面板（= 玩家口中的「周五晚上」；
+## 时间系统没有星期，周末月的开始就是「忙完这个月的活」那一刻）。防重弹。
+var _weekend_auto_prompted_month := -1
+## 出发模式下的周末计划 {month:int, pending:Array[String](区域字母), current:String}。
+## 玩家选完活动点「出发」→ 逐站走到目的区进门演到达演出（WeekendScenePanel），
+## 全部演完才回面板结算。
+var _weekend_visit := {}
+## 到达演出面板（弹丸论外式：全屏场景图 + 底部对话框，见 scripts/WeekendScenePanel.gd）。
+var _weekend_scene_panel
 ## 地面引导线（见 scripts/ui/GroundGuideLine.gd）。写弱类型：理由同 _memory_wall。
 var _guide_line
 ## 自由活动选定的区域 code（空 = 本周末没有目的地）。由自由周末面板回传。
 var _free_guide_zone := ""
+## 自由活动的户外落点（2026-09-18 深夜）：{position, label}，空字典 = 本周末没有户外目的地。
+## 湖边这类活动不在 A–H 任何建筑区里，引导线直接指落点坐标，不再借用总部的路标。
+var _free_guide_spot := {}
+## 户外落点的地面黄标（跟着引导线一起出现/收起）。
+var _weekend_spot_marker: Polygon2D
 ## 上次铺路时的玩家位置与目标：据此决定要不要重跑寻路。
 var _guide_path_origin := Vector2(-99999, -99999)
 var _guide_path_target := Vector2(-99999, -99999)
@@ -260,6 +276,7 @@ func _ready() -> void:
 	_build_map_collisions()
 	_build_player()
 	_build_guide_line()
+	_build_weekend_spot_marker()
 	_build_npcs()
 	_build_camera()
 	_build_hud()
@@ -339,6 +356,7 @@ func _physics_process(delta: float) -> void:
 	_update_zone_state()
 	_update_nearby_npc()
 	_update_camera(delta)
+	_check_weekend_outdoor_arrival()
 	_refresh_guide_line()
 
 func _process(_delta: float) -> void:
@@ -359,6 +377,12 @@ func _process(_delta: float) -> void:
 		# 目标入口保持纯黄，只改变亮度和大小，不再变成橙色。
 		marker.modulate = Color(1.0, 1.0, 0.0, 0.78 + pulse * 0.22) if is_target else Color(1.0, 0.96, 0.05, 1.0)
 		marker.scale = Vector2.ONE * (1.0 + (0.16 + pulse * 0.10) if is_target else 1.0)
+	# 户外落点黄标跟着一起呼吸：没有入口门的地方，这个标就是"到了"的提示。
+	# 每帧顺手校一次显隐：主线到点/做完会改变引导目标，黄标要跟着在/不在。
+	_refresh_weekend_spot_marker()
+	if _weekend_spot_marker != null and _weekend_spot_marker.visible:
+		_weekend_spot_marker.modulate = Color(1, 1, 1, 0.72 + pulse * 0.28)
+		_weekend_spot_marker.scale = Vector2.ONE * (1.0 + pulse * 0.18)
 
 ## 拖动中的移动与松手走 _input 而不是 _unhandled_input：
 ## 拖动时鼠标很可能划过按钮/摇杆，那些 Control 会吃掉事件，_unhandled_input 就收不到松手了
@@ -929,6 +953,20 @@ func _build_guide_line() -> void:
 	add_child(_guide_line)
 
 
+## 户外落点黄标（2026-09-18 深夜）：湖边这种没有入口门的落点，用一个会呼吸的菱形
+## 标在地面上，让玩家知道"走到这儿就算到了"。默认隐藏，由 _refresh_weekend_spot_marker
+## 按当前目的地显隐。z_index 与区域入口标一致（44），压在引导线之上。
+func _build_weekend_spot_marker() -> void:
+	_weekend_spot_marker = Polygon2D.new()
+	_weekend_spot_marker.name = "WeekendSpotMarker"
+	_weekend_spot_marker.polygon = PackedVector2Array([
+		Vector2(0, -20), Vector2(17, 11), Vector2(0, 24), Vector2(-17, 11)])
+	_weekend_spot_marker.color = Color("5ad8ff")
+	_weekend_spot_marker.z_index = 44
+	_weekend_spot_marker.visible = false
+	add_child(_weekend_spot_marker)
+
+
 func _hide_guide_line() -> void:
 	if _guide_line == null:
 		return
@@ -984,6 +1022,11 @@ func _resolve_guide_target() -> Dictionary:
 				"position": due_zone["entrance"], "code": String(due_zone["code"]),
 				"title": String(next_event.get("title", "")), "urgent": true,
 			}
+	if not _free_guide_spot.is_empty():
+		return {
+			"position": _free_guide_spot.get("position", Vector2.ZERO), "code": "",
+			"title": String(_free_guide_spot.get("label", "自由活动")), "urgent": false,
+		}
 	if not _free_guide_zone.is_empty():
 		var free_zone := _zone_by_code(_free_guide_zone)
 		if not free_zone.is_empty():
@@ -992,6 +1035,26 @@ func _resolve_guide_target() -> Dictionary:
 				"title": "自由活动", "urgent": false,
 			}
 	return {}
+
+
+## 户外落点黄标：显示/隐藏 + 挪到落点。**只有落点真的是当前引导目标时才亮**——
+## 主线到点时引导线去主线，黄标还亮着就成了第二套口径。没有目的地就收起来。
+func _refresh_weekend_spot_marker() -> void:
+	if _weekend_spot_marker == null:
+		return
+	if _free_guide_spot.is_empty():
+		_weekend_spot_marker.visible = false
+		_weekend_spot_marker.scale = Vector2.ONE
+		return
+	var target := _resolve_guide_target()
+	var spot_pos: Vector2 = _free_guide_spot.get("position", Vector2.ZERO)
+	var is_target := not target.is_empty() \
+		and (target.get("position", Vector2.ZERO) as Vector2).distance_to(spot_pos) < 1.0
+	if not is_target:
+		_weekend_spot_marker.visible = false
+		return
+	_weekend_spot_marker.position = spot_pos
+	_weekend_spot_marker.visible = true
 
 
 ## 按区域 code（"A".."H"）取 ZONES 条目；找不到返回空字典。
@@ -1011,6 +1074,13 @@ func _zone_code_from_free_label(label: String) -> String:
 	var trimmed := label.strip_edges()
 	if trimmed.is_empty():
 		return ""
+	# 面板的 ZONE_CODES 表优先（2026-09-18 晚修复）：「心湖」「心湖步道」这类
+	# 无 X_ 前缀的组团名只有这张表认得 —— 之前只走前缀/区域名兜底，二者全落空
+	# 返回空串，于是选了湖边散步/湖边深谈后既不画引导线、到达判定也永远不中。
+	if _free_time_panel != null:
+		var mapped := String(_free_time_panel.ZONE_CODES.get(trimmed, ""))
+		if mapped.length() == 1:
+			return mapped
 	var head := trimmed.split("_")[0]
 	if head.length() == 1 and not _zone_by_code(head).is_empty():
 		return head.to_upper()
@@ -1623,6 +1693,10 @@ func _enter_nearby_zone() -> void:
 	if not texture_path.is_empty():
 		_interior_preview.present(_active_zone, texture_path)
 		_interior_preview.set_phase(String(WorldClock.snapshot().get("phaseId", "work")))
+	# 到达演出（2026-09-18 晚新链路）：出发模式的周末计划落在这区 → 压着室内预览
+	# 演全屏场景图 + 底部文字；演完回面板走原结算链。事件/回声这次都让路。
+	if _maybe_start_weekend_visit():
+		return
 	var event_opened := _open_due_event_for_active_zone()
 	if not event_opened:
 		_interior_preview.enable_exploration()
@@ -1655,6 +1729,148 @@ func _exit_zone() -> void:
 		(npc["character"] as Node2D).show()
 		(npc["name_tag"] as Label).hide()
 	_hide_dialog()
+
+
+## ---------- 周末到达演出 · 站点队列（2026-09-18 深夜重做） ----------
+## 一站 = 一个格子的活动，按格子顺序逐站演（同区两格 = 两场，不再拼接成一场）。
+## kind = "zone"（走到区入口按 E 进室内演）/ "outdoor"（走到落点半径内直接演，
+## 湖边这种本来就没有门，按 E 进门反而怪）。
+
+## 队列头那一站。没站了返回空 Dictionary。
+func _weekend_current_station() -> Dictionary:
+	if _weekend_visit.is_empty():
+		return {}
+	var queue: Array = _weekend_visit.get("queue", [])
+	if queue.is_empty():
+		return {}
+	return queue[0]
+
+
+## 把当前站的路引到位：区域站 → 区入口（沿用旧链路）；户外站 → 落点坐标 + 地面黄标。
+func _focus_weekend_station(station: Dictionary) -> void:
+	if station.is_empty():
+		return
+	if String(station.get("kind", "")) == "outdoor":
+		_free_guide_zone = ""
+		_free_guide_spot = {
+			"position": station.get("position", Vector2.ZERO),
+			"label": String(station.get("label", "")),
+		}
+	else:
+		_free_guide_spot = {}
+		_free_guide_zone = String(station.get("key", ""))
+	_refresh_objective_hint()
+	_refresh_guide_line(true)
+	_refresh_weekend_spot_marker()
+
+
+## 推进到队头：铺引导；人已经在户外落点圈里（同一落点的第二场）就直接开演。
+## announce = true 时才提示「还有下一站」（出发铺第一站时不该弹这句）。
+func _start_next_weekend_station(announce: bool = false) -> void:
+	var station := _weekend_current_station()
+	if station.is_empty():
+		_finish_weekend_visit()
+		return
+	_focus_weekend_station(station)
+	if String(station.get("kind", "")) == "outdoor" and _is_player_at_weekend_spot(station):
+		_play_weekend_station(station)
+		return
+	if announce:
+		_dialog_label.text = "这个周末还有下一站，跟着地面指引继续。"
+		_dialog_label.show()
+		_dialog_timer.start(6.0)
+
+
+func _is_player_at_weekend_spot(station: Dictionary) -> bool:
+	if _player == null:
+		return false
+	var target: Vector2 = station.get("position", Vector2.ZERO)
+	var radius := float(station.get("radius", 96.0))
+	return _player.position.distance_to(target) <= radius
+
+
+## 开演一站：只取该格自己的文案。返回 true = 演出已开。
+func _play_weekend_station(station: Dictionary) -> bool:
+	if _free_time_panel == null or _weekend_scene_panel == null or station.is_empty():
+		return false
+	var scene_cfg: Dictionary = _free_time_panel.build_station_scene(int(station.get("slot", -1)))
+	if scene_cfg.is_empty():
+		# 文案缺失（理论上不该出现）：划掉这站接着走，别把玩家卡在原地。
+		_pop_weekend_station()
+		if _weekend_current_station().is_empty():
+			_finish_weekend_visit()
+		else:
+			_start_next_weekend_station()
+		return false
+	_weekend_visit["current"] = station
+	_weekend_scene_panel.present(scene_cfg)
+	return true
+
+
+func _pop_weekend_station() -> void:
+	_weekend_visit["current"] = {}
+	var queue: Array = _weekend_visit.get("queue", [])
+	if not queue.is_empty():
+		queue.remove_at(0)
+	_weekend_visit["queue"] = queue
+
+
+## 全部演完 → 先退回街上（否则人被留在没开探索模式的室内出不来），再走原结算链。
+func _finish_weekend_visit() -> void:
+	_weekend_visit = {}
+	_free_guide_spot = {}
+	_free_guide_zone = ""
+	_exit_zone()
+	_refresh_weekend_spot_marker()
+	_refresh_guide_line(true)
+	if _free_time_panel != null:
+		_free_time_panel.arrive_and_commit()
+
+
+## 进区时调用（区域站）：队列头就是这一区 → 开演。返回 true = 演出已开，
+## 主线/回声这次都让路。
+func _maybe_start_weekend_visit() -> bool:
+	if _weekend_visit.is_empty() or _weekend_scene_panel == null or _free_time_panel == null:
+		return false
+	if int(_weekend_visit.get("month", -1)) != int(WorldClock.snapshot().get("month", 0)):
+		_weekend_visit = {}
+		_free_guide_spot = {}
+		_refresh_weekend_spot_marker()
+		return false
+	var station := _weekend_current_station()
+	if station.is_empty() or String(station.get("kind", "")) != "zone":
+		return false
+	if String(station.get("key", "")) != String(_active_zone.get("code", "")):
+		return false
+	return _play_weekend_station(station)
+
+
+## 一站演完：先退回街上，再推进到下一站（或结算）。
+func _on_weekend_scene_finished() -> void:
+	if _weekend_visit.is_empty():
+		return
+	_pop_weekend_station()
+	if _weekend_current_station().is_empty():
+		_finish_weekend_visit()
+		return
+	# 演完先退回街上：到达演出分支没走 enable_exploration，室内是死的——人留在
+	# 里面既看不见下一站的引导线，也没有任何可交互的东西（用户实测卡死）。
+	# 同落点的第二场由 _start_next_weekend_station 的近距离判定直接接上。
+	_exit_zone()
+	_start_next_weekend_station(true)
+
+
+## 街上每帧：队列头是户外站且人已走进半径 → 开演（户外没有"按 E 进门"这一步）。
+func _check_weekend_outdoor_arrival() -> void:
+	if _weekend_visit.is_empty() or _weekend_scene_panel == null:
+		return
+	var station := _weekend_current_station()
+	if station.is_empty() or String(station.get("kind", "")) != "outdoor":
+		return
+	if _weekend_scene_panel.is_open():
+		return
+	if _is_player_at_weekend_spot(station):
+		_play_weekend_station(station)
 
 
 ## ---------------------------------------------------------------------------
@@ -1922,7 +2138,26 @@ func _build_monthly_life() -> void:
 	_free_time_panel.memo_requested.connect(_on_memo_recorded)
 	_free_time_panel.weekend_ledger.connect(_on_weekend_ledger)
 	_free_time_panel.zone_focused.connect(_on_free_zone_focused)
+	_free_time_panel.departure_started.connect(_on_weekend_departure)
 	add_child(_free_time_panel)
+	# 到达演出面板：图层 160，压在室内预览（80）上、手账（150）下互不打架。
+	_weekend_scene_panel = WEEKEND_SCENE_PANEL.new()
+	_weekend_scene_panel.finished.connect(_on_weekend_scene_finished)
+	add_child(_weekend_scene_panel)
+
+
+## 出发：登记这一轮周末的站点队列（一格一站，按格子顺序），并把引导铺到第一站。
+## stations 每项 = {kind, key, slot, label, position, radius}（FreeTimePanel.visit_stations()）。
+func _on_weekend_departure(month: int, stations: Array) -> void:
+	var queue: Array = []
+	for station in stations:
+		if station is Dictionary and not (station as Dictionary).is_empty():
+			queue.append(station)
+	_weekend_visit = {"month": month, "queue": queue, "current": {}}
+	# 面板里浏览区域时留下的旧目的地一律清掉，只认这一轮的队头。
+	_free_guide_zone = ""
+	_free_guide_spot = {}
+	_start_next_weekend_station()
 
 
 ## 自由周末选了组团 → 把地面指引线改指那个区域，任务卡同时换成"自由活动"。
@@ -1946,6 +2181,9 @@ func _on_weekend_closed(month: int) -> void:
 	# 先把目的地捕获下来，收尾时若人正好还站在那里，补一句周末余韵。
 	var stayed_zone := _free_guide_zone
 	_free_guide_zone = ""
+	# 户外落点同理：周末过完就把黄标和落点引导一起收掉。
+	_free_guide_spot = {}
+	_refresh_weekend_spot_marker()
 	# 契约 payload.regionId 是必填且强制 ^[A-H]$（server.py post_event），缺了会被 400 拒。
 	# weekend_close 是全局收束事件、没有天然区域，取当前所在区域；取不到就退回总部 A。
 	var close_region := String(_active_zone.get("code", "")) if not _active_zone.is_empty() else ""
@@ -1997,9 +2235,10 @@ func _maybe_show_sunday_sit() -> bool:
 	return true
 
 
-## 自由周末触发（2026-09-18 改版）：不再自动弹面板。每 3 个月一次（第 3/6/9…月），
-## 进月时若该月没有待结算的主线事件（或主线已结完），就弹一条顶部 toast +
-## 「生活」钮挂红点，玩家点开生活面板的「周末」页自己安排。
+## 自由周末触发（2026-09-18 晚改版）：每 3 个月一次（第 3/6/9…月），进月时若该月
+## 没有待结算的主线事件（或主线已结完），**自动弹一次规划面板**——玩家口中的
+## 「周五晚上规划周末」：时间系统没有星期，周末月的开始就是「忙完这个月的活」那一刻。
+## 「生活」钮红点保留；在宿舍里 / 面板已开时不弹，退回 toast 提示。
 ## 玩家无视到跨月 = 这个周末作废（month 变了条件不再满足，红点随 _weekend_ready_month 清理）。
 func _maybe_open_weekend(snapshot: Dictionary) -> void:
 	if _monthly_life == null:
@@ -2016,7 +2255,12 @@ func _maybe_open_weekend(snapshot: Dictionary) -> void:
 	if _weekend_ready_month != month:
 		_weekend_ready_month = month
 		_refresh_weekend_dot()
-		_show_reminder_toast("这个月有自由周末", "点右上角「生活」钮，安排这两天怎么过")
+		# 自动弹规划面板（发过一次就不再自动弹；玩家还能从「生活」钮进）。
+		if _weekend_auto_prompted_month != month:
+			_weekend_auto_prompted_month = month
+			_open_weekend_planning(month)
+		else:
+			_show_reminder_toast("这个月有自由周末", "点右上角「生活」钮，安排这两天怎么过")
 	_refresh_life_panel_context()
 
 
@@ -2060,6 +2304,15 @@ func _on_world_time_changed(snapshot: Dictionary) -> void:
 	if _monthly_life != null:
 		# 跨天 → 体力回满；跨月 → 补一次月底工资结算（见 MonthlyLife.sync）。
 		_monthly_life.sync(int(snapshot["month"]), int(snapshot.get("dayIndex", 0)))
+	# 出发模式跨月作废（2026-09-18 晚）：排好计划没去成，睡过月就清掉面板与目的地。
+	if _free_time_panel != null and _free_time_panel.has_departed_plan() \
+			and _free_time_panel.plan_month() != int(snapshot["month"]):
+		_free_time_panel.discard_plan()
+	if not _weekend_visit.is_empty() \
+			and int(_weekend_visit.get("month", -1)) != int(snapshot["month"]):
+		_weekend_visit = {}
+		_free_guide_spot = {}
+		_refresh_weekend_spot_marker()
 	if _time_hud != null:
 		_time_hud.set_time(snapshot)
 	_maybe_open_weekend(snapshot)
@@ -2191,6 +2444,17 @@ func _apply_objective_content() -> void:
 			"已到点 · 去 %s 区跟着地面指引走" % String(due_zone.get("code", "?")),
 			"%s 区" % String(due_zone.get("code", "?")),
 			true
+		)
+		return
+	# 户外落点（湖边这类）排在自由活动区域之前：没有区的目的地也要在卡上有说法，
+	# 否则会出现「卡上写着下一个主线、地上那条线却指着湖边」的两套口径。
+	if not _free_guide_spot.is_empty():
+		_set_objective(
+			"自由活动",
+			String(_free_guide_spot.get("label", "周末目的地")),
+			"周末目的地 · 走到标记处就开演",
+			"户外",
+			false
 		)
 		return
 	if not _free_guide_zone.is_empty():
@@ -2714,9 +2978,18 @@ func _on_life_panel_closed() -> void:
 ## 停表 + 打开自由周末面板（周末是要慢慢挑的，不该边挑边被宵禁拽走）。
 ## 结算完 _on_weekend_closed 里统一恢复时钟。
 func _on_life_weekend_requested(weekend_month: int) -> void:
+	_open_weekend_planning(weekend_month)
+
+
+## 打开周末规划（自动弹窗与「生活」钮共用）：已出发过就回计划页，别把玩家排好的
+## 两格清空重排；没出发过才开新的一轮。
+func _open_weekend_planning(weekend_month: int) -> void:
 	if _free_time_panel == null or _monthly_life == null:
 		return
 	if _life_panel != null and _life_panel.is_open():
 		_life_panel.close()
 	WorldClock.set_running(false)
-	_free_time_panel.open_for_month(weekend_month)
+	if _free_time_panel.has_departed_plan() and _free_time_panel.plan_month() == weekend_month:
+		_free_time_panel.reopen_plan()
+	else:
+		_free_time_panel.open_for_month(weekend_month)

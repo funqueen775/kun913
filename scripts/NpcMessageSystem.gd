@@ -24,6 +24,13 @@ const CONFIG_PATH := "res://data/story/npc_messages.json"
 ##   sent             Dict       {msg_id: 发送月份}——once 去重就靠它
 ##   last_month_by_npc Dict      {npc_id: 上次发消息的月份}——冷却就靠它
 ##   npc_names        Dict       {npc_id: 显示名}——数据显示名，本类零硬编码
+## 消息定义（data/story/npc_messages.json）支持的可选字段：
+##   npc              String   固定发送者；from_top_buddy=true 时省略
+##   from_top_buddy   bool     发送者改为「当时好感最高的挚友」（见 _top_buddy）
+##   when.level_min   int      from_top_buddy 时兼作门槛：没人到这一档整条不触发
+##   when.month_in    Array    白名单月份（如考核窗前一月）
+##   when.sent_any    Array    二手传播链：数组内任一消息 id 已发过才触发（社交记忆 §11.8 第四层）
+##   exempt_cooldown  bool     豁免同 NPC 冷却（解锁玩法 / 关键事件用）
 ## 返回 [{id, npc, npc_name, kind, text, month, read, unlocks_duel?}]
 static func generate(ctx: Dictionary) -> Array:
 	var cfg := load_config()
@@ -43,6 +50,13 @@ static func generate(ctx: Dictionary) -> Array:
 		if msg_id.is_empty() or sent.has(msg_id):
 			continue  # once：发过就不再发
 		var npc := String(def.get("npc", ""))
+		if bool(def.get("from_top_buddy", false)):
+			# 挚友干涉（V5.27 §11.7 Lv4）：发送者不是写死的人，而是「当时好感最高的那位」。
+			# 没人到 level_min 档 → 整条不触发（宁可漏发，也不让普通同事说挚友的话）。
+			var levels: Dictionary = ctx.get("levels", {})
+			npc = _top_buddy(levels, int((def.get("when", {}) as Dictionary).get("level_min", 4)))
+			if npc.is_empty():
+				continue
 		if not _match(def.get("when", {}), ctx, npc):
 			continue
 		if not bool(def.get("exempt_cooldown", false)):
@@ -50,7 +64,7 @@ static func generate(ctx: Dictionary) -> Array:
 			var prev := int(last_month.get(npc, -999))
 			if month - prev < cooldown:
 				continue
-		packed.append({"def": def, "idx": packed.size()})
+		packed.append({"def": def, "idx": packed.size(), "npc": npc})
 
 	# 优先级高的先发；同优先级按数据文件里的声明顺序（先声明者先发）。
 	packed.sort_custom(func(a, b):
@@ -63,8 +77,9 @@ static func generate(ctx: Dictionary) -> Array:
 
 	var out: Array = []
 	for i in mini(packed.size(), max_per_month):
-		var def: Dictionary = (packed[i]["def"] as Dictionary)
-		var npc := String(def.get("npc", ""))
+		var item: Dictionary = packed[i]
+		var def: Dictionary = (item["def"] as Dictionary)
+		var npc := String(item.get("npc", def.get("npc", "")))
 		var entry := {
 			"id": String(def.get("id", "")),
 			"npc": npc,
@@ -90,6 +105,16 @@ static func _match(when: Dictionary, ctx: Dictionary, npc: String) -> bool:
 		return false
 	if when.has("month_max") and month > int(when.get("month_max", 9999)):
 		return false
+	if when.has("month_in"):
+		# 白名单月份（如考核窗前一月）。比 month_min/month_max 更适合「每 6 个月一次」的节奏。
+		# JSON 数字在 Godot 里是 float，这里逐个 int() 比较，别依赖 has() 的隐式数值比较。
+		var hit := false
+		for v in (when.get("month_in", []) as Array):
+			if int(v) == month:
+				hit = true
+				break
+		if not hit:
+			return false
 	if when.has("health_max") and int(ctx.get("health", 99)) > int(when.get("health_max", 0)):
 		return false
 	if when.has("health_min") and int(ctx.get("health", 0)) < int(when.get("health_min", 0)):
@@ -108,12 +133,35 @@ static func _match(when: Dictionary, ctx: Dictionary, npc: String) -> bool:
 		var tags: Array = ctx.get("memory_tags", [])
 		if not _any_in_list(tags, when.get("tags_any", [])):
 			return false
+	if when.has("sent_any"):
+		# 二手传播（社交记忆，V5.27 §11.8 第四层）：前一条消息发出去之后，
+		# 这话才轮得到说——「A 跟你聊过 B，B 后来才有下文」。
+		# sent 在 generate 返回后才由调用方更新，所以同一轮内 A、B 不会同月连发。
+		var sent_seen: Dictionary = ctx.get("sent", {})
+		if not _any_key_in(sent_seen, when.get("sent_any", [])):
+			return false
 	if when.has("duel_cleared_all"):
 		var cleared: Array = ctx.get("cleared_duels", [])
 		for need in (when.get("duel_cleared_all", []) as Array):
 			if not cleared.has(String(need)):
 				return false
 	return true
+
+
+## 挚友干涉的发送者：levels 里 ≥ level_min 且好感最高的那位。
+## 平局取先遇到的 —— 调用方（MonthlyLife）按 NPC_NAMES 定义顺序填 levels，
+## 该顺序前四位与 SOCIAL_POOL 一致（王哥 → 小林 → 小赵 → 老周），平局因此按名单定序。
+## （NPC_NAMES 里多出的「熊总」不在 SOCIAL_POOL、也没有任何好感来源，永远 0 分，不会当选。）
+## 没人到档位 → 返回空串，调用方据此整条跳过。
+static func _top_buddy(levels: Dictionary, level_min: int) -> String:
+	var best := ""
+	var best_level := level_min - 1
+	for raw_id in levels.keys():
+		var lv := int(levels[raw_id])
+		if lv > best_level:
+			best_level = lv
+			best = String(raw_id)
+	return best
 
 
 static func _any_key_in(flags: Dictionary, keys) -> bool:

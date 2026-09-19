@@ -26,17 +26,24 @@ func _ready() -> void:
 	_town._settings_panel.close()
 	await _wait(0.4)
 
-	# 精力弹窗：点「力」圆钮打开 → 截（大圆点 3/3 + 4 张动作卡）。
-	_town._open_energy_modal()
+	# 生活面板：点「生」圆钮打开 → 截（精力 Tab：大圆点 3/3 + 4 张动作卡）。
+	_town._open_life_panel()
 	await _wait(0.5)
 	await _shot("3_energy_modal")
 	# 点「专业成长」卡花 1 点：计数 2/3 + 便签反馈。
-	_town._energy_panel._on_action_pressed("grow")
+	_town._life_panel._on_action_pressed("grow")
 	print("[hud] after card: energy=", _town._monthly_life.energy,
-		" count=", _town._energy_panel._count_label.text)
+		" count=", _town._life_panel._count_label.text)
 	await _wait(0.5)
 	await _shot("4_energy_modal_spent")
-	_town._energy_panel.close()
+	# 周末 / 熊友两个 Tab 也各截一张（三页合一版式验收）。
+	_town._life_panel.open_at_tab("weekend")
+	await _wait(0.4)
+	await _shot("4b_life_weekend_tab")
+	_town._life_panel.open_at_tab("buddy")
+	await _wait(0.4)
+	await _shot("4c_life_buddy_tab")
+	_town._life_panel.close()
 	await _wait(0.4)
 
 	# 精力耗尽联动：先放行开局压着的主线 E01（否则主线守卫会按设计拦停跳跃），

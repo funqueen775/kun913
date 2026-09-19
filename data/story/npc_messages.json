@@ -1,18 +1,37 @@
 {
-  "_readme": "NPC 主动消息（机制文档 §2「有人记得我」+ V5.27 §11.8/§11.9）。四类触发：state 状态 / relation 关系 / story 剧情 / memory 记忆。红线：① 消息里不能出现好感分数、等级数字、测评结论——只说人话；② 训练谷邀约必须由共同经历引出，不许凭空出现；③ 冷却 + 优先级防止 NPC 同时轰炸（机制文档 §5）。",
+  "_readme": "NPC 主动消息（机制文档 §2「有人记得我」+ V5.27 §11.8/§11.9）。五类触发：state 状态 / relation 关系 / story 剧情 / memory 记忆 / social 社交记忆（§11.8 第四层：NPC 谈论彼此；sent_any 表达二手传播链——A 跟你聊过 B，B 后来才有下文），外加 intervene 挚友干涉（Lv4 专属，V5.27 §11.7：考核窗前提醒 + 事故时第一个站出来——发送者由 from_top_buddy 动态决定，是好感最高的那位，不写死在数据里）。红线：① 消息里不能出现好感分数、等级数字、测评结论——只说人话；② 训练谷邀约必须由共同经历引出，不许凭空出现；③ 冷却 + 优先级防止 NPC 同时轰炸（机制文档 §5）。",
   "rules": {
     "per_npc_cooldown_months": 3,
     "max_per_month": 2,
     "priority": {
+      "intervene": 4,
       "state": 3,
       "memory": 2,
       "story": 2,
-      "relation": 1
+      "relation": 1,
+      "social": 1
     },
-    "_priority_note": "数字大的先发。同优先级按 messages 数组内的声明顺序（先声明者先发）。裁剪在「每月最多 2 条」时生效。",
+    "_priority_note": "数字大的先发。同优先级按 messages 数组内的声明顺序（先声明者先发）。裁剪在「每月最多 2 条」时生效。intervene（挚友干涉）最高：关键事件不能被普通寒暄挤掉。social（谈论彼此）与 relation 同级垫底：闲谈不能挤掉关心、旧事与邀约。",
     "_cooldown_note": "同一个 NPC 两次发消息之间至少隔 3 个月（含跨月）。训练谷邀约 exempt_cooldown=true，因为它解锁玩法、不能被冷却挡住。"
   },
   "messages": [
+    {
+      "id": "buddy_intervene_assessment",
+      "_note": "Lv4 挚友干涉·考核窗前提醒（V5.27 §11.7）。发送者 = 当时好感最高的那位（from_top_buddy），文案走通用口吻，谁都说得出口。",
+      "from_top_buddy": true,
+      "kind": "intervene",
+      "text": "下个月考评。材料先自己过一遍——真被问住，往我这边看一眼。",
+      "when": { "level_min": 4, "month_in": [5, 11, 17, 23, 29, 35, 41] },
+      "exempt_cooldown": true
+    },
+    {
+      "id": "buddy_intervene_incident",
+      "_note": "Lv4 挚友干涉·事故时第一个站出来（V5.27 §11.7）。走冷却（不豁免）：事故不该每月复读。",
+      "from_top_buddy": true,
+      "kind": "intervene",
+      "text": "这次不用你一个人扛。真要往上追责，第一个签字认领的是我。",
+      "when": { "level_min": 4, "health_max": 3 }
+    },
     {
       "id": "wange_state_low_health",
       "npc": "wang_ge",
@@ -142,6 +161,71 @@
       "when": { "month_min": 26 },
       "unlocks_duel": "D4_laozhou",
       "exempt_cooldown": true
+    },
+
+    {
+      "id": "wange_social_xiaolin_blame",
+      "_note": "社交记忆（V5.27 §11.8 第四层）· 王哥谈小林：E07 复盘会他在场，无论你当场澄清还是认下，他都看在眼里。",
+      "npc": "wang_ge",
+      "kind": "social",
+      "text": "复盘会那天，小林那话你别往心里去。交付日期压在她身上，到了会上，人话都会变味。",
+      "when": { "tags_any": ["当场澄清过", "好说话"] }
+    },
+    {
+      "id": "xiaolin_social_blame_reply",
+      "_note": "二手传播链：王哥先聊过（sent_any），小林才有下文——孤立的两条好感线第一次接通。",
+      "npc": "xiao_lin",
+      "kind": "social",
+      "text": "王哥找你聊过复盘会的事了吧？……他倒热心。下次复盘我把监控数据先摆桌上——省得再冤枉人，也省得他替你说话。",
+      "when": { "sent_any": ["wange_social_xiaolin_blame"] }
+    },
+    {
+      "id": "xiaolin_social_deadline",
+      "_note": "社交记忆 · 小林谈王哥：E09 顶工期的是你，她拿王哥作比——敢顶她的开发，你是头一个。",
+      "npc": "xiao_lin",
+      "kind": "social",
+      "text": "上次工期你顶了我一句。行——连王哥都没你顶得直。后来那份排期，我是照你的数重排的。",
+      "when": { "tags_any": ["顶住压力要了工期"] }
+    },
+    {
+      "id": "xiaozhao_social_laozhou_sign",
+      "_note": "社交记忆 · 小赵谈老周：E28 你替他整理 commit 记录发声（tag「替我出过头」），他后来看到老周的反应。",
+      "npc": "xiao_zhao",
+      "kind": "social",
+      "text": "申报材料的事……老周后来知道了。他什么都没说，但那周他把组里的署名规则重新写了一遍，贴在墙上。",
+      "when": { "tags_any": ["替我出过头"] }
+    },
+    {
+      "id": "laozhou_social_xiaozhao_reply",
+      "_note": "二手传播链：小赵先开口，老周才评价小赵的成长——公正三连测的人性余波。",
+      "npc": "lao_zhou",
+      "kind": "social",
+      "text": "小赵那孩子，最近敢在申报会上开口了。有人替他出过头、和没人替他出过头，长出来的是两株苗。",
+      "when": { "sent_any": ["xiaozhao_social_laozhou_sign"] }
+    },
+    {
+      "id": "wange_social_xiaozhao_review",
+      "_note": "社交记忆 · 王哥谈小赵：E36 你按事实给小赵打了分还写了评语（tag「按事实给朋友打过分」），评语被他贴在工位上。",
+      "npc": "wang_ge",
+      "kind": "social",
+      "text": "绩效排序那件事，你给小赵写的评语，他抄下来贴在工位上了。他在乎的不是名次——是有人真看了他的产出。",
+      "when": { "tags_any": ["按事实给朋友打过分"] }
+    },
+    {
+      "id": "xiaozhao_social_review_reply",
+      "_note": "二手传播链：王哥先提，小赵才敢说出那句「名次往后了」。",
+      "npc": "xiao_zhao",
+      "kind": "social",
+      "text": "哥……你那次写的评语我看见了。名次往后了，可每一条我都记着。下回让你挑不出毛病。",
+      "when": { "sent_any": ["wange_social_xiaozhao_review"] }
+    },
+    {
+      "id": "xiaozhao_social_wange_pr",
+      "_note": "社交记忆 · 小赵谈王哥：E21 你在王哥 PR 下留言（tag「当面指出过前辈的坑」），小赵路过看见——王哥嘴硬心软那一面由第三个人讲出来。",
+      "npc": "xiao_zhao",
+      "kind": "social",
+      "text": "那天你在王哥的 PR 底下留言，我路过看见了。他嘴上说「改就改」——转头把你的复现步骤转给我，说写得比他自己的清楚。",
+      "when": { "tags_any": ["当面指出过前辈的坑"] }
     }
   ]
 }

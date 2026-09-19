@@ -13,6 +13,10 @@ signal weekend_ledger(record: Dictionary)
 ## 玩家选定的组团（值形如 "D_树影书院" / "心湖"）。小镇据此把地面指引线铺到那个区域；
 ## 空字符串表示清掉上个周末留下的目的地。
 signal zone_focused(zone_label: String)
+## 出发模式（2026-09-18 晚新链路）：计划里至少一格配了到达演出 → 底部按钮变「出发」，
+## 关闭面板让玩家自己逐个走到目的区，进门演完场景图（WeekendScenePanel）才结算。
+## zone_labels = 本周末要去的目的地组团名列表（按格子顺序去重）。
+signal departure_started(month: int, zone_labels: Array)
 
 ## 一个自由周末 = 周六 2 格（设计文档 §3.1 / §13.1：周六 2 格 + 周日自由）。
 ## 周日**不进这张表**：它没有额度、不出结算、不铺引导线。
@@ -22,6 +26,11 @@ const SLOT_COUNT := 2
 
 const FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const CONFIG_PATH := "res://data/story/free_time_system.json"
+## 到达演出配置（2026-09-18 晚新链路）：activity_id → 场景图 + 逐字文案。
+const SCENES_PATH := "res://data/story/weekend_scenes.json"
+## 户外落点表（2026-09-18 深夜）：不属于 A–H 建筑区的活动目的地（心湖南岸/木栈道…）。
+## 走到 position 半径内即触发演出；activity_spots 决定哪个活动去哪个落点。
+const SPOTS_PATH := "res://data/town/outdoor_spots.json"
 
 const ACTIVITY_NAMES := {
 	"S1_library_study": "图书馆自习",
@@ -114,6 +123,8 @@ const DEFAULT_STAGE := 1
 
 var _life
 var _config: Dictionary = {}
+var _scenes_cfg: Dictionary = {}
+var _spots_cfg: Dictionary = {}
 var _month := 0
 var _weather := "sunny"
 var _step := "closed"
@@ -153,11 +164,29 @@ func setup(life) -> void:
 func _ready() -> void:
 	layer = 150
 	_config = _load_config()
+	_scenes_cfg = _load_scenes()
+	_spots_cfg = _load_spots()
 	_build_ui()
 
 
 func _load_config() -> Dictionary:
 	var text := FileAccess.get_file_as_string(CONFIG_PATH)
+	if text.is_empty():
+		return {}
+	var parsed = JSON.parse_string(text)
+	return parsed if parsed is Dictionary else {}
+
+
+func _load_scenes() -> Dictionary:
+	var text := FileAccess.get_file_as_string(SCENES_PATH)
+	if text.is_empty():
+		return {}
+	var parsed = JSON.parse_string(text)
+	return parsed if parsed is Dictionary else {}
+
+
+func _load_spots() -> Dictionary:
+	var text := FileAccess.get_file_as_string(SPOTS_PATH)
 	if text.is_empty():
 		return {}
 	var parsed = JSON.parse_string(text)
@@ -229,6 +258,146 @@ func activities_for_zone(zone: String) -> Array:
 		if String(activity.get("zone", "")).split("|").has(zone):
 			result.append(activity)
 	return result
+
+
+## ---------- 到达演出（出发模式，探针直接测这些口径） ----------
+
+## 活动的到达演出配置；没配返回空 Dictionary。
+func scene_config_for(activity_id: String) -> Dictionary:
+	var scenes: Dictionary = _scenes_cfg.get("scenes", {})
+	var cfg = scenes.get(activity_id, {})
+	return cfg if cfg is Dictionary else {}
+
+
+## 是否走「出发」模式：至少一格有到达演出（有就去演）。
+func visit_ready() -> bool:
+	return not visit_stations().is_empty()
+
+
+## 活动 → 户外落点 id（activity_spots 没登记的活动返回空串 = 走区域落点）。
+func spot_id_for(activity_id: String) -> String:
+	var table: Dictionary = _spots_cfg.get("activity_spots", {})
+	return String(table.get(activity_id, ""))
+
+
+## 落点条目（spots 里按 id 取；取不到返回空 Dictionary）。
+func spot_info(spot_id: String) -> Dictionary:
+	for spot in _spots_cfg.get("spots", []):
+		if String(spot.get("id", "")) == spot_id:
+			return spot
+	return {}
+
+
+## 一格的目的地：{kind, key, slot, label, position, radius}。
+## kind = "outdoor"（走到点上触发）/ "zone"（走到区入口按 E 进室内）。
+## 2026-09-18 深夜重做：**一格一站、不去重不合并**——之前按区域去重 + 同区文案拼接，
+## 结果选两个活动只演一场（用户实测「两个最后只有一个」）。
+func station_for_slot(index: int) -> Dictionary:
+	if index < 0 or index >= _slots.size() or slot_is_blank(index):
+		return {}
+	var slot: Dictionary = _slots[index]
+	var activity_id := String(slot.get("activityId", ""))
+	if scene_config_for(activity_id).is_empty():
+		return {}
+	var spot_id := spot_id_for(activity_id)
+	if not spot_id.is_empty():
+		var info := spot_info(spot_id)
+		if not info.is_empty():
+			var pos: Dictionary = info.get("position", {})
+			return {
+				"kind": "outdoor", "key": spot_id, "slot": index,
+				"label": String(info.get("name", "")),
+				"position": Vector2(float(pos.get("x", 0.0)), float(pos.get("y", 0.0))),
+				"radius": float(info.get("radius", 96.0)),
+			}
+	var zone := String(slot.get("zone", ""))
+	return {
+		"kind": "zone", "key": zone_region_id(zone), "slot": index,
+		"label": zone_display(zone), "position": Vector2.ZERO, "radius": 0.0,
+	}
+
+
+## 出发目的地列表：按格子顺序，**一个活动一站**（同区两格 = 两场）。
+func visit_stations() -> Array:
+	var result: Array = []
+	for i in _slots.size():
+		var station := station_for_slot(i)
+		if not station.is_empty():
+			result.append(station)
+	return result
+
+
+func plan_month() -> int:
+	return _month
+
+
+func has_departed_plan() -> bool:
+	return _step == "departed"
+
+
+## 一站的到达演出配置：只取该格自己的活动文案（一格一场，不再拼接同区两格）。
+func build_station_scene(index: int) -> Dictionary:
+	if index < 0 or index >= _slots.size() or slot_is_blank(index):
+		return {}
+	var slot: Dictionary = _slots[index]
+	var cfg := scene_config_for(String(slot.get("activityId", "")))
+	if cfg.is_empty():
+		return {}
+	var lines: Array = cfg.get("lines", [])
+	if lines.is_empty():
+		return {}
+	var who := ""
+	var targets: Array = slot.get("targets", [])
+	if not targets.is_empty() and _life != null:
+		who = String(_life.NPC_NAMES.get(String(targets[0]), String(targets[0])))
+	return {
+		"title": String(cfg.get("title", "")),
+		"image": String(cfg.get("image", "")),
+		"lines": lines,
+		"who": who,
+	}
+
+
+## 「出发」：关面板回地图，不结算、不发 weekend_closed。
+## 引导线由 zone_focused 接管（先指第一站）；到达后由小镇调 arrive_and_commit() 结算。
+func _depart_for_visit() -> void:
+	var stations := visit_stations()
+	if stations.is_empty():
+		return
+	_step = "departed"
+	_root.hide()
+	# 区域首站沿用 zone_focused（按组团名换算区域）；户外首站没有组团名，
+	# 引导线由小镇按 departure_started 里的 position 直接接管。
+	var first: Dictionary = stations[0]
+	if String(first.get("kind", "")) == "zone":
+		var slot_index := int(first.get("slot", 0))
+		if slot_index >= 0 and slot_index < _slots.size():
+			zone_focused.emit(String((_slots[slot_index] as Dictionary).get("zone", "")))
+	departure_started.emit(_month, stations)
+
+
+## 出发后从「生活」面板再进来 → 回到计划页（不清空已排的两格）。
+func reopen_plan() -> void:
+	if _step != "departed":
+		return
+	_root.show()
+	_step = "slots"
+	_show_slots()
+
+
+## 跨月作废：出发了却没去，睡过月就作废（任务卡口径一致）。
+func discard_plan() -> void:
+	if _step == "departed":
+		_step = "closed"
+		_root.hide()
+
+
+## 玩家走进目的区、场景演出完毕 → 回到面板走原结算链（decision / encounter / 手账）。
+func arrive_and_commit() -> void:
+	if _step != "departed":
+		return
+	_root.show()
+	commit_weekend()
 
 
 ## 随机指派同行者：双人 1 人、三人团 2 人、团队/独处不指派。
@@ -556,7 +725,13 @@ func _show_slots() -> void:
 	_content.add_child(_relation_overview_block())
 	for i in _slots.size():
 		_content.add_child(_make_slot_row(i))
-	_set_footer("就这样过", commit_weekend)
+	# 出发模式（2026-09-18 晚）：计划至少一格配了到达演出 → 「出发」去地图，
+	# 逐站走到目的区进门演场景图，全部演完才结算；没配的维持旧流程当场结算。
+	if visit_ready():
+		_content.add_child(_body_label("出发后跟着地面指引逐站走，进门就会开始；这个周末可以不止去一个地方。", 15, COLOR_SUB))
+		_set_footer("出发", _depart_for_visit)
+	else:
+		_set_footer("就这样过", commit_weekend)
 
 
 ## 关系一览（机制文档 §5.4「前台展示关系阶段及进度感」）。

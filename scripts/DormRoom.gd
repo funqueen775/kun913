@@ -3,8 +3,10 @@ extends CanvasLayer
 
 ## 宿舍：玩家每天出发、每天结束的地方。
 ##
-## 排版：左侧「慢生活园」美术图卡片（完整不裁切），右侧信息栏
-## （眉题 / 标题 / 分隔线 / 描述 / 行动提示条），暖色羊皮纸系配色。
+## 排版（2026-09-18 二次改造）：底图按 COVER 缩放**铺满整个视口**，无图卡无黑边；
+## 右侧信息浮层（眉题/标题/描述/提示条）**整个删掉**——指引靠门口/床边的呼吸光环地贴，
+## 交互 = 走到热点上按 E / Enter 弹确认框。
+## 玩法层不受影响：站位、掩膜、热点判定全部仍是底图像素坐标。
 ## 家园装饰系统整体后置（见 docs/家园系统设计说明_V1.md），
 ## 届时本屏是"宿舍场景 + 陈列层"的底座。
 ##
@@ -53,32 +55,26 @@ const BED_RADIUS := 92.0
 
 ## 配色（与记忆墙/手册同一羊皮纸系）
 const INK_BG := Color("0b0812")
-const CARD_BG := Color("14100c")
 const CARD_BORDER := Color("4a2619")
 const PARCHMENT := Color("f6e6c2")
 const PARCHMENT_SOFT := Color("e8d3ac")
-const KICKER := Color("c9a97a")
 const ACCENT := Color("9f4c36")
 const ACCENT_HOVER := Color("bf6241")
 const OUTLINE := Color("23170f")
 const GOLD := Color("f0b45a")
-const NIGHT_BLUE := Color("8fb8e8")
 
-## 左侧图卡与右侧信息栏的版面基准（1920×1080）
-const CARD_RECT := Rect2(100, 70, 960, 940)
-const CARD_PAD := 18.0
-const COL_X := 1160.0
-const COL_W := 660.0
+## 全屏版式（2026-09-18 晚二改）：主图按 **min** 缩放放进视口，上限
+## PHOTO_MAX_SCALE = 1.0（原像素尺寸，最清晰、视角也最小）；
+## 四周不够的地方用**同一张图的暗化放大版**垫底 —— 既没有黑边，也不会把房间放到过大。
+const PHOTO_MAX_SCALE := 1.0
+const BACKDROP_DIM := Color(0.42, 0.4, 0.38)
 
 var _root: Control
+var _backdrop: TextureRect
 var _photo: TextureRect
-var _kicker: Label
-var _title: Label
-var _desc: Label
-var _hint: Label
-var _prompt: Button
 var _scrim: ColorRect
 var _joystick: Control
+var _spot_prompt: Button
 var _confirm_panel: Panel
 var _confirm_title: Label
 var _confirm_desc: Label
@@ -92,7 +88,6 @@ var _image_size := FALLBACK_IMAGE_SIZE
 var _room: Node2D
 var _player: Node2D
 var _player_sprite: PaperDoll64Sprite
-var _marker: Node2D
 ## 可站掩膜（Image）。加载不到就退化成"整张图都能站"，至少不卡死玩家。
 var _mask: Image
 
@@ -120,9 +115,9 @@ func _ready() -> void:
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(backdrop)
 
-	_build_photo_card()
-	_build_text_column()
+	_build_backdrop_image()
 	_build_room_layer()
+	_build_spot_prompt()
 	_build_joystick()
 	_build_confirm_dialog()
 
@@ -135,8 +130,12 @@ func _process(delta: float) -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	if viewport_size != _last_viewport_size:
 		_sync_room()
+	# 站在哪个热点上（空 = 不在任何热点）：每帧重算，确认框开着时冻结，
+	# 否则确认框弹出的瞬间人就还没动、判定却可能漂走。
+	if not _confirm_open:
+		_active_spot_id = _resolve_spot()
 	_step_player(delta)
-	_refresh_marker()
+	_update_spot_prompt()
 
 
 ## ---------------------------------------------------------------------------
@@ -154,7 +153,6 @@ func present(curfew: bool) -> void:
 	_stick_active = false
 	_root.show()
 	_sync_room()
-	_refresh_prompt()
 	if _joystick != null:
 		_joystick.queue_redraw()
 
@@ -215,7 +213,6 @@ func _step_player(delta: float) -> void:
 	var direction := _effective_input()
 	if direction == Vector2.ZERO:
 		_player_sprite.set_motion(Vector2.ZERO, 0.0)
-		_refresh_prompt()
 		return
 	var from := _player.position
 	var step := direction * MOVE_SPEED * delta
@@ -230,7 +227,6 @@ func _step_player(delta: float) -> void:
 	_player.position = target
 	# 距离按精灵自己的局部尺度给（角色挂在 CHARACTER_SCALE 缩放的锚点下），步频才和镇里一致。
 	_player_sprite.set_motion(direction, from.distance_to(target) * CHARACTER_SCALE)
-	_refresh_prompt()
 
 
 func _can_stand(image_position: Vector2) -> bool:
@@ -329,95 +325,80 @@ func is_walkable_image_position(image_position: Vector2) -> bool:
 ## 场景搭建
 ## ---------------------------------------------------------------------------
 
-## 左侧：圆角卡片包住整张宿舍图（KEEP_ASPECT_CENTERED，不再裁上下）。
-func _build_photo_card() -> void:
-	var card := Panel.new()
-	card.position = CARD_RECT.position
-	card.size = CARD_RECT.size
-	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = CARD_BG
-	card_style.border_color = CARD_BORDER
-	card_style.set_border_width_all(2)
-	card_style.set_corner_radius_all(10)
-	card_style.shadow_color = Color(0, 0, 0, 0.45)
-	card_style.shadow_size = 22
-	card_style.shadow_offset = Vector2(0, 6)
-	card.add_theme_stylebox_override("panel", card_style)
-	_root.add_child(card)
+## 双层底图：主图按 min 缩放居中（≤ PHOTO_MAX_SCALE，原像素最清晰），
+## 背后垫一张**同一张图的暗化 COVER 版**补足四周 —— 没有黑边，主图也不会被放到过大。
+## 绘制矩形由 _sync_room() 维护。
+func _build_backdrop_image() -> void:
+	var texture := _load_texture(DORM_IMAGE_PATH)
+	if texture != null:
+		_image_size = texture.get_size()
+
+	_backdrop = TextureRect.new()
+	_backdrop.name = "DormBackdrop"
+	_backdrop.texture = texture
+	_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_backdrop.stretch_mode = TextureRect.STRETCH_SCALE
+	_backdrop.modulate = BACKDROP_DIM
+	_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_backdrop)
 
 	_photo = TextureRect.new()
 	_photo.name = "DormPhoto"
-	_photo.texture = _load_texture(DORM_IMAGE_PATH)
+	_photo.texture = texture
 	_photo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_photo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_photo.position = Vector2(CARD_PAD, CARD_PAD)
-	_photo.size = CARD_RECT.size - Vector2(CARD_PAD, CARD_PAD) * 2.0
+	_photo.stretch_mode = TextureRect.STRETCH_SCALE
 	_photo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(_photo)
-	if _photo.texture != null:
-		_image_size = _photo.texture.get_size()
+	_root.add_child(_photo)
 
 
-## 右侧：眉题 → 标题 → 分隔线 → 描述 → 行动提示条 → 操作小字。
-func _build_text_column() -> void:
-	_kicker = _label("H 区 · 员工宿舍", 20, KICKER, 0)
-	_kicker.position = Vector2(COL_X, 296)
-	_kicker.size = Vector2(COL_W, 34)
-	_root.add_child(_kicker)
-
-	_title = _label("慢生活园", 56, PARCHMENT, 5)
-	_title.position = Vector2(COL_X, 338)
-	_title.size = Vector2(COL_W, 84)
-	_root.add_child(_title)
-
-	var divider := ColorRect.new()
-	divider.color = ACCENT
-	divider.position = Vector2(COL_X + 2, 444)
-	divider.size = Vector2(140, 3)
-	_root.add_child(divider)
-
-	_desc = _label("", 22, PARCHMENT_SOFT, 2)
-	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desc.custom_minimum_size = Vector2(COL_W - 20, 0)
-	_desc.size = Vector2(COL_W - 20, 150)
-	_desc.position = Vector2(COL_X, 486)
-	_root.add_child(_desc)
-
-	_prompt = Button.new()
-	_prompt.name = "DormPrompt"
-	_prompt.position = Vector2(COL_X, 664)
-	_prompt.size = Vector2(460, 96)
-	_prompt.add_theme_font_override("font", FONT)
-	_prompt.add_theme_font_size_override("font_size", 25)
-	_prompt.add_theme_color_override("font_color", Color("fff4d4"))
-	_prompt.add_theme_color_override("font_hover_color", Color("fff8e0"))
-	_prompt.add_theme_color_override("font_disabled_color", Color("d8c6a2"))
-	_prompt.add_theme_stylebox_override("normal", _button_style(ACCENT))
-	_prompt.add_theme_stylebox_override("hover", _button_style(ACCENT_HOVER))
-	_prompt.add_theme_stylebox_override("pressed", _button_style(Color("7e3c2a")))
-	_prompt.add_theme_stylebox_override("disabled", _button_style(Color("3a2a20")))
-	_prompt.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	_prompt.pressed.connect(_on_prompt_pressed)
-	_root.add_child(_prompt)
-
-	_hint = _label("W / A / S / D 或 方向键 走动 · E 交互", 18, KICKER, 0)
-	_hint.position = Vector2(COL_X, 780)
-	_hint.size = Vector2(COL_W, 30)
-	_root.add_child(_hint)
+## 门口/床边的「靠近才出现」胶囊提示，与 InteriorPreview 的门口提示同一套样式
+## （深底金边圆角胶囊，锚在视口底部正中）。点击 = 走到热点上按 E 同一条路（open_confirm）。
+func _build_spot_prompt() -> void:
+	_spot_prompt = Button.new()
+	_spot_prompt.name = "DormSpotPrompt"
+	_spot_prompt.text = "离开宿舍 · E"
+	_spot_prompt.anchor_left = 0.5
+	_spot_prompt.anchor_right = 0.5
+	_spot_prompt.anchor_top = 1.0
+	_spot_prompt.anchor_bottom = 1.0
+	_spot_prompt.offset_left = -130
+	_spot_prompt.offset_right = 130
+	_spot_prompt.offset_top = -216
+	_spot_prompt.offset_bottom = -150
+	_spot_prompt.focus_mode = Control.FOCUS_NONE
+	_spot_prompt.add_theme_font_override("font", FONT)
+	_spot_prompt.add_theme_font_size_override("font_size", 20)
+	_spot_prompt.add_theme_color_override("font_color", Color("ffe9b8"))
+	_spot_prompt.add_theme_color_override("font_hover_color", Color("fff6d8"))
+	_spot_prompt.add_theme_color_override("font_disabled_color", Color("bfa77f"))
+	_spot_prompt.add_theme_stylebox_override("normal", _spot_prompt_style(Color("2b1a10", 0.88)))
+	_spot_prompt.add_theme_stylebox_override("hover", _spot_prompt_style(Color("472814", 0.94)))
+	_spot_prompt.add_theme_stylebox_override("disabled", _spot_prompt_style(Color("241a12", 0.82)))
+	_spot_prompt.add_theme_stylebox_override("pressed", _spot_prompt_style(Color("5a3418", 0.94)))
+	_spot_prompt.pressed.connect(open_confirm)
+	_spot_prompt.hide()
+	_root.add_child(_spot_prompt)
 
 
-## 底图坐标系容器：玩家、影子、目标地贴都挂在它下面，用底图像素坐标摆位。
+func _spot_prompt_style(bg: Color) -> StyleBoxFlat:
+	# 与 InteriorPreview._door_prompt_style 完全同款：深底金边的圆角胶囊。
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = Color("d49a4c")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(28)
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	return style
+
+
+## 底图坐标系容器：玩家、影子都挂在它下面，用底图像素坐标摆位。
 ## 画序靠**树序**决定，不用 z_index —— z_index 是 CanvasLayer 内全局的，
-## 一旦给玩家一个按 y 排的 z，确认框和黑幕就会被玩家盖住。地贴先加、玩家后加即可。
+## 一旦给玩家一个按 y 排的 z，确认框和黑幕就会被玩家盖住。
 func _build_room_layer() -> void:
 	_room = Node2D.new()
 	_room.name = "DormRoomFloor"
 	_root.add_child(_room)
-
-	_marker = Node2D.new()
-	_marker.name = "DormSpotMarker"
-	_marker.draw.connect(_draw_marker)
-	_room.add_child(_marker)
 
 	_player = Node2D.new()
 	_player.name = "DormPlayer"
@@ -506,62 +487,34 @@ func _make_confirm_button(text: String, normal: Color, hover: Color) -> Button:
 	return button
 
 
-## 图片在屏幕上的实际绘制矩形（= 卡片位置 + 内边距 + 等比缩放后的居中偏移）。
+## 双层底图的绘制矩形：
+##   主图 = **min** 缩放（上限 PHOTO_MAX_SCALE）居中放进视口 —— 原像素尺寸、最清晰；
+##   背景垫图 = **max** 缩放 COVER 铺满视口，压暗补足四周。
+## _room 的原点 = 主图 (0,0) 在屏幕上的落点，所以站位/热点等底图坐标不用跟着版式改。
 func _sync_room() -> void:
 	if _photo == null or _room == null:
 		return
 	_last_viewport_size = get_viewport().get_visible_rect().size
-	var box_position := CARD_RECT.position + _photo.position
-	var box_size := _photo.size
+	var box_size := _last_viewport_size
 	var source := _image_size if _image_size.x > 0.0 else FALLBACK_IMAGE_SIZE
-	var factor := minf(box_size.x / source.x, box_size.y / source.y)
-	var drawn := source * factor
-	_image_rect = Rect2(box_position + (box_size - drawn) * 0.5, drawn)
-	_room.position = _image_rect.position
-	_room.scale = Vector2.ONE * (drawn.x / source.x)
+	var photo_factor := minf(minf(box_size.x / source.x, box_size.y / source.y), PHOTO_MAX_SCALE)
+	var photo_drawn := source * photo_factor
+	var photo_offset := (box_size - photo_drawn) * 0.5
+	_image_rect = Rect2(photo_offset, photo_drawn)
+	_photo.position = photo_offset
+	_photo.size = photo_drawn
+	if _backdrop != null:
+		var backdrop_factor := maxf(box_size.x / source.x, box_size.y / source.y)
+		var backdrop_drawn := source * backdrop_factor
+		_backdrop.position = (box_size - backdrop_drawn) * 0.5
+		_backdrop.size = backdrop_drawn
+	_room.position = photo_offset
+	_room.scale = Vector2.ONE * photo_factor
 
 
 func _refresh() -> void:
-	# 宵禁时给画面压一层夜色，让"该睡了"先被看见再被读到。
+	# 宵禁时给画面压一层夜色，让"该睡了"先被看见。
 	_photo.modulate = Color(0.72, 0.78, 0.95) if _curfew else Color.WHITE
-	if _curfew:
-		_kicker.text = "%02d:00 · 宵禁" % CURFEW_HOUR
-		_title.text = "该回宿舍了"
-		_desc.text = "宿舍 %02d:00 关门，再晚就只能睡走廊了。\n今天到此为止，走到床边睡一觉，明早 %02d:00 再出门。" % [CURFEW_HOUR, WAKE_UP_HOUR]
-	else:
-		_kicker.text = "H 区 · 员工宿舍"
-		_title.text = "慢生活园"
-		_desc.text = "你在这里开始一天，也在这里结束一天。\n记住：晚上 %02d:00 之前必须回到宿舍。" % CURFEW_HOUR
-
-
-## 提示条随"站在哪"变：不在热点上时是灰的指路，站上去了才亮成可点。
-func _refresh_prompt() -> void:
-	if _prompt == null:
-		return
-	_active_spot_id = _resolve_spot()
-	match _active_spot_id:
-		"door":
-			if _curfew:
-				_prompt.text = "%02d:00 了，门已经锁了" % CURFEW_HOUR
-				_prompt.disabled = true
-			else:
-				_prompt.text = "离开宿舍  ·  E"
-				_prompt.disabled = false
-		"bed":
-			_prompt.text = "上床睡觉  ·  E"
-			_prompt.disabled = false
-		_:
-			_prompt.disabled = true
-			if _curfew:
-				_prompt.text = "走回床边就能睡（WASD 走动）"
-			elif _player != null and _player.position.y < 520.0:
-				_prompt.text = "往下走，到蓝色双开门前"
-			else:
-				_prompt.text = "走近门口的蓝色双开门"
-
-
-func _on_prompt_pressed() -> void:
-	open_confirm()
 
 
 func _close_confirm() -> void:
@@ -570,27 +523,31 @@ func _close_confirm() -> void:
 		_scrim.hide()
 	if _confirm_panel != null:
 		_confirm_panel.hide()
-	_refresh_prompt()
 
 
-## 目标地贴：呼吸光环 + 中心圆点。门口暖金、床边冷蓝。
-func _refresh_marker() -> void:
-	if _marker == null:
+## 站上门口/床边才出现的胶囊提示（与 InteriorPreview 的门口提示同一套交互）：
+## 宵禁时门口的胶囊变灰锁死；确认框打开时收起，别挡确认框。
+func _update_spot_prompt() -> void:
+	if _spot_prompt == null:
 		return
-	var target := BED_SPOT if _curfew else DOOR_SPOT
-	_marker.position = target
-	_marker.queue_redraw()
-
-
-func _draw_marker() -> void:
-	if _marker == null:
+	if _confirm_open:
+		_spot_prompt.hide()
 		return
-	var pulse := (sin(Time.get_ticks_msec() * 0.004) + 1.0) * 0.5
-	var color := NIGHT_BLUE if _curfew else GOLD
-	var radius := BED_RADIUS if _curfew else DOOR_RADIUS
-	_marker.draw_circle(Vector2.ZERO, radius * 0.62, Color(color, 0.10 + pulse * 0.07))
-	_marker.draw_arc(Vector2.ZERO, radius, 0.0, TAU, 48, Color(color, 0.55 + pulse * 0.35), 5.0)
-	_marker.draw_arc(Vector2.ZERO, radius * (0.74 + pulse * 0.10), 0.0, TAU, 48, Color(color, 0.28), 3.0)
+	match _active_spot_id:
+		"door":
+			if _curfew:
+				_spot_prompt.text = "%02d:00 了，门已经锁了" % CURFEW_HOUR
+				_spot_prompt.disabled = true
+			else:
+				_spot_prompt.text = "离开宿舍 · E"
+				_spot_prompt.disabled = false
+			_spot_prompt.show()
+		"bed":
+			_spot_prompt.text = "上床睡觉 · E"
+			_spot_prompt.disabled = false
+			_spot_prompt.show()
+		_:
+			_spot_prompt.hide()
 
 
 ## 触屏摇杆：小镇那份在 CanvasLayer 40 上、被宿舍的黑幕盖住收不到事件，
