@@ -30,6 +30,7 @@ const TRAINING_PANEL := preload("res://scripts/TrainingValleyPanel.gd")
 const GROUND_GUIDE := preload("res://scripts/ui/GroundGuideLine.gd")
 const CHINESE_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const TOWN_MAP_PATH := "res://assets/town/workplace_town_no_labels.png"
+const TOWN_MAP_TEXTURE: Texture2D = preload("res://assets/town/workplace_town_no_labels.png")
 const SOURCE_MAP_SIZE := Vector2(1678, 937)
 const LOCATION_MARKER_RECTS := {
 	"A": Rect2(250, 20, 230, 82),
@@ -753,7 +754,7 @@ func _build_walls() -> void:
 func _build_map_backdrop() -> void:
 	var sprite := Sprite2D.new()
 	sprite.name = "TownMapReference"
-	sprite.texture = _load_map_texture(TOWN_MAP_PATH)
+	sprite.texture = TOWN_MAP_TEXTURE
 	sprite.centered = false
 	if sprite.texture != null:
 		var source_size := sprite.texture.get_size()
@@ -764,6 +765,12 @@ func _build_map_backdrop() -> void:
 
 
 func _load_map_texture(path: String) -> Texture2D:
+	var imported := ResourceLoader.load(path, "Texture2D") as Texture2D
+	if imported != null:
+		return imported
+	if OS.has_feature("web"):
+		push_error("小镇贴图资源不存在: %s" % path)
+		return null
 	var image := Image.new()
 	if image.load(ProjectSettings.globalize_path(path)) != OK:
 		push_error("小镇底图加载失败: %s" % path)

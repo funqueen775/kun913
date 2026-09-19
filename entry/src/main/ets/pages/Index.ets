@@ -71,7 +71,13 @@ struct Index {
         .fileAccess(true)
         .backgroundColor(Color.Black)
         .onInterceptRequest((event) => this.localAsset(event.request.getRequestUrl()))
-        .onPageEnd(() => this.checkGraphics())
+        .onPageEnd(() => {
+          this.controller.runJavaScript('document.getElementById("canvas")?.focus()');
+          this.checkGraphics();
+        })
+        .onTouch(() => {
+          this.controller.runJavaScript('document.getElementById("canvas")?.focus()');
+        })
         .onConsole((event) => {
           const message: string = event.message.getMessage();
           if (message.includes('GL_INVALID_OPERATION') && message.includes('uniform buffers')) {
