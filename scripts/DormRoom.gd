@@ -419,7 +419,7 @@ func _build_room_layer() -> void:
 	_player_sprite.position = Vector2(-32, -72)
 	_player_sprite.configure_motion_speed(MOVE_SPEED * CHARACTER_SCALE)
 	anchor.add_child(_player_sprite)
-	_player_sprite.set_loadout("bear_green_cardigan")
+	_player_sprite.set_loadout(PlayerProfile.get_selected_avatar_id())
 
 
 func _build_confirm_dialog() -> void:

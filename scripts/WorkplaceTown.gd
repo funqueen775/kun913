@@ -115,11 +115,10 @@ var ZONES := [
 	{"id": "h", "code": "H", "name": "慢生活园·宿舍与桌游馆", "rect": Rect2(760, 760, 390, 250), "center": Vector2(955, 885), "door": "top"},
 ]
 var NPCS := [
-	{"zone": "a", "name": "陈工", "role": "邻组 Leader", "loadout": "bear_beige_blazer", "route": PackedVector2Array([Vector2(405, 345), Vector2(510, 345), Vector2(510, 390), Vector2(405, 390)]), "prompt": "结论是什么？预算和工期，一句话说完。"},
+	{"zone": "a", "name": "陈工", "role": "邻组 Leader", "loadout": "bear_orange_blazer", "route": PackedVector2Array([Vector2(405, 345), Vector2(510, 345), Vector2(510, 390), Vector2(405, 390)]), "prompt": "结论是什么？预算和工期，一句话说完。"},
 	{"zone": "b", "name": "王哥", "role": "技术 · 你的导师", "loadout": "bear_plaid_glasses", "route": PackedVector2Array([Vector2(850, 325), Vector2(1070, 325), Vector2(1070, 370), Vector2(850, 370)]), "prompt": "方案我看过了，先别急着推。说说你为什么选这条路线。"},
-	{"zone": "c", "name": "小林", "role": "产品", "loadout": "bear_green_cardigan", "route": PackedVector2Array([Vector2(1435, 335), Vector2(1650, 335), Vector2(1650, 380), Vector2(1435, 380)]), "prompt": "客户那边催得很急，先帮我把需求优先级定下来。"},
-	{"zone": "d", "name": "老周", "role": "资深", "loadout": "bear_orange_blazer", "route": PackedVector2Array([Vector2(1205, 680), Vector2(1285, 680), Vector2(1285, 800), Vector2(1205, 800)]), "prompt": "复盘会上有不同说法。你觉得该由谁来牵头？"},
-	{"zone": "h", "name": "小赵", "role": "实习生", "loadout": "bear_green_cardigan", "route": PackedVector2Array([Vector2(365, 380), Vector2(405, 380), Vector2(405, 490), Vector2(365, 490)]), "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？"},
+	{"zone": "c", "name": "小林", "role": "产品", "loadout": "bear_beige_blazer", "route": PackedVector2Array([Vector2(1435, 335), Vector2(1650, 335), Vector2(1650, 380), Vector2(1435, 380)]), "prompt": "客户那边催得很急，先帮我把需求优先级定下来。"},
+	{"zone": "d", "name": "老周", "role": "资深", "loadout": "bear_green_cardigan", "route": PackedVector2Array([Vector2(1205, 680), Vector2(1285, 680), Vector2(1285, 800), Vector2(1205, 800)]), "prompt": "复盘会上有不同说法。你觉得该由谁来牵头？"},
 ]
 
 var _office: OfficeSet
@@ -625,7 +624,7 @@ func _build_player() -> void:
 	_player_sprite.position = Vector2(-32, -72)
 	_player_sprite.configure_motion_speed(PLAYER_SPEED)
 	_player.add_child(_player_sprite)
-	_player_sprite.set_loadout("bear_green_cardigan")
+	_player_sprite.set_loadout(PlayerProfile.get_selected_avatar_id())
 
 
 func _build_npcs() -> void:
@@ -2330,14 +2329,8 @@ func _on_world_time_changed(snapshot: Dictionary) -> void:
 	_refresh_objective_hint()
 	if _environment_tint == null:
 		return
-	# 键必须与 WorldClock.PHASES 的 id 一一对应，漏一个就会退成「不压色」。
-	var tint_by_phase := {
-		"morning": Color(0.93, 0.72, 0.42, 0.12),
-		"work": Color(1, 1, 1, 0.0),
-		"offwork": Color(0.88, 0.46, 0.20, 0.20),
-		"night": Color(0.07, 0.14, 0.35, 0.42),
-	}
-	_environment_tint.color = tint_by_phase.get(String(snapshot["phaseId"]), Color(1, 1, 1, 0))
+	# 视觉只区分白天和晚上。内部仍保留事件使用的细分时刻，避免改变睡觉和主线门禁。
+	_environment_tint.color = Color(0.07, 0.14, 0.35, 0.42) if String(snapshot["phaseId"]) == "night" else Color(1, 1, 1, 0)
 
 
 ## （原「跳空白日/跳到下个内容日」逻辑已删：2026-09-17 晚拍板，睡觉 = 进下月，

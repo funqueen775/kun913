@@ -7,8 +7,8 @@ extends CanvasLayer
 ## 养成行动（月度 3 点精力）不再承担推进职责。
 
 const FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
-## 一天的时段数，与 WorldClock.PHASES 一一对应（进度点用它铺）。
-const PHASE_COUNT := 4
+## 视觉上只区分白天和晚上；WorldClock 的细分时刻仍用于事件和睡觉门禁。
+const PHASE_COUNT := 2
 
 var _title: Label
 var _date: Label
@@ -44,12 +44,12 @@ func _ready() -> void:
 	_clock.position = Vector2(234, 52)
 	_clock.size = Vector2(98, 36)
 	panel.add_child(_clock)
-	# 当前时段 + 今天走到第几拍：进度点用实心/空心区分已过与未到。
-	_phase = _label("早上", 25, Color("ffd98a"))
+	# 当前昼夜 + 今天走到哪一档：进度点用实心/空心区分已过与未到。
+	_phase = _label("白天", 25, Color("ffd98a"))
 	_phase.position = Vector2(18, 96)
 	_phase.size = Vector2(180, 32)
 	panel.add_child(_phase)
-	_progress = _label("●○○○", 22, Color("fff0c9"))
+	_progress = _label("●○", 22, Color("fff0c9"))
 	_progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_progress.position = Vector2(168, 96)
 	_progress.size = Vector2(164, 32)
@@ -72,12 +72,9 @@ func set_time(snapshot: Dictionary) -> void:
 	# 只显示月份（用户拍板：不要「日」）。
 	_date.text = "第 %d 月" % int(snapshot["month"])
 	_clock.text = String(snapshot["clock"])
-	var phase_index := int(snapshot.get("phaseIndex", 0))
-	_phase.text = String(snapshot.get("phaseName", ""))
-	var marks := ""
-	for i in PHASE_COUNT:
-		marks += "●" if i <= phase_index else "○"
-	_progress.text = marks
+	var is_night := String(snapshot.get("phaseId", "")) == "night"
+	_phase.text = "晚上" if is_night else "白天"
+	_progress.text = "●●" if is_night else "●○"
 	var next_event := WorldClock.next_main_event()
 	if next_event.is_empty():
 		_next_event.text = "第一幕主线事件已完成"

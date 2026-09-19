@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
   "_source": "《事件场景与人物对照表 V2》《剧情设计详细方案 V5.27》。开场三屏与地图内 NPC **共用这一份**，改演员只改这里。",
-  "_artNote": "角色设定是【熊】。王哥/陈工/小林/老周 已接入美术交付的熊行走图（loadout = bear_plaid_glasses / bear_beige_blazer / bear_green_cardigan / bear_orange_blazer，atlas 见 assets/characters/paper_doll_64/compiled/）。小赵（street_creator）暂无熊图，仍沿用人类纸娃娃占位。新增造型只在 wardrobe_catalog.json 的 loadouts 里追加条目，字段名不变。",
+  "_artNote": "主世界只有四位常驻 NPC：王哥为橙色熊老板、陈工为奶白西装熊、小林为灰熊、老周为绿色开衫熊。五个玩家形象仅供玩家选择，不作为 NPC 使用。运行图集位于 assets/characters/paper_doll_64/compiled/。",
   "_decisions": [
     "角色形象：保留【熊】设定，美术出图；在此之前沿用人类纸娃娃占位（2026-09-13 定）",
-    "演员表：只用这 5 只熊，Godot 里原有的 8 个区域 NPC（艾米/陈工/林总/周岚/小莫/阿哲/宁宁/乐乐）作废（2026-09-13 定）",
+    "演员表：主世界只保留 4 位常驻 NPC；玩家由开场选择的形象呈现。Godot 里原有的 8 个区域 NPC（艾米/陈工/林总/周岚/小莫/阿哲/宁宁/乐乐）作废。",
     "区域名：以 data/town/regions.json 为准",
     "已删除的「选择初始同事」屏的残留字段（recommended / selectable）不再保留",
     "周日闲话（2026-09-17，设计说明 §13.1）：sunday_prompt 数组，只在「周日」（周末面板收束次日）替换日常 prompt，纯台词**不加好感**——加了就会把周日刷成好感资源。随机挑一句说。"
@@ -57,7 +57,7 @@
       "line": "话少，只问结论和成本。不陪你聊天，但会记住你兑现过什么。",
       "note": "不进关系系统",
       "noteDetail": "事务型直属上级：无好感度、无熊友卡、不参与邀约",
-      "loadout": "bear_beige_blazer",
+      "loadout": "bear_orange_blazer",
       "route": [
         [
           405,
@@ -91,7 +91,7 @@
       "place": "创意水巷",
       "line": "被客户催得急，语速偏快。先把需求塞给你，再跟你一起想办法。",
       "note": "",
-      "loadout": "bear_green_cardigan",
+      "loadout": "bear_beige_blazer",
       "_loadoutNote": "造型待产品定；若定为女性形象，把 loadout 换成 skirt_woman 即可",
       "route": [
         [
@@ -126,7 +126,7 @@
       "place": "会议室",
       "line": "在听，等着看谁认领。年轻时也被侵占过署名——他知道那是什么滋味。",
       "note": "",
-      "loadout": "bear_orange_blazer",
+      "loadout": "bear_green_cardigan",
       "route": [
         [
           1205,
@@ -150,40 +150,6 @@
       "sunday_prompt": [
         "慢一点，不一定就是落后。",
         "周末的意义，是让你周一还想回来。"
-      ]
-    },
-    {
-      "id": "xiaozhao",
-      "zone": "H",
-      "name": "小赵",
-      "role": "实习生",
-      "place": "走廊 · 看守记忆墙",
-      "line": "常在被帮助的位置。深夜路过会停一拍：「师兄还没走？」",
-      "note": "",
-      "loadout": "bear_green_cardigan",
-      "route": [
-        [
-          365,
-          380
-        ],
-        [
-          405,
-          380
-        ],
-        [
-          405,
-          490
-        ],
-        [
-          365,
-          490
-        ]
-      ],
-      "prompt": "师兄，这个我搞不太定……能帮我看一眼吗？",
-      "relation": true,
-      "sunday_prompt": [
-        "师兄，今天小镇的猫都比平时懒。",
-        "我昨天玩了一下午桌游，一个字都不想看。"
       ]
     }
   ]

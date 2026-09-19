@@ -18,6 +18,7 @@ config/features=PackedStringArray("4.7")
 
 WorldClock="*res://scripts/WorldClock.gd"
 ApiClient="*res://scripts/ApiClient.gd"
+PlayerProfile="*res://scripts/PlayerProfile.gd"
 
 [display]
 
