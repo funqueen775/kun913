@@ -8,7 +8,8 @@
   终局分级：传承者 L6-L7 / 中坚者 L3-L5 / 守界者 L1-L2。
   红线：阈值数字永不出现。
 
-⚠ 阈值缺省值是**占位值**，剧本与机制文档均未给标定数字，必须由机制层校准后替换。
+⚠ 阈值标定说明（2026-09-17）：见下方 CUMULATIVE_MIN 的注释——
+  已按「23 件主线」的实际容量重新标定，是**临时值**；剧情补齐后必须重标。
 """
 
 from __future__ import annotations
@@ -16,12 +17,28 @@ from __future__ import annotations
 from ..core import constants as C
 from .state import GameState
 
-# ⚠ 占位阈值（待机制层校准）：目标职级 → 累积层门槛
-PLACEHOLDER_CUMULATIVE_MIN = {2: 8, 3: 15, 4: 23, 5: 32, 6: 42, 7: 52}
-# ⚠ 占位阈值：行为层允许的隐瞒类 flag 数（0 = 一个都不能有）
-PLACEHOLDER_BEHAVIOR_MAX_CONCEAL = 0
-# ⚠ 占位阈值：答辩层最低分（仅 L4+ 有答辩）
-PLACEHOLDER_DEFENSE_MIN = 0
+# 目标职级 → 累积层门槛（本考核窗内 S+O+N+D 的净累积要够这个数才升）
+#
+# ⚠ 2026-09-17 重标定（**临时值，剧情补齐后必须重标**）：
+#   旧值 {2:8, 3:15, 4:23, 5:32, 6:42, 7:52} 是按「跑批口径 87 个核心选择」定的 ——
+#   跑批每 6 个月有约 12 个选择供能（含 48 个逐月事件），而**游戏路径只有 23 件主线**，
+#   每个考核窗只摊到 2-4 件，实测每窗能攒到的天花板只有 3~8（脚本实测：5/4/3/4/8/3/3）。
+#   门槛一律 8 → 七个窗**数学上全都不可能通过** → 玩满 48 个月职级永远 L1。
+#
+#   新值按「23 件主线」实测容量标定，取**递增**（越往上越难），校验过四种玩法：
+#     最努力(每件取最大) 累积 5/4/3/4/8/3/3 → 过 3 窗 → 终局 L4（与跑批基准一致）
+#     全选首项          累积 4/2/1/2/6/1/0 → 过 2 窗 → 终局 L3
+#     全选末项          累积 4/1/0/-1/3/1/0 → 过 1 窗 → 终局 L2
+#     最省力(每件取最小) 累积 2/-1/-2/-2/0/-1/-1 → 过 0 窗 → 终局 L1（守界者）
+#   → 玩法之间能拉开档次，测评有区分度。
+#
+#   已知副作用：M18/M36/M42 三窗的天花板只有 3，而升到 L4/L5 需要 5/6 →
+#   这三窗**数学上过不了**（体现高位难攀）。剧情补齐、事件变密后重标即可消除。
+CUMULATIVE_MIN = {2: 3, 3: 4, 4: 5, 5: 6, 6: 7, 7: 8}
+# 行为层允许的隐瞒类 flag 数（0 = 一个都不能有）
+BEHAVIOR_MAX_CONCEAL = 0
+# 答辩层最低分（仅 L4+ 有答辩）。0 = 暂不设卡：无标定依据，且原始值就是 0。
+DEFENSE_MIN = 0
 
 
 def evaluate(state: GameState) -> dict:
@@ -29,21 +46,21 @@ def evaluate(state: GameState) -> dict:
     target = min(state.level + 1, C.LEVEL_MAX)
 
     cumulative = state.window_cumulative
-    cum_min = PLACEHOLDER_CUMULATIVE_MIN.get(target, 999)
+    cum_min = CUMULATIVE_MIN.get(target, 999)
     cum_pass = cumulative >= cum_min
 
     conceal = [f for f in state.window_flags if f in C.CONCEAL_FLAGS]
-    beh_pass = len(conceal) <= PLACEHOLDER_BEHAVIOR_MAX_CONCEAL
+    beh_pass = len(conceal) <= BEHAVIOR_MAX_CONCEAL
 
     defense_pass = True
     if target >= 4:
-        defense_pass = state.competency.get("integrity", 0) >= PLACEHOLDER_DEFENSE_MIN
+        defense_pass = state.competency.get("integrity", 0) >= DEFENSE_MIN
 
     promoted = cum_pass and beh_pass and defense_pass
     return {
         "target_level": target,
         "cumulative": {"value": cumulative, "min": cum_min, "pass": cum_pass, "weight": 0.70},
-        "behavior": {"conceal_flags": conceal, "max": PLACEHOLDER_BEHAVIOR_MAX_CONCEAL,
+        "behavior": {"conceal_flags": conceal, "max": BEHAVIOR_MAX_CONCEAL,
                      "pass": beh_pass, "weight": 0.20},
         "defense": {"pass": defense_pass, "weight": 0.10, "has_defense": target >= 4},
         "promoted": promoted,

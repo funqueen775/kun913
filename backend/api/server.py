@@ -1,21 +1,45 @@
 # -*- coding: utf-8 -*-
-"""M4 最小服务层：把 contracts/openapi.yaml 的三个核心端点变成可执行体。
+"""M4 最小服务层：把 contracts/openapi.yaml 的核心端点变成可执行体。
 
-范围（先让契约有能跑的实体，其余端点后续补）：
+范围（其余端点后续补）：
   GET  /api/v1/health                                    存活检查
   POST /api/v1/sessions                                  建会话（支持 resumeSessionId 续接）
   GET  /api/v1/sessions/{sid}                            读权威会话状态
   GET  /api/v1/sessions/{sid}/next                       下一个可玩节点
   POST /api/v1/sessions/{sid}/events                     幂等上报（主线选择真正进引擎结算）
   GET  /api/v1/sessions/{sid}/npcs/{npcId}/memories      NPC 记忆（事件流推导，只读）
+  POST /api/v1/sessions/{sid}/report                     生成终局报告（202 + 状态）
+  GET  /api/v1/sessions/{sid}/report                     读已成片的报告（未成片 404）
+  GET  /api/v1/sessions/{sid}/report/status              轮询生成状态
 
 设计要点：
   - 只用标准库（http.server + sqlite3），与 engine_core 的零依赖口径一致；FastAPI 是后续升级项。
   - 引擎状态以 JSON 快照存在 sessions.state_json，每结算一条主线事件推进一次；
     重启不丢，且与「跑批可复算」精神一致（事件流重放可还原同一状态）。
-  - 主线事件按 schedule 顺序强校验：跳事件回 409（契约：conflicts with current story state）。
+  - **叙事编号 ↔ 引擎键走 data/story/story_key_map.json**（2026-09-16 起）。
+    旧做法「storyId 去掉 M 前缀」只对第 1 件成立：Godot 的 M1-E02 是「技术选型」，
+    而打分卡 E02 是「第一次被轻视」。靠前缀裁剪的后果是前 8 件静默记错账、第 9 件起 409。
+    映射表里不含任何打分载荷，所以不违反「scoring_cards 不下发前端」的红线。
+  - **会话推进用映射表的 playableOrder，不是引擎的全量 44 节点 schedule**：
+    Godot 目前只提供 19 个测评节点，按全量 schedule 校验会卡在缺失节点上（实测第 9 件
+    就撞上成就节点 C1）。缺失节点在报告层表现为「证据不足」，算法册 §6 本来就允许。
+    playableOrder 随剧情补齐逐件变长，全部补齐即等价于全量 schedule。
+  - 跳事件仍回 409（契约：conflicts with current story state）—— 这条守住，
+    它是唯二能发现编号错位的机制（另一个是 completedStoryIds 对账）。
+  - **纯叙事成就节点 C1/C2/C3 靠 achievement_view 推进**：它们 no_decision、无选项，
+    走不进选择通道；没有这条分支，会话会永远停在这三件上。
   - 测评埋点与叙事埋点全部落 events 表；只有带 storyId+choiceId 的选择事件触发引擎结算。
+  - 选项没对齐的事件（align=pending_rewrite）一律 409 并说明原因，
+    **绝不退回正则按同名选项记分** —— 那正是「善意选项被记成越界选项」的来源。
   - NPC 记忆四层（fact/relation/state/social）从决策流推导，绝不单独存储（契约红线）。
+  - **报告走 app.report.build()，服务层只喂料不重算**（2026-09-16 起）：
+    报告算法本身完整且是纯函数，服务层零算法；阈值与打分卡永不下发（契约 anti-leak 红线）。
+    契约把生成写成异步（202 → 轮询），但生成是纯模板毫秒级、无大模型 → **同步生成后如实回 ready**，
+    不伪造 pending/generating 中间态。POST 幂等：已成片则不重算（契约「请求两次返回同一个 handle」）。
+    转成异步只需把 generate_report 换成丢线程池 + 状态位，接口形状不用动。
+  - 报告缺料的地方**留空不估算**：服务层没有跑批的逐月日志 → situationTrack.states 为空；
+    档案自评（profile_answer 埋点）尚未采集 → 无后验与矛盾度。报告层自己按「证据不足」处理，
+    这是算法册 §6 允许的表现，不用假数据顶替。
 
 本机注意：这台机器新文件约 5 分钟后被锁、新进程无法写打开 —— SQLite 库文件重启会变只读。
       用环境变量 WORKPLACE_TOWN_DB_PATH 每次启动指一个新文件即可（同 ARISAI 的 ARISAI_DB_PATH 做法）。
@@ -41,9 +65,13 @@ _ENGINE_ROOT = Path(__file__).resolve().parents[1] / "engine_core"
 sys.path.insert(0, str(_ENGINE_ROOT))
 
 from app.core.loader import load  # noqa: E402
+from app.core import constants as C  # noqa: E402
+from app.engine import promotion as pr  # noqa: E402
+from app.engine import survival as sv  # noqa: E402
 from app.engine import timeline as tl  # noqa: E402
 from app.engine.settlement import normalize_mainline, settle  # noqa: E402
 from app.engine.state import DecisionRecord, GameState  # noqa: E402
+from app.report import build as build_report  # noqa: E402
 
 import id_map  # noqa: E402
 
@@ -53,6 +81,9 @@ DB_PATH = Path(sys.argv[sys.argv.index("--db") + 1]) if "--db" in sys.argv \
                                            Path(__file__).resolve().parent / "workplace_town.db"))
 PORT = int(sys.argv[sys.argv.index("--port") + 1]) if "--port" in sys.argv \
     else int(__import__("os").environ.get("WORKPLACE_TOWN_PORT", "8077"))
+
+# 叙事编号 ↔ 引擎测评节点键的唯一映射（人工逐条确认，data/story 下）。
+STORY_KEY_MAP_PATH = REPO_ROOT / "data" / "story" / "story_key_map.json"
 
 NPC_IDS = {"wang_ge", "chen_gong", "xiao_lin", "lao_zhou", "xiao_zhao"}
 # 契约 eventType 枚举里没有 "main_choice"（fixture 在用），两条口径都收。
@@ -90,6 +121,14 @@ class Store:
             response_json TEXT NOT NULL,
             created_at    TEXT NOT NULL,
             PRIMARY KEY(session_id, event_id)
+        );
+        CREATE TABLE IF NOT EXISTS reports(
+            session_id   TEXT PRIMARY KEY,
+            status       TEXT NOT NULL,
+            reason       TEXT NOT NULL DEFAULT '',
+            payload_json TEXT NOT NULL DEFAULT '',
+            requested_at TEXT NOT NULL,
+            generated_at TEXT
         );
         """)
 
@@ -163,6 +202,31 @@ class Store:
                 out.append(rid)
         return out
 
+    def event_stream(self, sid: str) -> list:
+        """本会话的原始事件流（按落库顺序）。报告层要用它还原埋点轨迹。"""
+        with _lock:
+            return self.conn.execute(
+                "SELECT event_type, payload_json FROM events WHERE session_id=?"
+                " ORDER BY created_at", (sid,)).fetchall()
+
+    # ---- reports（一个会话一份；契约要求幂等，所以按 session_id 主键 upsert）
+    def get_report(self, sid: str):
+        with _lock:
+            return self.conn.execute(
+                "SELECT * FROM reports WHERE session_id=?", (sid,)).fetchone()
+
+    def save_report(self, sid: str, status: str, reason: str,
+                    payload_json: str, generated_at: str | None) -> None:
+        with _lock:
+            self.conn.execute(
+                "INSERT INTO reports(session_id, status, reason, payload_json,"
+                " requested_at, generated_at) VALUES(?,?,?,?,?,?)"
+                " ON CONFLICT(session_id) DO UPDATE SET"
+                " status=excluded.status, reason=excluded.reason,"
+                " payload_json=excluded.payload_json, generated_at=excluded.generated_at",
+                (sid, status, reason, payload_json, now_iso(), generated_at))
+            self.conn.commit()
+
 
 class Engine:
     """engine_core 的进程内单例：配置装一次，schedule 算一次。"""
@@ -201,28 +265,120 @@ class Engine:
         month = self.sched_month[engine_key]
         st.month = max(st.month, month)
         choice = normalize_mainline(self.reg, engine_key, option)
-        return settle(st, choice, self.reg, month=month,
-                      hesitation_ms=hesitation_ms, switch_count=switch_count)
+        result = settle(st, choice, self.reg, month=month,
+                        hesitation_ms=hesitation_ms, switch_count=switch_count)
+        # 月末尾巴（补齐跨过的月份：考核窗 + 生存轨）。
+        # 返回值里只留 promotionWindows —— 生存轨的迁移结果归 _session_state
+        # 下发（那里才是「你的处境」页读的地方），事件回包不必再多一份。
+        tails = self.settle_months_tail(st)
+        result["promotionWindows"] = [t["promotion"] for t in tails if "promotion" in t]
+        return result
+
+    def settle_months_tail(self, st: GameState) -> list[dict]:
+        """补齐「已跨过但还没做月末尾巴」的月份（含考核窗 + 生存轨）。
+
+        跑批路径（simulation.run）是**逐月**循环，月末的东西每月自然命中一次；
+        服务层是**逐事件跳跃**推进 —— 月份取自事件排期 sched_month，
+        相邻两件事之间可能跨过 1-3 个月，中间的月份会被整个跳过去。
+        这里在每次结算后，按月份升序把跨过的月份补齐。
+
+        月末尾巴的顺序照跑批 simulation.run 的月末段（第 212-236 行）：
+            ① 考核窗：survival.raise_flags → promotion.settle_window
+            ② 生存轨：survival.monthly_tick
+        两者不可换序：raise_flags 读的是 window_flags，而 settle_window 会把它清零。
+
+        为什么补是对的：
+          - settle_window 结算后会重置 window_cumulative / window_flags，
+            所以补一个窗拿到的恰好是「自上个窗以来」的累积，与跑批语义一致；
+          - monthly_tick 每月只让 months_since_mistake +1，逐月补与连续推进等价，
+            「连续 6 个月无失误自动回升一级」的自我修复也因此不会在跳月时被吃掉。
+
+        幂等锚是 st.settled_months（**落库**，不是内存）→ 重放 / 重复上报
+        不会把同一个月跑两遍，这也是它与 promotion.promotion_windows 的区别。
+
+        ⚠ 2026-09-18 前这里只补考核窗，生存轨整条没接 —— 结果是「只记失误、不修复」，
+        strikes 单向累积恶化。现在补齐整条月末尾巴。
+        """
+        done = set(st.settled_months)
+        out: list[dict] = []
+        for m in range(1, st.month + 1):
+            if m in done:
+                continue
+            done.add(m)
+            st.settled_months.append(m)
+            rec: dict = {"month": m}
+            if m in C.PROMOTION_MONTHS:
+                # ① 窗结算前先看本窗有没有新增隐瞒（生存轨的「输入」）
+                sv.raise_flags(st, m)
+                rec["promotion"] = pr.settle_window(st, m)
+            # ② 生存轨月度推进：状态迁移 + 自我修复
+            rec["survival"] = sv.monthly_tick(st, m)
+            out.append(rec)
+        return out
 
     def next_undone(self, st: GameState) -> str | None:
+        """全量排期（44 节点）里下一个未完成的。
+
+        ⚠ 服务层的会话推进**不用**这个 —— 它按剧本全量 schedule 走，
+        而 Godot 目前只提供 19 个节点，用它会卡在缺失节点上永远前进不了。
+        Service 走映射表的 playableOrder。这里保留给「覆盖度对账」用。
+        """
         done = set(st.events_done)
         return next((e for e in self.sched_order if e not in done), None)
 
 
+class ReportInput:
+    """喂给 report.build() 的输入壳。
+
+    报告层的签名收 `simulation.RunResult`（要 `result.state` 与
+    `result.log.months` / `result.log.tracking`），但服务层是逐事件推进的，
+    没有跑批那份逐月日志。这里只把**真实可得**的部分装进去，缺的留空 ——
+    绝不用估算值顶替：报告层对空输入本来就按「证据不足」处理（算法册 §6 允许）。
+    """
+
+    class _Log:
+        def __init__(self, months: list, tracking: list):
+            self.months = months
+            self.tracking = tracking
+
+    def __init__(self, state: GameState, months: list, tracking: list):
+        self.state = state
+        self.log = ReportInput._Log(months, tracking)
+
+
 class Service:
-    def __init__(self, store: Store, engine: Engine):
+    def __init__(self, store: Store, engine: Engine, mapping: id_map.StoryKeyMap):
         self.store = store
         self.engine = engine
+        self.mapping = mapping
+
+    # ---- 推进口径
+    def _next_step(self, st: GameState) -> str | None:
+        """客户端当前该走的下一步（引擎键）。
+
+        用映射表的 playableOrder，**不是**引擎的全量 schedule：
+        Godot 侧目前只提供 44 个测评节点里的 19 个，按全量 schedule 校验会在
+        缺失节点上永久卡死（实测第 9 件起全部 409，因为第 9 位是成就节点 C1）。
+        缺失节点在报告层自然表现为「证据不足」——算法册 §6 本来就允许「没说」。
+        playableOrder 随剧情补齐逐件变长，全部补齐就等价于全量 schedule。
+        """
+        return self.mapping.next_playable(set(st.events_done))
+
+    def _client_label(self, engine_key: str | None) -> str | None:
+        """引擎键 → 回给客户端的叙事 id。映射表查不到才退回契约口径拼装。"""
+        if not engine_key:
+            return None
+        return self.mapping.client_id(engine_key) or \
+            id_map.engine_to_story(engine_key, self.engine.act_number(engine_key))
 
     # ---- 响应组装
     def _session_state(self, sid: str, st: GameState) -> dict:
         regions = ["A", "H"] + [r for r in self.store.region_ids(sid) if r not in ("A", "H")]
-        nxt = self.engine.next_undone(st)
+        nxt = self._next_step(st)
         if nxt:
-            current = id_map.engine_to_story(nxt, self.engine.act_number(nxt))
+            current = self._client_label(nxt)
         elif st.events_done:
-            last = st.events_done[-1]
-            current = id_map.engine_to_story(last, self.engine.act_number(last))
+            current = self._client_label(st.events_done[-1])
         else:
             current = "M1-E01"
         return {
@@ -232,11 +388,71 @@ class Service:
             "completedActivityIds": [],
             "unlockedRegionIds": sorted(set(regions)),
             "energy": st.life,
+            # 职级是**服务端-gameplay 权威值**（2026-09-17 拍板：口径只留一份）。
+            # Godot 只负责显示，本地不算 —— 否则同一个东西会有两份会漂移的真相。
+            "level": st.level,
+            # 下一次考评落在第几个月。**服务端算**：Godot 不必再抄一份考核月日历，
+            # 否则 §2.3 的七个窗会在两边各写一遍，改一处忘一处。
+            # None（全部考完）时缺席而不是给 0 —— 「没有下一次了」不该显示成「第 0 月」。
+            **({"nextAssessmentMonth": m} if (m := next((x for x in C.PROMOTION_MONTHS
+                                                        if x > st.month), None)) else {}),
             "npcAffinity": dict(st.npc_affinity),
+            # 显示要用的是这一个（只有 Lv 称号），不是上面那个 0-100 原始分。
+            # npcAffinity 是契约既有字段、给 NPC 记忆的性格推断用，**UI 不读它** ——
+            # free_time_system.json 的红线是「好感对玩家隐藏」。
+            "npcRelationStage": self._relation_stages(st),
+            "survivalState": self._survival_view(st),
             "flags": {f: True for f in st.flags},
             "scoreSummary": {"decisions": float(st.seq)},
-            "scoringVersion": "v2.9",
+            # 版本号跟打分卡走，别写死 —— 硬编码会在换版后骗人
+            "scoringVersion": "v" + str(self.engine.reg.version.get("scoring_cards", "?")),
         }
+
+    @staticmethod
+    def _relation_stages(st: GameState) -> dict[str, str]:
+        """引擎侧 npc_level(int) → 契约的 "Lv1".."Lv5" 字符串。
+
+        没有关系系统的 NPC（陈工 relation:false）本来就不在 npc_level 里，
+        下发自然是缺席 —— 正好对上契约「NPCs without a relation system are absent」。
+        """
+        return {k: f"Lv{int(v)}" for k, v in st.npc_level.items() if int(v) >= 1}
+
+    @staticmethod
+    def _survival_view(st: GameState) -> dict:
+        """生存轨的玩家可见视图（剧情册 §2.4 明示原则，最高优先级红线）。
+
+        三件套缺一不可：现在叫什么、为什么会走到这里、还剩多少余地。
+        ⚠ 全部是行为语言：**不出现 strike 计数、不出现阈值**
+        （§2.3「阈值数字永不出现」+ §2.4「用文字，不用数字和血条」）。
+        因此自我修复的进度也只给一句话的分档，不给「还剩 N 个月」。
+        """
+        state = st.survival_state
+        recent = list(st.incidents[-5:])
+        view = {
+            "state": state,
+            "label": C.SURVIVAL_CN.get(state, state),
+            # 逐条引具体事件编号（§2.4 要求：「第 3 月的 PR、第 19 月的事故」）
+            "reasons": [f"第 {i.get('month', '?')} 月 · {C.reason_cn(str(i.get('reason', '')))}"
+                        for i in recent],
+        }
+        # 降级必预警（§2.4 铁律 3）：不存在跳变死亡，进危急必须说清下一步
+        view["warning"] = {
+            "observation": "再出一次岔子，就会有人正式来找你谈。",
+            "critical": "再一次重大失误，就会被叫去正式谈话。",
+            "last_talk": "谈话已经约下了 —— 该决定怎么走。",
+            "exited": "这条路已经走完。",
+        }.get(state, "")
+        # 自我修复的余地也说清楚（§2.4 保护条款：连续 6 个月无失误回升一级）
+        clean = int(st.months_since_mistake)
+        if clean <= 0:
+            view["healingLine"] = ""
+        elif clean <= 2:
+            view["healingLine"] = "出了那件事之后，还没稳住太久。"
+        elif clean <= 4:
+            view["healingLine"] = "连着几个月干净，气氛缓过来了。"
+        else:
+            view["healingLine"] = "快翻篇了 —— 再稳几个月，之前的账就不提了。"
+        return view
 
     def session_response(self, sid: str, content_version: str, st: GameState) -> dict:
         return {"sessionId": sid, "contentVersion": content_version,
@@ -268,16 +484,25 @@ class Service:
         if row is None:
             return 404, {"error": "unknown sessionId"}
         st = Engine.state_from_json(row["state_json"])
-        nxt = self.engine.next_undone(st)
+        nxt = self._next_step(st)
         if nxt is None:
             return 200, {"nodeId": "END", "nodeType": "finished",
                          "regionId": "A", "title": "48 个月走完了"}
         ev = self.engine.reg.events[nxt]
-        choices = [{"choiceId": f"{id_map.engine_to_story(nxt, 1)}-C{i + 1:02d}",
+        client_id = self._client_label(nxt)
+        # choiceId 用客户端的叙事 id 拼（Godot 的 _contract_choice_id 同形），
+        # 后端收到后会先经映射表归一再进引擎。
+        #
+        # ⚠ 这里的 title / choices[].text 直接来自打分卡，是契约既有设计
+        #   （§「证据不足就静默」那条不覆盖本端点）。但算法册 §1 的红线是
+        #   「scoring_cards 不得下发前端」—— Godot 自带 MAIN_EVENTS 文案，
+        #   并不调本端点，所以目前不冲突。若将来有瘦客户端要用它，
+        #   应该改成只回结构（id + 选项数），文案由客户端自己出。
+        choices = [{"choiceId": f"{client_id}-C{i + 1:02d}",
                     "text": opt.get("text", "")}
                    for i, opt in enumerate(ev.options.values())]
         return 200, {
-            "nodeId": id_map.engine_to_story(nxt, self.engine.act_number(nxt)),
+            "nodeId": client_id,
             "nodeType": "main_story",
             "regionId": "A",
             "title": ev.title,
@@ -309,25 +534,61 @@ class Service:
 
         st = Engine.state_from_json(row["state_json"])
         seq = None
-        if event_type in CHOICE_TAPS and payload.get("storyId") and payload.get("choiceId"):
-            engine_key = id_map.story_to_engine(str(payload["storyId"]))
-            option = id_map.choice_to_engine(str(payload["choiceId"]))
-            if engine_key is None or engine_key not in self.engine.reg.events:
-                return 400, {"error": f"unknown storyId: {payload['storyId']}"}
-            if option is None or option not in self.engine.reg.events[engine_key].options:
-                return 400, {"error": f"unknown choiceId: {payload['choiceId']}"}
-            done = set(st.events_done)
-            if engine_key in done:
-                return 409, {"error": "event already settled"}
-            nxt = self.engine.next_undone(st)
-            if engine_key != nxt:
-                expected = id_map.engine_to_story(nxt, 1) if nxt else None
-                return 409, {"error": f"story state conflict, expected {expected}"}
-            hes = payload.get("hesitationMs")
-            swc = payload.get("switchCount")
-            self.engine.settle_mainline(st, engine_key, option,
-                                        _as_int(hes), _as_int(swc))
-            seq = st.seq
+        story_id = str(payload.get("storyId") or "")
+        choice_id = str(payload.get("choiceId") or "")
+
+        # ---- ① 纯叙事成就节点（C1/C2/C3）的推进通道
+        # 这三个节点 no_decision=True、options 为空，永远走不进 CHOICE_TAPS。
+        # 没有这条分支，_next_step 会一直停在 C1，它后面的节点全部 409 ——
+        # 实测「Godot 走完第 8 件就再也过不去」就是这个原因。
+        # 这一档只把节点记进 events_done：不调 settle、不加 seq、不进 decisions，
+        # 因为成就演出本来就不测评（算法册：纯演出无 marker）。
+        if event_type == "achievement_view" and story_id:
+            a_key = self.mapping.scoring_key(story_id)
+            a_ev = self.engine.reg.events.get(a_key or "")
+            if a_ev is not None and a_ev.is_achievement and not a_ev.has_decision:
+                if a_key not in st.events_done:
+                    nxt = self._next_step(st)
+                    if a_key != nxt:
+                        return 409, {"error": "story state conflict",
+                                     "expected": self._client_label(nxt),
+                                     "got": story_id}
+                    st.events_done.append(a_key)
+
+        # ---- ② 选择事件
+        elif event_type in CHOICE_TAPS and story_id and choice_id:
+            align = self.mapping.align(story_id)
+            if align == id_map.ALIGN_PENDING:
+                # 编号对上了、选项还没对上。宁可 409 也说清楚，绝不退回正则瞎猜 ——
+                # 「按同名选项记分」正是把善意选项记成越界选项的原因。
+                return 409, {
+                    "error": f"{story_id} 的选项尚未对齐，不能进测评",
+                    "align": align,
+                    "storyId": story_id,
+                    "scoringKey": self.mapping.scoring_key(story_id),
+                    "todo": self.mapping.todo(story_id),
+                }
+            if align != id_map.ALIGN_NON_SCORING:
+                engine_key = self.mapping.scoring_key(story_id)
+                if engine_key is None or engine_key not in self.engine.reg.events:
+                    return 400, {"error": f"unknown storyId: {story_id}"}
+                option = self.mapping.option_key(story_id, choice_id)
+                if option is None or option not in self.engine.reg.events[engine_key].options:
+                    return 400, {"error": f"unknown choiceId: {choice_id}"}
+                done = set(st.events_done)
+                if engine_key in done:
+                    return 409, {"error": "event already settled"}
+                nxt = self._next_step(st)
+                if engine_key != nxt:
+                    return 409, {"error": "story state conflict",
+                                 "expected": self._client_label(nxt)}
+                self.engine.settle_mainline(st, engine_key, option,
+                                            _as_int(payload.get("hesitationMs")),
+                                            _as_int(payload.get("switchCount")))
+                seq = st.seq
+            # ALIGN_NON_SCORING（熊熊有招训练对局这类 Godot 自创事件）：
+            # 玩家确实做完了剧情，所以照常落库、进 completedStoryIds，
+            # 但不进引擎结算 —— 只落日志不算账。
 
         # 先落事件行（响应占位），再算会话状态 —— 否则 state 里的
         # completedStoryIds / 解锁区域看不到本事件，幂等重放时也对不上。
@@ -336,13 +597,13 @@ class Service:
                                 str(body["clientTime"]), json.dumps(payload, ensure_ascii=False),
                                 "{}")
         state = self._session_state(sid, st)
-        nxt2 = self.engine.next_undone(st)
+        nxt2 = self._next_step(st)
         resp = {
             "eventId": event_id,
             # 走到这里 = 校验全过：选择事件已结算、其余埋点已落日志，都算 accepted
             "accepted": True,
             "state": state,
-            "nextNodeId": id_map.engine_to_story(nxt2, self.engine.act_number(nxt2)) if nxt2 else None,
+            "nextNodeId": self._client_label(nxt2),
         }
         self.store.update_event_response(sid, event_id, json.dumps(resp, ensure_ascii=False))
         return 200, resp
@@ -419,6 +680,113 @@ class Service:
         stage = f"Lv{st.npc_level.get(npc_id, 1)}"
         return 200, {"npcId": npc_id, "relationStage": stage, "items": items[:limit]}
 
+    # ---- 报告层（算法在 app.report，这里只喂料）
+    def _report_tracking(self, sid: str, st: GameState) -> list[dict]:
+        """把落库事件流还原成报告层要的 tracking。
+
+        报告层的「冲刺与伪装」模块吃两类轨迹：
+          - explore_click：自由周末的组团与同伴（真实埋点，从 events 表还原）
+          - promotion_window：考核窗（账本里的真实状态，不是埋点，直接合成同形条目）
+        另还原 encounter_choice（在场一幕应答）→ 报告层的性格回声（encounterEchoes）。
+        服务层收不到的（比如还没实现的埋点）就不出现 —— 对应的分析自然为空。
+        """
+        tracking: list[dict] = []
+        for row in self.store.event_stream(sid):
+            if row["event_type"] == "encounter_choice":
+                payload = json.loads(row["payload_json"] or "{}")
+                tags = payload.get("memoryTags")
+                tracking.append({
+                    "tap": "encounter_choice",
+                    "month": payload.get("month"),
+                    "activityId": payload.get("activityId"),
+                    "npcId": payload.get("npcId"),
+                    "optionId": payload.get("optionId"),
+                    "memoryTags": tags if isinstance(tags, list) else [],
+                })
+                continue
+            if row["event_type"] != "explore_click":
+                continue
+            payload = json.loads(row["payload_json"] or "{}")
+            month = _as_int(payload.get("slotIndex"))
+            if month:
+                targets = payload.get("targets")
+                tracking.append({
+                    "tap": "explore_click", "month": month,
+                    "targets": targets if isinstance(targets, list) else [],
+                    "activityId": payload.get("activityId"),
+                })
+        for w in st.promotion_windows:
+            tracking.append({"tap": "promotion_window", "month": w["month"],
+                             "passed": w["promoted"]})
+        return tracking
+
+    def _self_ratings(self, sid: str) -> dict[str, float] | None:
+        """建档自评（0-10）。profile_answer 埋点尚未采集 → 现在恒为 None，
+        大五只有行为一列、不出后验与矛盾度。埋点一落地这里自动生效。"""
+        for row in self.store.event_stream(sid):
+            if row["event_type"] != "profile_answer":
+                continue
+            payload = json.loads(row["payload_json"] or "{}")
+            ratings = payload.get("ratings") or payload.get("selfRatings")
+            if isinstance(ratings, dict) and ratings:
+                out: dict[str, float] = {}
+                for k, v in ratings.items():
+                    try:
+                        out[str(k).upper()] = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                return out or None
+        return None
+
+    def generate_report(self, sid: str) -> tuple[int, dict]:
+        """POST /report。契约写的是异步（202 + 状态），但生成是纯模板、毫秒级、无大模型
+        → 同步算完如实回 ready，不伪造 pending/generating 中间态。
+        幂等：已成片就返回同一 handle，不重算（契约「请求两次返回同一个 handle」）。"""
+        row = self.store.get_session(sid)
+        if row is None:
+            return 404, {"error": "unknown sessionId"}
+        prev = self.store.get_report(sid)
+        if prev is not None and prev["status"] == "ready":
+            return 202, {"sessionId": sid, "status": "ready"}
+
+        st = Engine.state_from_json(row["state_json"])
+        try:
+            report = build_report(
+                ReportInput(st, [], self._report_tracking(sid, st)),
+                self.engine.reg,
+                self_ratings=self._self_ratings(sid),
+                session_id=sid,
+            )
+        except Exception as exc:  # 生成失败要留痕，但不把内部堆栈泄漏给客户端
+            self.store.save_report(sid, "failed", type(exc).__name__, "", None)
+            sys.stdout.write("[api] report build failed: %r\n" % (exc,))
+            return 202, {"sessionId": sid, "status": "failed",
+                         "reason": "报告生成失败，详见服务端日志"}
+        self.store.save_report(sid, "ready", "",
+                               json.dumps(report, ensure_ascii=False),
+                               report["generatedAt"])
+        return 202, {"sessionId": sid, "status": "ready"}
+
+    def report_status(self, sid: str) -> tuple[int, dict]:
+        if self.store.get_session(sid) is None:
+            return 404, {"error": "unknown sessionId"}
+        row = self.store.get_report(sid)
+        if row is None:
+            return 200, {"sessionId": sid, "status": "pending"}
+        out = {"sessionId": sid, "status": row["status"]}
+        if row["status"] == "failed" and row["reason"]:
+            out["reason"] = row["reason"]
+        return 200, out
+
+    def get_report(self, sid: str) -> tuple[int, dict]:
+        """GET /report。契约：只有 ready 才 200，其余 404（客户端去轮询 status）。"""
+        if self.store.get_session(sid) is None:
+            return 404, {"error": "unknown sessionId"}
+        row = self.store.get_report(sid)
+        if row is None or row["status"] != "ready" or not row["payload_json"]:
+            return 404, {"error": "report not generated yet"}
+        return 200, json.loads(row["payload_json"])
+
 
 def _as_int(v) -> int | None:
     if v is None or isinstance(v, bool):
@@ -438,6 +806,8 @@ class Handler(BaseHTTPRequestHandler):
         re.compile(r"^/api/v1/sessions/([\w-]+)/next$"),
         re.compile(r"^/api/v1/sessions/([\w-]+)/events$"),
         re.compile(r"^/api/v1/sessions/([\w-]+)/npcs/([\w-]+)/memories$"),
+        re.compile(r"^/api/v1/sessions/([\w-]+)/report$"),
+        re.compile(r"^/api/v1/sessions/([\w-]+)/report/status$"),
     ]
 
     def log_message(self, fmt, *args):  # 安静模式由 -v 控制，默认打印一行
@@ -465,7 +835,7 @@ class Handler(BaseHTTPRequestHandler):
         svc = self.service
         path = self.path.split("?")[0]
         query = self.path.split("?")[1] if "?" in self.path else ""
-        m0, m1, m2, m3, m4, m5 = self.routes
+        m0, m1, m2, m3, m4, m5, m6, m7 = self.routes
 
         if method == "GET" and m0.match(path):
             return self._reply(200, {"status": "ok", "time": now_iso()})
@@ -499,6 +869,14 @@ class Handler(BaseHTTPRequestHandler):
                 except ValueError:
                     pass
             return self._reply(*svc.npc_memories(m.group(1), m.group(2), layers, limit))
+        m = m6.match(path)
+        if method == "POST" and m:
+            return self._reply(*svc.generate_report(m.group(1)))
+        if method == "GET" and m:
+            return self._reply(*svc.get_report(m.group(1)))
+        m = m7.match(path)
+        if method == "GET" and m:
+            return self._reply(*svc.report_status(m.group(1)))
         return self._reply(404, {"error": "no route"})
 
     def do_GET(self):
@@ -508,16 +886,26 @@ class Handler(BaseHTTPRequestHandler):
         self._dispatch("POST")
 
 
-def build_service(db_path: Path | None = None) -> Service:
-    return Service(Store(db_path or DB_PATH), Engine())
+def build_service(db_path: Path | None = None,
+                  mapping_path: Path | None = None) -> Service:
+    return Service(
+        Store(db_path or DB_PATH),
+        Engine(),
+        id_map.StoryKeyMap.load_or_empty(mapping_path or STORY_KEY_MAP_PATH),
+    )
 
 
 def main() -> None:
     svc = build_service()
     Handler.service = svc
     server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    cov = svc.mapping.coverage()
     print(f"[api] workplace-town M4 minimal server on http://127.0.0.1:{PORT}/api/v1 "
           f"(db={DB_PATH})")
+    print(f"[api] 映射表 v{svc.mapping.version}：可连续承接 {len(svc.mapping.playable_engine_order())} 个节点"
+          + (f"，Godot 已对齐 {cov.get('aligned')}/{cov.get('godotEvents')} 件、"
+             f"覆盖打分卡 {cov.get('scoringNodes')}/{cov.get('scoringNodesTotal')} 个节点"
+             if cov else ""))
     server.serve_forever()
 
 

@@ -1,29 +1,28 @@
 {
- "_readme": "自由活动与好感度系统全量配置（剧情册 V5.2 §2.4/2.5、专册《自由活动与好感度系统设计 V1》的落地版）。19 个活动（含 V5.4 新增工作型 W1-W5） + 好感度 spec + 天气 + 收益递减规则。所有数值为预标定，策划改这里不改代码。红线：affinity 数值对玩家隐藏（视觉=记忆墙便签蓝→黄→金渐进）；本文件任何字段不得下发前端或进大模型 prompt。",
+ "_readme": "自由活动与好感度系统全量配置（剧情册 V5.2 §2.4/2.5、专册《自由活动与好感度系统设计 V1》的落地版）。19 个活动（含 V5.4 新增工作型 W1-W5） + 好感度 spec + 天气 + 收益递减规则。所有数值为预标定，策划改这里不改代码。2026-09-16 v1.4：全表数值均衡（方案文档《自由周末参与感设计说明 V1》§13.2）——消除同档位严格支配，同类内数值平手、差异只在 scoring_card 与 memory_tag。新增 conditional_gain 字段（带 when 条件的收益替代）。红线：affinity 数值对玩家隐藏（视觉=记忆墙便签蓝→黄→金渐进）；本文件任何字段不得下发前端或进大模型 prompt。2026-09-16 v1.5：给 D1/D3/D4/D5/G3 五个有人同行、但没有既有 decision 的活动补 `encounter`（B 件·在场一幕）——一屏「撞见」场景加 2-3 个应答。**硬约束：encounter 的 option 只能带 memory_tags 与 instant_feedback，绝不带 gain / affinity_delta**，因为这一幕是性格测量、不是好感度博弈，好感照旧按活动自己的 affinity_gain 走。场景句里的 `{who}` 由运行时替换成随机同行者姓名（沿用 decision.trigger_text 的 `{stuck_npc}` 做法）。D6 是 auto_trigger 的雨天彩蛋、不进可选列表，故不给 encounter。",
  "system_id": "free_time_system",
- "version": "1.3",
+ "version": "1.6",
  "schedule": {
   "cadence": "every_3_months",
   "total_slots": 16,
   "slot_name": "自由周末",
   "flow": "时间卡片「第X月·周末到了」→ 小火车选组团（explore_click zone）→ 选活动（explore_click activity_id）→ 小事件30-60秒 → 结算 + 记忆墙/好感度变化",
   "unlocks": {
-   "note": "组团随局解锁，与美术 P0/P1/P2 制作顺序对齐",
-   "game1_months_1_16": [
+   "note": "组团按月份阶段开放（2026-09-16 用户拍板：不分局，一局跑完 48 个月；原 game1/2/3 即阶段 1/2/3，只是月份区间，不是独立的一局）。",
+   "stage1_months_1_16": [
     "A_总部",
     "B_科技丘",
     "C_水巷",
     "心湖",
     "E_训练谷"
    ],
-   "game2_months_17_32": [
-    "F_会展码头",
-    "G_康护院"
-   ],
-   "game3_months_33_48": [
+   "stage2_months_17_32": [
     "D_树影书院",
     "H_慢生活园"
-   ]
+   ],
+   "stage3_months_33_48": [],
+   "_stage3_todo": "阶段 3 暂无专属组团：原设计把 F_会展码头 / G_康护院 放在这一档，但这两组团当前零活动。补上活动后，把名字挪进 stage3_months_33_48。",
+   "_field_note": "活动真正的门槛看 activity.unlock_game（值 = 阶段号，与上表同义）；本表只是文档，代码不读它。"
   }
  },
  "weather": {
@@ -34,25 +33,30 @@
   "_note": "每个自由周末独立判定；雨天且与某 NPC 同出口时 D6 共伞可触发（彩蛋，非必选）"
  },
  "npcs": {
+  "_intimate_text_note": "intimate_text = Lv2 知心时刻的正文，逐字取自剧情册 V5.27 §11.3（四段私事独白）。触发在 D2 的 d2_intimate_reply 决策屏，由 FreeTimePanel 在选项上方整段展示；D4 的 hooks.early_secret 命中时把 intimate_early_<npc> 置真，可绕过 40 好感门槛提前解锁（MonthlyLife.can_trigger_intimate）。红线：本字段是叙事文本，不含任何数值，也不得进大模型 prompt。",
   "wang_ge": {
    "name": "王哥",
    "role": "导师",
-   "intimate_story": "当年放弃管理岗又回技术的原因（呼应 E30 路线选择）"
+   "intimate_story": "当年放弃管理岗又回技术的原因（呼应 E30 路线选择）",
+   "intimate_text": "「三年前我也坐过那个答辩席。」他摘下眼镜擦了擦。「那天我讲的是管理成果，掌声很响。可台下鼓掌的人，没有一个记得我写过什么代码。第二周我申请转回技术，薪级降了一档，所有人都说我傻。」他把眼镜戴回去，「所以上次你问我走技术还是管理，我没资格替你选。我只知道，技术这碗饭，我吃得踏实。」"
   },
   "xiao_lin": {
    "name": "小林",
    "role": "产品",
-   "intimate_story": "他的 KPI 恐惧——甩锅背后的东西（让甩锅者人性化）"
+   "intimate_story": "他的 KPI 恐惧——甩锅背后的东西（让甩锅者人性化）",
+   "intimate_text": "「这个月我的需求被砍了三个。」他笑得有点勉强。「你们背后肯定说我甩锅……随便吧。每次复盘会我手心都在出汗——需求被砍的那一刻，我在老板眼里就是个『提错需求的人』。我不敢认，因为认了，下次连站上会议桌的资格都没有。」他顿了顿，「你今天肯坐在这听我说这个，我记着。」"
   },
   "xiao_zhao": {
    "name": "小赵",
    "role": "实习生",
-   "intimate_story": "他不敢发言的过去（呼应 E02 被轻视）"
+   "intimate_story": "他不敢发言的过去（呼应 E02 被轻视）",
+   "intimate_text": "「大一那年我在班上发言，讲到一半忘词了。」他搅着咖啡，没抬头。「全班笑了半分钟。从那以后我开会只敢坐最后一排。」咖啡凉了他也没喝。「上个月你非说『小赵你来讲』——我腿一直在抖。但你不知道，那是我三年来第一次主动站起来。」"
   },
   "lao_zhou": {
    "name": "老周",
    "role": "资深同事",
-   "intimate_story": "他年轻时也被侵占过署名（E28 的动机伏笔）"
+   "intimate_story": "他年轻时也被侵占过署名（E28 的动机伏笔）",
+   "intimate_text": "「我入职第二年做的模块拿了公司金奖。」他喝了口茶。「领奖台上站着的，是我组长。」茶杯放下的声音很轻。「我没闹。我记了十年——不是为了记仇，是怕自己变成那样的人。」他看了你一眼。「结果前阵子，差点就变了。小赵那事，谢谢你。」"
   }
  },
  "affinity_spec": {
@@ -119,7 +123,7 @@
   {
    "activity_id": "S1_library_study",
    "zone": "D_树影书院",
-   "unlock_game": 3,
+   "unlock_game": 2,
    "type": "solo",
    "party_size": 1,
    "estimated_seconds": 20,
@@ -178,8 +182,26 @@
    "party_size": 1,
    "estimated_seconds": 20,
    "gain": {
-    "H": 2
+    "H": 1
    },
+ "conditional_gain": [
+  {
+   "when": {
+    "H_lte": 3
+   },
+   "gain": {
+    "H": 2
+   }
+  },
+  {
+   "when": {
+    "H_gte": 7
+   },
+   "gain": {
+    "H": 0
+   }
+  }
+ ],
    "conditional_text": {
     "when": {
      "H_lte": 3
@@ -253,14 +275,44 @@
     "lao_zhou"
    ],
    "estimated_seconds": 30,
-   "gain": {
-    "N": 1
+   "gain": {},
+   "cost": {
+    "H": 1
    },
-   "affinity_gain": 3,
+   "affinity_gain": 5,
    "prototype": "CareerSim #31 午饭跟谁吃（38次）",
    "bigfive_proxy": "A+",
    "memory_tag": null,
    "instant_feedback": "外摆的椅子有点晃，咖啡一般，但话比咖啡多。",
+   "encounter": {
+    "text": "你在外摆的椅子坐下，抬头看见 {who} 端着咖啡站在门口。他没看见你。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "招呼他坐过来",
+      "memory_tags": [
+       "会先开口的人"
+      ],
+      "instant_feedback": "你招了招手。他愣了一下才认出来，端着杯子蹭到你对面坐下。"
+     },
+     {
+      "option_id": "B",
+      "text": "点点头",
+      "memory_tags": [
+       "不远不近"
+      ],
+      "instant_feedback": "你抬下巴点了下头。他也点了下头，端着杯子从你桌边绕过去了。"
+     },
+     {
+      "option_id": "C",
+      "text": "低头看手机",
+      "memory_tags": [
+       "想自己待着"
+      ],
+      "instant_feedback": "你把手机翻出来。再抬头的时候，门口已经没人了。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -282,8 +334,9 @@
     "lao_zhou"
    ],
    "estimated_seconds": 60,
-   "gain": {
-    "H": 1
+   "gain": {},
+   "cost": {
+    "H": 2
    },
    "affinity_gain": 8,
    "hooks": {
@@ -346,13 +399,43 @@
     "lao_zhou"
    ],
    "estimated_seconds": 30,
-   "gain": {
-    "H": 2
+   "gain": {},
+   "cost": {
+    "H": 1
    },
    "affinity_gain": 5,
    "prototype": "CareerSim #65 午休羽毛球联赛",
    "bigfive_proxy": "E+",
    "instant_feedback": "三局两胜。你输了两局，但笑得比赢的时候多。",
+   "encounter": {
+    "text": "打到第三局，{who} 弯腰撑着膝盖喘气，汗珠挂在额角。他把球抛回来：「再来？」",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "接住，再来一局",
+      "memory_tags": [
+       "输得起也接得住"
+      ],
+      "instant_feedback": "你把球接住抛回去。等太阳偏下去，两个人才想起比分早就不算了。"
+     },
+     {
+      "option_id": "B",
+      "text": "差不多了，去喝口水",
+      "memory_tags": [
+       "会照看节奏"
+      ],
+      "instant_feedback": "你说差不多了。他愣了半秒，笑出声：「行，今天服你。」"
+     },
+     {
+      "option_id": "C",
+      "text": "干脆往草坪上一躺",
+      "memory_tags": [
+       "累到家了也不装"
+      ],
+      "instant_feedback": "你径直往后倒了下去。他跟着坐下来，两个人喘着气看天，谁也没先说话。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -378,15 +461,45 @@
    "cost": {
     "H": 1
    },
-   "affinity_gain": 6,
+   "affinity_gain": 5,
    "hooks": {
     "early_secret": {
      "chance": 0.3,
-     "effect": "对方提前讲秘密（好感+4 而非+6，但知心时刻提前解锁）",
-     "note": "炭火和深夜让人诚实，但要少拿 2 分——捷径有价"
+     "affinity_delta": -1,
+     "effect": "对方提前讲秘密（好感 +4 而非 +5，但知心时刻提前解锁）",
+     "note": "炭火和深夜让人诚实，但捷径有价：少拿 1 分，换知心时刻提前解锁。数值由 affinity_delta 决定，不写死在代码里"
     }
    },
    "instant_feedback": "烤串糊了两串，烟熏得人流眼泪。话题倒是越聊越深。",
+   "encounter": {
+    "text": "炭火把烟直往天上送。{who} 翻着串，没回头：「你说，咱这行能干到几岁？」",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "说实话，不一定干得到",
+      "memory_tags": [
+       "说得出口实话"
+      ],
+      "instant_feedback": "你说不一定干得到。他翻串的手停了一下，然后「嗯」了一声，没再往下问。"
+     },
+     {
+      "option_id": "B",
+      "text": "说想过试试别的",
+      "memory_tags": [
+       "心里有别的打算"
+      ],
+      "instant_feedback": "你说想过别的可能性。他没追问，只是把烤好的串先递给了你。"
+     },
+     {
+      "option_id": "C",
+      "text": "岔开，说明天还得上班",
+      "memory_tags": [
+       "不急着交底"
+      ],
+      "instant_feedback": "你说先不想这个，明天还得早起。他笑了一声，话题就散在烟里了。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -399,7 +512,7 @@
   {
    "activity_id": "D5_study_together",
    "zone": "D_树影书院",
-   "unlock_game": 3,
+   "unlock_game": 2,
    "type": "duo",
    "party_size": 2,
    "candidates": [
@@ -412,9 +525,41 @@
    "gain": {
     "S": 1
    },
+   "cost": {
+    "H": 2
+   },
    "affinity_gain": 4,
    "bigfive_proxy": null,
    "instant_feedback": "两张桌子，两杯茶，各自翻各自的书。安静，但不尴尬。",
+   "encounter": {
+    "text": "抬头的工夫，{who} 也正好从书里抬起头来。两个人对上眼，都没说话。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "笑一下，继续看自己的",
+      "memory_tags": [
+       "安静也自在"
+      ],
+      "instant_feedback": "你笑了一下又低下去。翻页的声音重新响起来，中间一次也没断。"
+     },
+     {
+      "option_id": "B",
+      "text": "问他看的是什么书",
+      "memory_tags": [
+       "好奇不憋着"
+      ],
+      "instant_feedback": "你问了他书名。他把封面转过来给你看，讲了两句，又都埋回书里。"
+     },
+     {
+      "option_id": "C",
+      "text": "把书合上，先走",
+      "memory_tags": [
+       "该走就走得动"
+      ],
+      "instant_feedback": "你把书合上收进包里。他抬手挥了一下，没人觉得尴尬。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -534,9 +679,7 @@
    "cost": {
     "H": 1
    },
-   "affinity_gain": {
-    "each": 4
-   },
+   "affinity_gain": {"each": 5},
    "prototype": "CareerSim #27 聚餐第二场 KTV 与晋升决策者（首期无 KTV 场地改篝火晚会）",
    "decision": {
     "node_id": "g2_mic_pass",
@@ -591,7 +734,7 @@
   {
    "activity_id": "G3_board_game",
    "zone": "H_慢生活园",
-   "unlock_game": 3,
+   "unlock_game": 2,
    "type": "group",
    "party_size": 3,
    "candidates": [
@@ -601,13 +744,43 @@
     "lao_zhou"
    ],
    "estimated_seconds": 40,
-   "gain": {
-    "S": 1
+   "gain": {},
+   "cost": {
+    "H": 1
    },
    "affinity_gain": {
-    "each": 4
+    "each": 5
    },
    "instant_feedback": "三局两胜。你输了两局，但看穿了小赵藏牌的小动作。",
+   "encounter": {
+    "text": "一局快收尾的时候，你眼角扫到 {who} 把一张牌往袖口底下压了压。桌面上没人注意。",
+    "options": [
+     {
+      "option_id": "A",
+      "text": "当场说破",
+      "memory_tags": [
+       "当场就说的性子"
+      ],
+      "instant_feedback": "你把牌往桌上一放：「等等，你袖子里那张呢？」桌上愣了半秒，然后笑成一片。"
+     },
+     {
+      "option_id": "B",
+      "text": "什么也不说，往后记着",
+      "memory_tags": [
+       "心里有数不点破"
+      ],
+      "instant_feedback": "你什么也没讲，低头继续理自己的牌。但后来每一轮，都多看了那个袖口一眼。"
+     },
+     {
+      "option_id": "C",
+      "text": "跟着笑，假装没看见",
+      "memory_tags": [
+       "乐意让场面圆着"
+      ],
+      "instant_feedback": "你跟着笑，把视线挪开了。事后想起来，其实也没什么大不了。"
+     }
+    ]
+   },
    "scoring_card": {
     "sdt": {
      "autonomy": 1,
@@ -624,9 +797,13 @@
    "party_size": "team",
    "estimated_seconds": 40,
    "gain": {},
+   "cost": {
+    "H": 1
+   },
    "affinity_gain": {
     "each": 3
    },
+   "_affinity_note": "team 型活动的 each = 全员（整个同事池各 +3），不是只见面的两人 —— 年会排练本就是公司级场合。每人低、覆盖面广，所以与 group 型（每人 +5、只见面两人）互不支配。",
    "prototype": "CareerSim #11 年会被起哄上台表演",
    "decision": {
     "node_id": "g4_stage_or_backstage",
@@ -681,7 +858,7 @@
     "S": 2
    },
    "cost": {
-    "H": 1
+    "H": 2
    },
    "bigfive_proxy": "O+",
    "bigfive_note": "开放性最强行为锚点：无人要求仍主动尝试新东西",
@@ -773,11 +950,10 @@
    "party_size": 1,
    "estimated_seconds": 40,
    "gain": {
-    "N": 2,
-    "S": 1
+    "N": 2
    },
    "cost": {
-    "H": 1
+    "H": 2
    },
    "bigfive_proxy": "E+",
    "bigfive_note": "影响力经营 vs 埋头干活的分歧点",
@@ -818,7 +994,6 @@
    "party_size": 1,
    "estimated_seconds": 40,
    "gain": {
-    "N": 1,
     "S": 1
    },
    "cost": {
@@ -989,6 +1164,21 @@
   }
  },
  "_change_log": [
+  {
+   "version": "1.6",
+   "date": "2026-09-17",
+   "change": "S3 天台吹风反支配（用户拍板方案①）：conditional_gain 改为**数组**（逐条判定、首条命中即用；单对象写法兼容保留）——H≤3 时 H+2、H≥7 时 H+0（状态好去天台就只是吹了会儿风）、中间档维持基础 H+1。至此 S3 不再弱支配 S2 湖边独走：S2 是唯一任何状态下稳定 H+1 的独处活动，两者各有适用场景。MonthlyLife.gain_for 同步支持数组解析。encounter / 数值表其余项未动。"
+  },
+  {
+   "version": "1.5",
+   "date": "2026-09-16",
+   "change": "B 件·在场一幕：D1/D3/D4/D5/G3 五个 duo/group 活动新增 encounter 字段（一屏撞见场景 + 3 个应答，每个应答只落 memory_tags 与 instant_feedback）。硬口径：不改任何数值——好感/属性照旧由 affinity_gain 与 gain/cost 决定，应答只决定标签；一个周末最多演一屏，且 decision 优先于 encounter。D2/G1/G2/G4 已有 decision、D6 是自动彩蛋，均不重复加。scoring_card / 数值表未改。"
+  },
+  {
+   "version": "1.4",
+   "date": "2026-09-16",
+   "change": "数值均衡：消除 6 组同档位严格支配（W1→W2 / G3→S1 / D5→S1 / D3→D1 / S3→S2 / G1→G2）。原则＝同类内数值平手、差异只在标签；社交一律 H−1、单人好感 +5，D2 最贵（H−2/+8）、G4 公司活动最低（每人 +3）。新增 conditional_gain（S3 生命 ≤3 才给满）。scoring_card / input_structure 未改。改前请跑 build/probe_free_time.gd 的支配断言。"
+  },
   {
    "version": "1.3",
    "date": "2026-09-11",
