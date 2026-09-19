@@ -18,13 +18,14 @@ config/features=PackedStringArray("4.3")
 
 WorldClock="*res://scripts/WorldClock.gd"
 ApiClient="*res://scripts/ApiClient.gd"
+DevAutoPlay="*res://scripts/DevAutoPlay.gd"
 
 [display]
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
-window/size/window_width_override=1280
-window/size/window_height_override=720
+window/size/window_width_override=1536
+window/size/window_height_override=864
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4

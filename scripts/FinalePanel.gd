@@ -233,6 +233,9 @@ func _build_bear_cards() -> void:
 # ------------------------------------------------------------------ 报告交棒
 
 func _on_report_pressed() -> void:
+	# 先退场再交棒：本面板 layer=210 高于 ReportPanel 的 200，不先关掉会把
+	# 报告面板整个压住 —— 报告其实已经生成，玩家却永远只能看到终局页。
+	close()
 	if _on_view_report.is_valid():
 		_on_view_report.call()
 		return

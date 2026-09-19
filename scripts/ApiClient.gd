@@ -160,6 +160,20 @@ func pending_event_count() -> int:
 	return _queue.size()
 
 
+## 开发自检专用：清掉本地会话/队列/拒收留底，并把内存里的会话打回未握手态。
+## 下次 start_or_resume() 会向服务端要一个**全新会话** —— 否则上次运行留下的
+## confirmed sessionId 会被直接续用，POST /report 幂等返回旧报告（generatedAt 不变），
+## 自动验收测的就不是本次的 48 个月。玩家正常游玩路径不会调用它。
+func reset_session_for_clean_run() -> void:
+	for p in [SESSION_PATH, QUEUE_PATH, REJECTED_PATH]:
+		if FileAccess.file_exists(p):
+			DirAccess.remove_absolute(p)
+	_session_id = ""
+	_session_confirmed = false
+	_server_state = {}
+	_queue = []
+
+
 ## 拉取报告（GET /sessions/{sid}/report）。Batch 3（2026-09-17）：
 ## 沿用同一个 HTTPRequest 串行骨架（kind="report"），不开第二套传输。
 ## 红线：报告只在服务端算 —— mock 模式下这里就是拿不到报告，如实说，不做本地兜底计算
@@ -185,6 +199,34 @@ func fetch_report() -> void:
 		_in_flight = false
 		_in_flight_kind = ""
 		report_failed.emit("请求未能发出（错误码 %d）。" % err)
+
+
+## 让服务端结算并生成报告（POST /sessions/{sid}/report，幂等：重复 POST 会重新结算）。
+## Batch 3 只做了 GET（fetch_report），但报告是「先生成后拉取」两段式 ——
+## 终局点「查看我的职业报告」前没人 POST，GET 永远 404，还会被误判成会话失效。
+## 现在：POST 成功（202/200）→ 自动接 GET 把整份报告拉回来；失败直接回 report_failed。
+## 红线同 fetch_report：报告只在服务端算，本地不做兜底计算。
+func generate_report() -> void:
+	if not _live_ready():
+		report_failed.emit("报告只在服务端生成。当前未连接后端（mode=%s），配好 live 后再来。" % _mode)
+		return
+	if _in_flight:
+		report_failed.emit("上一个请求还在路上，稍等一下再试。")
+		return
+	if not _session_confirmed:
+		_ensure_session()
+		report_failed.emit("正在向服务端要会话，稍等一两秒再点一次。")
+		return
+	_in_flight = true
+	_in_flight_kind = "report_generate"
+	var err := _http.request(
+		"%s%s/sessions/%s/report" % [_base_url, API_PREFIX, _session_id],
+		PackedStringArray(), HTTPClient.METHOD_POST)
+	if err != OK:
+		_in_flight = false
+		_in_flight_kind = ""
+		report_failed.emit("请求未能发出（错误码 %d）。" % err)
+
 
 ## live 是否真的可以发包：mode=live + 地址合规 + 版本等于后端认的那个。
 func _live_ready() -> bool:
@@ -253,6 +295,21 @@ func _on_request_completed(result: int, code: int, _headers: PackedStringArray, 
 				_warn("后端建会话返回里没有 sessionId，事件继续留在本地队列。")
 		else:
 			_warn("后端未接受建会话（code=%d），事件继续留在本地队列。" % code)
+		return
+
+	if kind == "report_generate":
+		# 先生成后拉取：POST 成功（202 / 200）说明服务端已出片，紧接 GET 拿整份报告。
+		# 404 同 GET 的处置：可能是会话已失效（后端换库/重建），作废本地会话重新握手。
+		if ok:
+			fetch_report()
+		elif code == 404:
+			_session_confirmed = false
+			_session_id = ""
+			_save_session()
+			_ensure_session()
+			report_failed.emit("服务端不认当前会话（后端可能重建过），已重新连接，稍等一两秒再点一次。")
+		else:
+			report_failed.emit("服务端生成报告失败（code=%d）。" % code)
 		return
 
 	if kind == "report":

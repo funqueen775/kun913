@@ -174,7 +174,7 @@ func _title_screen() -> void:
 		if i > 0:
 			column.add_child(_spacer(16))
 		column.add_child(main_btn)
-	column.add_child(_spacer(20))
+	column.add_child(_spacer(14))
 
 	# 两个次级按钮：并排一行。第一个 = 我的报告（Batch 3 接通）。
 	var row := HBoxContainer.new()
@@ -213,6 +213,7 @@ func _open_report() -> void:
 		_report_panel = REPORT_PANEL.new()
 		add_child(_report_panel)
 	_report_panel.open()
+
 
 # ------------------------------------------------------------------ 导览三页
 # 【2026-09-15 排版重排】三个坑一起修掉，动这块之前先读完：
