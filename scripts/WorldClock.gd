@@ -63,6 +63,39 @@ const MAIN_EVENTS := [
 		}
 	},
 	{
+		"id": "M1-E02B", "scoringKey": "E02", "month": 2, "day": 1, "hour": 9,
+		"title": "第一次被轻视", "locationId": "A", "location": "A 总部 · 小会议室", "durationMinutes": 50,
+		"story": "第一次组会，你演示刚跑通的 Agent 编排 demo。投影亮起来还没过半分钟，邻座就笑了：「这不就是调 API 嘛。」",
+		"actTitle": "第一幕 · 进入行业",
+		"situation": "medium",
+		"cast": [
+			{"name": "陈工", "role": "直属 Leader", "loadout": "bear_beige_blazer", "pos": "left"},
+			{"name": "王哥", "role": "带你的人", "loadout": "bear_plaid_glasses", "pos": "right"},
+		],
+		"beats": [
+			{"type": "narration", "text": "第一次组会，你演示刚跑通的 Agent 编排 demo。\n\n投影亮起来还没过半分钟，邻座就笑了：「这不就是调 API 嘛。」"},
+			{"type": "say", "speaker": "陈工", "text": "别这么说，让他讲讲。"},
+			{"type": "narration", "text": "他嘴上让讲，人却已经低头看起了手机。会议室里有人跟着笑了笑。"},
+			{"type": "choice", "prompt": "这口气，你怎么咽？"},
+		],
+		"prompt": "这口气，你怎么咽？", "hint": "第一次被质疑，回应方式会留在别人对你的第一印象里",
+		"choices": [
+			{"id": "option_a", "text": "当场解释编排逻辑"},
+			{"id": "option_b", "text": "会后单独聊清楚"},
+			{"id": "option_c", "text": "不回应，用结果说话"},
+		],
+		"outcome": {
+			"option_a": "你停下来，把编排层的调度、重试和上下文管理一项项讲完。会议室安静了几秒，有人把手机放下了。",
+			"option_b": "散会后你单独找邻座聊了整条链路。对方把「不就是调 API」改成了「确实有东西」。",
+			"option_c": "你笑了笑，没接话。后来那套编排在压测里扛住了别人没扛住的量，再没人提这句话。",
+		},
+		"memoryNote": {
+			"option_a": {"text": "被轻视时当场讲清了逻辑", "tone": "gold"},
+			"option_b": {"text": "被轻视时会后单独说清", "tone": "gold"},
+			"option_c": {"text": "被轻视时用结果回话", "tone": "gray"},
+		}
+	},
+	{
 		"id": "M1-E02", "scoringKey": "E04", "month": 3, "day": 1, "hour": 9,
 		"title": "技术选型", "locationId": "A", "location": "A 总部 · 评审室", "durationMinutes": 60,
 		"story": "Agent 编排层即将进入正式开发。评审会上，自研方案可控但周期较长，开源方案上线快却需要适配现有系统。\n\n负责人请你给出建议，这次决定会影响后续几个月的技术路线和交付节奏。",
@@ -150,10 +183,24 @@ const MAIN_EVENTS := [
 		"outcome":{"option_a":"账单降得很快，几个关键场景也开始失忆。第二天的投诉让你重新打开了被砍掉的上下文。","option_b":"处理不快，但每一步都有记录。王哥说，终于有人把“贵”拆成了能讨论的问题。","option_c":"短期预算过了线，边缘用户先感觉到了回答变钝。你把这件事记进了后续观察项。"}, "memoryNote":{"option_a":{"text":"先砍掉了上下文","tone":"gray"},"option_b":{"text":"把成本拆成了可验证的链路","tone":"gold"},"option_c":{"text":"为预算交换了体验","tone":"gray"}}
 	},
 	{
+		"id":"M2-E09", "scoringKey": "E13", "month":12, "day":1, "hour":10, "title":"跨组接口技术异议", "locationId":"A", "location":"A 总部 · 技术评审会", "durationMinutes":50, "actTitle":"第二幕 · 真实需求与成本压力", "situation":"medium", "cast":[{"name":"陈工","role":"邻组 Leader","pos":"left"},{"name":"王哥","role":"技术导师","pos":"right"}],
+		"story":"邻组的接口方案存在明显性能隐患：每个请求要额外打三次子查询。评审会上，主讲人讲得顺畅，会议室里没人提。",
+		"prompt":"面对方案里的性能坑，你怎么办？", "hint":"数据在手上，说与不说都在改变这件事的走向。",
+		"choices":[{"id":"option_a","text":"会上提，附数据"},{"id":"option_b","text":"会后私下聊"},{"id":"option_c","text":"不提"}],
+		"outcome":{"option_a":"你报出那组压测数字，会议安静了几秒。主讲人当场改了方案，两周后接口重测通过。","option_b":"散会你把性能图摊到邻组面前。对方没在台上丢面子，改起来反而更配合。","option_c":"方案按原样进入排期。后来线上卡了三个月，才有人翻出那天谁都没提的那份数据。"}, "memoryNote":{"option_a":{"text":"技术异议在会上带着数据提了","tone":"gold"},"option_b":{"text":"技术异议放到了会后说","tone":"gold"},"option_c":{"text":"技术异议在会上没提","tone":"gray"}}
+	},
+	{
 		"id":"M2-E07", "scoringKey": "E10", "month":13, "day":1, "hour":10, "title":"保证不胡说", "locationId":"C", "location":"C 创意水巷 · 客户展厅", "durationMinutes":45, "actTitle":"第二幕 · 真实需求与成本压力", "situation":"medium", "cast":[{"name":"小林","role":"产品","pos":"left"},{"name":"陈工","role":"邻组 Leader","pos":"right"}],
 		"story":"客户要求在合同上写“100% 不幻觉”。所有人都知道这句话不能兑现，但项目正等着签字。", "prompt":"面对绝对承诺，你怎么回答？", "hint":"说清边界不是推开责任。",
 		"choices":[{"id":"option_a","text":"先答应下来，靠后续测试尽量把风险压低。"},{"id":"option_b","text":"明确不能保证，并提供引用、拒答和人工兜底方案。"},{"id":"option_c","text":"把承诺改为可测指标，约定验收场景和例外处理。"}],
 		"outcome":{"option_a":"合同签得很快，团队后来花了更久解释那句“100%”为什么做不到。","option_b":"客户没有立刻点头，却开始认真问兜底流程。你们第一次把风险写进了合作本身。","option_c":"验收条款变长了，但每个人都知道下一次争执该回到哪张表。"}, "memoryNote":{"option_a":{"text":"接受了绝对承诺","tone":"gray"},"option_b":{"text":"把边界说在了签字前","tone":"gold"},"option_c":{"text":"把承诺改成了可验收规则","tone":"gold"}}
+	},
+	{
+		"id":"M2-E10", "scoringKey": "E15", "month":14, "day":1, "hour":14, "title":"会议上点子被抢先", "locationId":"A", "location":"A 总部 · 会议室", "durationMinutes":45, "actTitle":"第二幕 · 真实需求与成本压力", "situation":"strong", "cast":[{"name":"老周","role":"资深","pos":"left"},{"name":"王哥","role":"技术导师","pos":"right"}],
+		"story":"你花了两周准备的优化方案，昨天刚写进笔记本。会上老周先开口，把同一个点子讲得像是他的——连那个核心指标都一字不差。",
+		"prompt":"这句话是你先想出来的。你怎么办？", "hint":"被人抢先认领时，回应方式决定这件事的走向。",
+		"choices":[{"id":"option_a","text":"当场温和认领+补充"},{"id":"option_b","text":"会后联合汇报"},{"id":"option_c","text":"算了"}],
+		"outcome":{"option_a":"你接过话头：「这个思路我这边已经跑过两轮，我补几个数据。」老周顿了顿，把话筒让了出来。","option_b":"散会后你去找老周，把笔记本摊开。最后汇报变成两个人的名字，你的那两轮数据也进了方案。","option_c":"你合上笔记本。后来方案落地时没人记得谁先提出来的，只有你知道那两轮实验昨晚刚跑完。"}, "memoryNote":{"option_a":{"text":"点子被抢时当场认领并补了数据","tone":"gold"},"option_b":{"text":"点子被抢后会联合汇报","tone":"gold"},"option_c":{"text":"点子被抢时没吭声","tone":"gray"}}
 	},
 	{
 		"id":"M2-E08", "scoringKey": "none", "month":15, "day":1, "hour":16, "title":"熊熊有招训练对局", "locationId":"E", "location":"E 松风训练谷", "durationMinutes":30, "actTitle":"第二幕 · 真实需求与成本压力", "situation":"weak", "cast":[{"name":"小赵","role":"实习生","pos":"left"}],

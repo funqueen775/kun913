@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""端到端验收：按 Godot 的真实叙事顺序走完 24 件，验「剧情 ↔ 算法」这条链路。
+"""端到端验收：按 Godot 的真实叙事顺序走完 27 件，验「剧情 ↔ 算法」这条链路。
 
 和 selftest.py 的分工：
   selftest.py  验**接口形状**（契约字段、幂等、404/409 语义）
@@ -10,7 +10,8 @@
   第 9 件起全部 409（撞上成就节点 C1，而 Godot 侧没有这件剧情）。
 本脚本把那次的每个失败点都变成断言：
 
-  ① 已对齐的 23 件必须真的结算，落到的引擎节点与映射表逐条一致
+  ① 已对齐的 26 件必须真的结算，落到的引擎节点与映射表逐条一致
+     （v2.3：M1-E02B/M2-E09/M2-E10 三件复活后 24→27 件，26 件进测评）
   ② 未对齐的件必须被**明确拒绝**（409 + align=pending_rewrite），不许静默记错账
      ⚠ 24 件全部对齐后线上已无 pending 的件，这条性质改由 selftest.py ⑦b
         用临时映射表置位来守住（否则回归会悄悄失效）
@@ -111,12 +112,13 @@ def main() -> int:
     sid = sess["sessionId"]
     check("建会话 201", code == 201)
 
-    # ---- 按 Godot 叙事顺序逐件走（映射表的 key 就是 Godot 的顺序）
+    # ---- 按 Godot 叙事顺序逐件走（顺序 = playableOrder，v2.3 起 27 件）
     settled: list[tuple[str, str, str]] = []      # (godotId, engineKey, choiceId)
     rejected: list[tuple[str, str]] = []
     non_scoring: list[str] = []
 
-    for i, (gid, entry) in enumerate(events.items()):
+    for i, gid in enumerate(mapping_raw["playableOrder"]["list"]):
+        entry = events[gid]
         align = entry.get("align")
         opts = entry.get("options") or {}
         if align == "non_scoring":
@@ -195,8 +197,8 @@ def main() -> int:
     print()
     # ---- Godot 源码里的 scoringKey 必须与映射表同源
     gd = WORLDCLOCK_PATH.read_text(encoding="utf-8")
-    pairs = dict(re.findall(r'"id"\s*:\s*"(M\d+-[EC]\d+)",\s*"scoringKey"\s*:\s*"(\w+)"', gd))
-    check(f"WorldClock.gd 里 24 件都带 scoringKey（实得 {len(pairs)}）", len(pairs) == 24)
+    pairs = dict(re.findall(r'"id"\s*:\s*"(M\d+-[EC]\d+[A-Z]?)",\s*"scoringKey"\s*:\s*"(\w+)"', gd))
+    check(f"WorldClock.gd 里 27 件都带 scoringKey（实得 {len(pairs)}）", len(pairs) == 27)
     mismatch = []
     for gid, entry in events.items():
         want = str(entry.get("scoringKey") or "none")
@@ -206,7 +208,7 @@ def main() -> int:
     check("Godot 源码 scoringKey 与映射表逐条一致", not mismatch, "; ".join(mismatch))
 
     # ---- non_scoring 的件不能被误当成测评件
-    # 2026-09-16 起 24 件全部进测评，non_scoring 只剩 M2-E08 一件
+    # v2.3 起 27 件里 26 件进测评，non_scoring 只剩 M2-E08 一件
     extra = [g for g in non_scoring if g != "M2-E08"]
     check("non_scoring 清单符合预期", not extra, str(extra))
 

@@ -108,10 +108,19 @@ def main() -> int:
     check("fixture 事件 200 accepted", code == 200 and resp.get("accepted") is True)
     check("完成后 completedStoryIds 含 M1-E01",
           "M1-E01" in resp["state"]["completedStoryIds"], str(resp["state"]["completedStoryIds"]))
-    # 映射表 playableOrder 的下一件是 M1-E02（Godot 的六幕叙事顺序）。
-    # 2026-09-16 之前 M1-E02 是 pending_rewrite、被排除在可承接链外，所以这里原本是 M1-E03；
-    # 现在 24 件全部对齐，链 = 完整叙事顺序。
-    check("nextNodeId 指向 M1-E02", resp.get("nextNodeId") == "M1-E02", str(resp.get("nextNodeId")))
+    # 映射表 playableOrder 的下一件是 M1-E02B（Godot 的六幕叙事顺序；v2.3 起
+    # 复活节点 M1-E02B 插在 M1-E01 与 M1-E02 之间，为第一幕第二件）。
+    check("nextNodeId 指向 M1-E02B", resp.get("nextNodeId") == "M1-E02B", str(resp.get("nextNodeId")))
+
+    # ---- ④b v2.3 复活节点 M1-E02B：排 M1-E02 之前结算，落到引擎 E02
+    code, resp_b = c.req("POST", f"/api/v1/sessions/{sid}/events",
+                         make_event("M1-E02B", "option_b", hesitation=7200, switch=1))
+    check("M1-E02B 已对齐：200 进测评", code == 200 and resp_b.get("accepted") is True,
+          str((code, resp_b)))
+    st_e02b = srv.Engine.state_from_json(svc.store.get_session(sid)["state_json"])
+    check("M1-E02B 落到引擎 E02（复活卡重新在册）",
+          any(d.node_id == "E02" for d in st_e02b.decisions),
+          str([d.node_id for d in st_e02b.decisions]))
 
     # ---- ⑤ 幂等：同一 eventId 重发 → duplicate=true、状态不变
     code, dup = c.req("POST", f"/api/v1/sessions/{sid}/events", ev)
@@ -137,18 +146,23 @@ def main() -> int:
     e04 = next((d for d in st_probe.decisions if d.node_id == "E04"), None)
     check("M1-E02 option_b 落到 E04 的 C（协作锚点）",
           e04 is not None and e04.option_id == "C", str(e04 and e04.option_id))
-    check("账本里没有 E02（旧口径把善意选项记成越界）",
-          all(d.node_id != "E02" for d in st_probe.decisions),
-          str([d.node_id for d in st_probe.decisions]))
+    before = {d.node_id for d in st_e02b.decisions}
+    after = {d.node_id for d in st_probe.decisions}
+    check("M1-E02 结算只新增 E04（旧口径会把善意选项记成 E02 越界）",
+          "E02" in before and after - before == {"E04"},
+          f"before={sorted(before)} after={sorted(after)}")
 
     # ---- ⑦b 「编号对上、选项没对上 → 409 并且把原因说清楚」这条性质
-    # 24 件全部对齐以后，线上已经没有任何 pending_rewrite 的件了，
+    # 27 件全部对齐以后，线上已经没有任何 pending_rewrite 的件了，
     # 这条回归会悄悄失效 —— 所以用临时映射表把 M1-E02 置回 pending 来守住它。
     # 核心是：宁可 409，也绝不退回「按同名选项猜着记分」。
+    # M1-E02B 也一并从临时表的 playableOrder 摘掉，让 M1-E02 紧接 M1-E01，
+    # 保证这次 409 是「选项语义没对上」触发的，而不是顺序冲突。
     p_map = tmp / "map_pending.json"
     praw = json.loads(srv.STORY_KEY_MAP_PATH.read_text(encoding="utf-8"))
     praw["events"]["M1-E02"]["align"] = "pending_rewrite"
-    praw["events"]["M1-E02"]["_todo"] = "（自检临时置位）验证 409 通道没有被 24 件对齐冲掉"
+    praw["events"]["M1-E02"]["_todo"] = "（自检临时置位）验证 409 通道没有被 27 件对齐冲掉"
+    praw["playableOrder"]["list"] = [g for g in praw["playableOrder"]["list"] if g != "M1-E02B"]
     p_map.write_text(json.dumps(praw, ensure_ascii=False), encoding="utf-8")
     svc_p = srv.build_service(tmp / "pending.db", p_map)
     httpd_p = srv.ThreadingHTTPServer(("127.0.0.1", 0),
@@ -237,8 +251,7 @@ def main() -> int:
     # ---- ⑪ next 端点：形状对齐 fixture next-m1-e01.json
     code, nxt = c.req("GET", f"/api/v1/sessions/{sid}/next")
     nxt_shape = fixture("next-m1-e01.json")
-    # 已上报 M1-E01 / M1-E02 / M1-E03，playableOrder 的下一件是 M1-E04（E08）。
-    # 2026-09-16 前 M1-E02 被排除在链外，所以这里原本断到 M2-E06。
+    # 已上报 M1-E01 / M1-E02B / M1-E02 / M1-E03，playableOrder 的下一件是 M1-E04。
     check("next 200 且 nodeId=M1-E04", code == 200 and nxt["nodeId"] == "M1-E04",
           str(nxt.get("nodeId")))
     check("NextResponse 字段对齐契约", set(nxt.keys()) >= set(nxt_shape.keys()))
@@ -306,9 +319,9 @@ def main() -> int:
     check("大五证据来自真实选择（evidenceCount>0）",
           any(t.get("evidenceCount", 0) > 0 for t in big5),
           str([(t.get("trait"), t.get("evidenceCount")) for t in big5]))
-    # M1-E01 / M1-E02 / M1-E03 三条进测评；M2-E08 是 non_scoring，不算。
-    check("决策数与上报一致（3 条进测评的主线，M2-E08 不算）",
-          report.get("decisionCount") == 3, str(report.get("decisionCount")))
+    # M1-E01 / M1-E02B / M1-E02 / M1-E03 四条进测评；M2-E08 是 non_scoring，不算。
+    check("决策数与上报一致（4 条进测评的主线，M2-E08 不算）",
+          report.get("decisionCount") == 4, str(report.get("decisionCount")))
 
     # ---- ⑬ 报告路由（HTTP 级）：契约四态与幂等必须真的从路由走得通
     # 上面 ⑫ 是直接调 build()（验算法），这里验的是「路由把算法接上了没」。
@@ -333,7 +346,7 @@ def main() -> int:
           {"persona", "market", "crossHints"} <= set(rep_http.get("layers", {})),
           str(list(rep_http.get("layers", {}).keys())))
     check("GET /report 回填 sessionId 与 decisionCount",
-          rep_http.get("sessionId") == sid and rep_http.get("decisionCount") == 3,
+          rep_http.get("sessionId") == sid and rep_http.get("decisionCount") == 4,
           str((rep_http.get("sessionId"), rep_http.get("decisionCount"))))
 
     code, st_post = c.req("GET", f"/api/v1/sessions/{sid}/report/status")

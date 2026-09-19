@@ -18,9 +18,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from ..core import constants as C
+from ..core.loader import DEFAULT_DATA_DIR
 from ..engine import promotion as pr
 from ..engine.state import GameState
-from ..measure import bayes, investment, radar, topics
+from ..measure import bayes, career, investment, radar, topics
+
+CAREER_PROFILES_PATH = DEFAULT_DATA_DIR / "career_profiles.json"
 
 BANDS = ((2, "很低"), (4, "偏低"), (6, "中等"), (8, "偏高"), (11, "很高"))
 CONSISTENCY_NOTE = "你的这一面是有条件的：有人看着和没人看着，表现不一样。"
@@ -233,6 +236,16 @@ def build(result, reg, self_ratings: dict[str, float] | None = None,
     trait_rows = bayes.build_posteriors(state, reg.loading_base, self_ratings)
     topic_mods = [m for m in topics.build_topics(state) if m["displayable"]]
 
+    # 岗位适配（算法设计 V2.3 §5 理想点模型）：只做排序，不做断言。
+    # 匹配输入：优先后验（自评×行为），无自评/后验时回退行为分——行为分本身就是
+    # 48 个月行为证据的贝叶斯评分，无自评的跑批/快车道也能给出有意义的排序。
+    career_profiles = career.load_profiles(CAREER_PROFILES_PATH)
+    career_evidence = {r["trait"]: r["evidence_count"] for r in trait_rows}
+    career_input = {r["trait"]: (r["posterior"] if r["posterior"] is not None
+                                 else r["behavior"]) for r in trait_rows}
+    career_advice = career.build_career_advice(
+        career_input, career_profiles, evidence=career_evidence)
+
     by_key = {m["key"]: m for m in topic_mods}
     sketch = (by_key.get("regulatory_focus", {}).get("summary")
               or by_key.get("moral_foundation", {}).get("summary")
@@ -288,9 +301,18 @@ def build(result, reg, self_ratings: dict[str, float] | None = None,
         "psychDriveHighlights": [{"tag": p["tag"], "line": p["line"],
                                   "evidence": p["evidence"]}
                                  for p in topics.psych_drive(state)],
+        "career": {
+            "dataSource": "curated",
+            "note": "岗位画像为内置口径，真实 JD 语料接入后按词频重建",
+            "top3": [{
+                "jobId": a["jobId"], "title": a["title"], "score": a["score"],
+                "emphasis": a["emphasis"], "emphasisPhrase": a["emphasisPhrase"],
+                "line": a["line"], "dims": a["dims"],
+            } for a in career_advice],
+        },
     }
 
-    # ---- 三层 · 交叉提示：画像 vs 岗位要求。语料未接入 → 画像内提示 + 占位说明
+    # ---- 三层 · 交叉提示：画像 vs 岗位要求。真实 JD 语料未接入前，不给编造的市场结论
     hints = []
     for c in conflicts:
         row = row_by_cn[c["traitCn"]]
@@ -299,11 +321,6 @@ def build(result, reg, self_ratings: dict[str, float] | None = None,
                      f"（你自己说的是「{_band(row['self'])}」）——差距不在能力，在具体那几次。"),
             "basis": c["evidence"],
         })
-    hints.append({
-        "line": ("岗位市场参考待接入真实 JD 语料后，按「画像 vs 岗位要求」生成精确差距提示。"
-                 "本层是提示，不是结论。"),
-        "basis": [],
-    })
 
     return {
         "sessionId": session_id,
@@ -312,7 +329,12 @@ def build(result, reg, self_ratings: dict[str, float] | None = None,
         "decisionCount": len(state.decisions),
         "layers": {
             "persona": persona,
-            "market": {"dataSource": "stub", "corpusSize": 0, "jobs": []},
+            "market": {
+                "dataSource": "curated",
+                "corpusSize": len(career_profiles["jobs"]),
+                "jobs": [{"id": a["jobId"], "title": a["title"],
+                          "matchScore": a["score"]} for a in career_advice],
+            },
             "crossHints": {"hints": hints},
         },
         "evidenceReplay": _evidence_replay(state),
