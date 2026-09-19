@@ -15,10 +15,11 @@ from ..core import constants as C
 from ..engine.state import GameState
 
 # E19 归因三维 → 心理学含义（算法册 §3.4 模型四表）
+# 注意：打分卡里 controllable 是布尔值，键必须按布尔匹配，否则永远落兜底分支
 _ATTRIBUTION_MEANING = {
-    ("external", "unstable", "uncontrollable"): "外归因：怪环境",
-    ("internal", "stable", "uncontrollable"): "内-能力归因：最需要警惕「我天生不行」",
-    ("internal", "unstable", "controllable"): "内-行为归因：最健康，可以改",
+    ("external", "unstable", False): "外归因但有据：先定位到规则或环境，不急着归咎自己",
+    ("internal", "unstable", True): "内-行为归因：认的是可修的流程做法，最健康",
+    ("external", "stable", False): "稳定且不可控的外归因：与「我天生不行」同构，最需要警惕",
 }
 
 
@@ -64,7 +65,8 @@ def sdt(state: GameState) -> dict:
     for k in C.SDT_KEYS:
         vals = [float(i.get(k, 0)) for i in items]
         mean = sum(vals) / n if n else 0.0
-        bullets.append({"label": C.SDT_CN[k], "value": f"{round(mean, 2)} / 2"})
+        band = "强" if mean >= 0.5 else ("弱" if mean <= -0.5 else "中")
+        bullets.append({"label": C.SDT_CN[k], "value": band})
     summary = ""
     if n:
         auto = sum(float(i.get("autonomy", 0)) for i in items) / n
@@ -95,8 +97,8 @@ def regulatory_focus(state: GameState) -> dict:
     dp, dq = _count(daily)
     ip, iq = _count(incident)
     bullets = [
-        {"label": "促进 vs 预防（日常）", "value": f"{dp} / {dq}"},
-        {"label": "促进 vs 预防（事故）", "value": f"{ip} / {iq}"},
+        {"label": "促进 vs 预防（日常）", "value": f"促进 {dp} 次 · 预防 {dq} 次"},
+        {"label": "促进 vs 预防（事故）", "value": f"促进 {ip} 次 · 预防 {iq} 次"},
     ]
     # 某场景 n<3 → 只报另一场景（算法册 §3.4）
     if len(daily) < C.TOPIC_MIN_EVIDENCE["regulatory_focus"]:
@@ -168,8 +170,27 @@ def attribution(state: GameState) -> dict:
     def _meaning(attr: dict | None) -> str:
         if not attr:
             return "回避"
-        key = (attr.get("locus"), attr.get("stability"), attr.get("controllable"))
-        return _ATTRIBUTION_MEANING.get(key, "回避" if key[0] in (None, "avoid") else "归因：" + str(key))
+        if attr.get("locus") in (None, "avoid"):
+            return "回避"
+        hit = _ATTRIBUTION_MEANING.get((attr.get("locus"), attr.get("stability"),
+                                        attr.get("controllable")))
+        if hit:
+            return hit
+        # 兜底：只给方向词，绝不外泄内部结构
+        parts = []
+        if attr.get("locus") == "internal":
+            parts.append("内归因")
+        elif attr.get("locus") == "external":
+            parts.append("外归因")
+        if attr.get("stability") == "stable":
+            parts.append("稳定")
+        elif attr.get("stability") == "unstable":
+            parts.append("不稳定")
+        if attr.get("controllable") is True:
+            parts.append("可控")
+        elif attr.get("controllable") is False:
+            parts.append("不可控")
+        return "归因方向：" + "、".join(parts) if parts else "回避"
 
     for it in items:
         bullets.append({"label": f"事故当场（{it.get('node')}）", "value": _meaning(it)})
@@ -211,38 +232,47 @@ def cognition(state: GameState) -> list[dict]:
     def _mean(vals: list[float]) -> float:
         return sum(vals) / len(vals) if vals else 0.0
 
-    # CFC：均值 −2~+2（算法册 §3.4 模型五）
+    # CFC：均值 −2~+2，报告只给档位不给点值（算法册 §3.4 模型五）
     n = len(cfc_items)
-    bullets = [{"label": "未来取向均值", "value": f"{round(_mean([i['_val'] for i in cfc_items]), 2)}（−2 ~ +2）"}]
     summary = ""
+    mode = ""
     if n:
         m = _mean([i["_val"] for i in cfc_items])
         if m >= 0.5:
+            mode = "偏长远"
             summary = "你愿意为以后牺牲眼前。"
         elif m <= -0.5:
+            mode = "偏眼前"
             summary = "你更看重眼前——远期的账，你不太算。"
         else:
+            mode = "远近摇摆"
             summary = "摇摆型：大的远见有，小的偷懒也多——你的远见是有尺寸的。"
+    bullets = [{"label": "未来取向", "value": mode}] if n else []
     out.append(_module("cfc", "未来取向", n, C.TOPIC_MIN_EVIDENCE["CFC"],
                        summary, bullets, cfc_items, state))
 
     # NFC：均值 + 与犹豫时长交叉（算法册 §3.4 模型六）
     n = len(nfc_items)
-    bullets = [{"label": "认知需求均值", "value": f"{round(_mean([i['_val'] for i in nfc_items]), 2)}"}]
     with_h = [i for i in nfc_items if i.get("_hesitation") is not None]
     summary = ""
+    mode = ""
     if n:
         m = _mean([i["_val"] for i in nfc_items])
         pos = [i for i in nfc_items if i["_val"] > 0]
         neg = [i for i in nfc_items if i["_val"] < 0]
         if m >= 0.3:
+            mode = "偏高（爱啃难题）"
             summary = "你爱难题本身，不只看结果。"
         elif m <= -0.3:
+            mode = "偏低（能省则省）"
             summary = "能省则省——难题对你更多是负担。"
         else:
+            mode = "时有时无"
             summary = "对难题的兴趣时有时无。"
-        if with_h and pos and neg:
-            bullets.append({"label": "爱啃的题上犹豫时长", "value": f"{round(sum((i.get('_hesitation') or 0) for i in pos) / len(pos) / 1000, 1)} 秒（对比 {round(sum((i.get('_hesitation') or 0) for i in neg) / len(neg) / 1000, 1)} 秒）"})
+    bullets = [{"label": "认知需求", "value": mode}] if n else []
+    if with_h and pos and neg:
+        bullets.append({"label": "爱啃的题上犹豫时长",
+                        "value": f"{round(sum((i.get('_hesitation') or 0) for i in pos) / len(pos) / 1000, 1)} 秒（对比 {round(sum((i.get('_hesitation') or 0) for i in neg) / len(neg) / 1000, 1)} 秒）"})
     out.append(_module("nfc", "思维方式（认知需求）", n, C.TOPIC_MIN_EVIDENCE["NFC"],
                        summary, bullets, nfc_items, state))
     return out

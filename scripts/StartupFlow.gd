@@ -13,6 +13,8 @@ const TOWN_ART := preload("res://assets/ui/intro/town_1.png")
 const LIFE_ART := preload("res://assets/ui/intro/town_3.png")
 const PLAQUE_SHELL := preload("res://assets/ui/startup/startup_menu_shell.png")
 const PROFILE_PATH := "user://workplace_town_profile.json"
+# Batch 3（2026-09-17）：「我的报告」接通 —— 面板按需实例化，报告只在服务端算。
+const REPORT_PANEL := preload("res://scripts/ReportPanel.gd")
 
 const PAPER := Color("f6e6bd")
 const INK := Color("4a2b1a")
@@ -49,7 +51,8 @@ const CONTENT_TOP := 130.0
 const CONTENT_RECT := Rect2(94, 252, 1512, 540)
 
 ## 导览三页文案 —— 口径来源：《剧情设计详细方案 V5.27》一/二/三章 + 十一（自由活动）
-## 「八组团」「三条空间线」「48 个月」「39 主线 / 19 自由活动」都是文档里的硬数据，不是形容词。
+## 「八组团」「三条空间线」「48 个月」「24 主线（六幕）/ 19 自由活动」都是文档里的硬数据，不是形容词。
+## 2026-09-16 口径修正：事件基准 = 24 件六幕（一局跑完 48 个月，不分局），原「39 件」「五个阶段」作废。
 const PAGES := [
 	{"tab":"小镇介绍", "kicker":"欢迎来到这里", "title":"从第一天入职开始",
 	 "body":"小熊镇以一湖、两环、八组团铺开：湖心办庆典、冲突与结局，东岸智研线走技术与决策，西岸成长生活线走关系、恢复与夜间支线。\n\n八个组团各有各的作息——熊起东方总部管入职与重大决策，云栖科技丘做技术协作，创意水巷对接客户，树影书院负责培训复盘，松风训练谷做团建与信任测试，观澜会展码头办路演，暖邻康护院管员工关怀，慢生活园留给休息和桌游。你会在这些地方经历路演、协作、培训与关怀，也会慢慢认识每天和你一起上班的人。",
@@ -58,8 +61,8 @@ const PAGES := [
 	 "body":"他们不是围着玩家转的角色——每人有自己的区域与节奏；靠近、交流、一起解决问题，才会慢慢建立联系。陈工是事务型上级，不进关系系统。",
 	 "cast":true},
 	{"tab":"开始旅程", "kicker":"怎么走完这一程", "title":"选择会留下记录",
-	 "body":"整条旅程横跨 48 个月，职级从 L1 走到 L7：每 6 个月有一次晋升考核窗，不升职，项目就会被别人推进。\n\n主线跟着一个客服 Agent 走完 0→1、上线、救火、重构、传承五个阶段，39 个事件全部必遇；另有 19 项自由活动（独处、双人、团建与工作型）由你自己安排。你的选择、停留与交流会被服务端记录，最终汇成一份只属于你的成长报告。",
-	 "facts":[["48", "个月的旅程"], ["39", "个主线事件"], ["19", "项自由活动"]], "art":LIFE_ART},
+	 "body":"整条旅程横跨 48 个月，职级从 L1 走到 L7：每 6 个月有一次晋升考核窗，不升职，项目就会被别人推进。\n\n主线跟着一个客服 Agent 走完六幕——进入行业、真实需求与成本压力、事故与责任、重构与传承、边界与答辩、传承与新局，24 个事件全部必遇；另有 19 项自由活动（独处、双人、团建与工作型）由你自己安排。你的选择、停留与交流会被服务端记录，最终汇成一份只属于你的成长报告。",
+	 "facts":[["48", "个月的旅程"], ["24", "个主线事件"], ["19", "项自由活动"]], "art":LIFE_ART},
 ]
 
 ## 演员表唯一来源 data/town/npcs.json（V5.27 口径）。旧 8 区 NPC（艾米/林总/周岚/宁宁…）
@@ -72,20 +75,19 @@ const CAST := [
 	["小赵", "实习生", "H 区 · 慢生活园", "d8885b", "常在被帮助的位置，深夜会停一拍。"],
 ]
 
-## 标题页菜单：文本 / 是否可进入（false = 占位，还没接）
-const MAIN_MENU := [
-	["继续游戏", true],
-	["开始新游戏", true],
-	["加载游戏", true],
-]
+## 标题页菜单：三个主按钮的文案（从上到下）。各自接什么行为见 _title_screen() 内的 match。
+## 【2026-09-18 诚实化】原来三项的「是否可进入」全是 true 且全接 _start_intro，
+## 「继续 / 加载」点下去和新游戏一模一样。现在行为按有没有存档区分，见主按钮循环。
+const MAIN_MENU := ["继续游戏", "开始新游戏", "加载游戏"]
 const SUB_MENU := [
-	["我的报告", false],
+	["我的报告", true],
 	["游戏设置", false],
 ]
 
 var _mode := "title"
 var _page := 0
 var _fonts: Dictionary = {}
+var _report_panel: CanvasLayer
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -148,23 +150,40 @@ func _title_screen() -> void:
 	column.add_child(_divider())
 	column.add_child(_spacer(26))
 
-	# 三个主按钮：等宽竖排
+	# 三个主按钮：等宽竖排。
+	# 【2026-09-18 诚实化】行为按钮位区分，不再三个全接 _start_intro：
+	#   继续游戏   → 有存档（profile 文件在）才亮：跳过导览直接进小镇；没存档置灰。
+	#   开始新游戏 → 恒亮：走导览三页再进小镇。
+	#   加载游戏   → 恒灰：还没有读档系统（多存档位），tooltip 说明。
+	# ⚠ 置灰按钮不连 pressed —— disabled 状态下 Godot 本来就不派发点击，连了也没用。
+	var has_save := FileAccess.file_exists(PROFILE_PATH)
 	for i in MAIN_MENU.size():
-		var main_item: Array = MAIN_MENU[i]
-		var main_btn := _button(main_item[0], "primary")
-		main_btn.pressed.connect(_start_intro if main_item[1] else _placeholder)
+		var main_btn := _button(String(MAIN_MENU[i]), "primary")
+		match i:
+			0:
+				main_btn.disabled = not has_save
+				if has_save:
+					main_btn.pressed.connect(_continue_game)
+				else:
+					main_btn.tooltip_text = "还没有存档，先开始一局新游戏"
+			1:
+				main_btn.pressed.connect(_start_intro)
+			2:
+				main_btn.disabled = true
+				main_btn.tooltip_text = "读档暂未开放"
 		if i > 0:
 			column.add_child(_spacer(16))
 		column.add_child(main_btn)
 	column.add_child(_spacer(20))
 
-	# 两个次级按钮：并排一行
+	# 两个次级按钮：并排一行。第一个 = 我的报告（Batch 3 接通）。
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	for sub_item in SUB_MENU:
+	for i in SUB_MENU.size():
+		var sub_item: Array = SUB_MENU[i]
 		var sub_btn := _button(sub_item[0], "secondary")
 		sub_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		sub_btn.pressed.connect(_placeholder)
+		sub_btn.pressed.connect(_open_report if i == 0 else _placeholder)
 		row.add_child(sub_btn)
 	column.add_child(row)
 
@@ -184,8 +203,16 @@ func _topbar() -> void:
 	for text in ["我的报告", "游戏设置", "帮助"]:
 		var chip := _button(text, "chip")
 		chip.custom_minimum_size = Vector2(134, 56)
-		chip.pressed.connect(_placeholder)
+		chip.pressed.connect(_open_report if text == "我的报告" else _placeholder)
 		top.add_child(chip)
+
+
+## 打开「我的报告」面板（按需实例化，ReportPanel 自己管拉取与失败文案）。
+func _open_report() -> void:
+	if _report_panel == null:
+		_report_panel = REPORT_PANEL.new()
+		add_child(_report_panel)
+	_report_panel.open()
 
 # ------------------------------------------------------------------ 导览三页
 # 【2026-09-15 排版重排】三个坑一起修掉，动这块之前先读完：
@@ -439,6 +466,13 @@ func _footer(frame: Panel) -> void:
 	frame.add_child(next)
 
 func _start_intro() -> void: _mode = "intro"; _page = 0; _rebuild()
+
+## 继续游戏：跳过导览直接进小镇，不重写 profile（保留上次开局留下的文件）。
+## ⚠ 当前存档粒度只有「玩过没有」——真正的进度续玩（currentNodeId / 月份 / 精力落盘）
+##   是方案 B 的活，别把这条当成已经能续上中途进度。
+func _continue_game() -> void:
+	get_tree().change_scene_to_file("res://Main.tscn")
+
 func _back() -> void: _mode = "title"; _rebuild()
 func _go_page(index: int) -> void: _page = clampi(index, 0, PAGES.size() - 1); _rebuild()
 func _placeholder() -> void: pass

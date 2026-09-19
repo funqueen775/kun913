@@ -218,6 +218,46 @@ components:
           additionalProperties:
             type: string
             enum: [Lv1, Lv2, Lv3, Lv4, Lv5]
+        survivalState:
+          type: object
+          description: >
+            Survival track as the player may see it (story doc V5.27 §2.4, highest-priority
+            Explicitness rule): what it is called, why it got here, and how much room is
+            left. Text only — never a strike count and never a bar.
+          properties:
+            state:
+              type: string
+              enum: [stable, observation, critical, last_talk, exited]
+            label: { type: string, example: 稳定 }
+            reasons:
+              type: array
+              description: >
+                Behavioural-language entries referencing the concrete incident month, e.g.
+                "第 24 月 · 把问题推给了别人". Internal flag names and thresholds must
+                never appear here (§2.3 no-thresholds rule).
+              items: { type: string }
+            warning:
+              type: string
+              description: >
+                Empty while stable. Non-empty whenever degraded: spells out what the next
+                mistake triggers, so there is no death by ambush.
+            healingLine:
+              type: string
+              description: Sentence-form progress toward self-repair; deliberately not a countdown.
+        level:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: >
+            Current rank L1-L7, issued by the server. The client renders it and never
+            computes or mirrors it — one authoritative copy only (2026-09-17 decision).
+        nextAssessmentMonth:
+          type: integer
+          minimum: 1
+          description: >
+            Next staff assessment month. Computed server-side so the client never has to
+            keep its own copy of the assessment calendar. Absent once every window has
+            passed — "there isn't a next one" must not read as month 0.
         flags: { type: object, additionalProperties: true }
         scoreSummary: { type: object, additionalProperties: { type: number } }
         scoringVersion: { type: string, example: v1 }
@@ -261,6 +301,8 @@ components:
             # ---- 叙事流补充（非测评，服务端只落日志）
             - region_entered
             - npc_dialogue_complete
+            - weekend_close          # 自由周末收束：月份/收束快照 → 周末完成度（不测评）
+            - encounter_choice       # 在场一幕应答：活动/选项/NPC/标签 → 性格回声（不测评，只记性格标签）
         contentVersion: { type: string, example: v1 }
         clientTime: { type: string, format: date-time }
         durationSeconds: { type: integer, minimum: 0 }
@@ -274,6 +316,11 @@ components:
             choiceId: { type: string, example: E27-A }
             templateId: { type: string, example: work_late }
             npcId: { type: string }
+            optionId: { type: string, example: A, description: 在场一幕应答选项编号（encounter_choice 用） }
+            memoryTags:
+              type: array
+              items: { type: string }
+              description: 在场一幕性格标签（如「会先开口的人」），应答原样上报，服务端只聚合不加工
             questionId: { type: string, example: profile_q3 }
             hesitationMs: { type: integer, minimum: 0, description: 进入决策点到确认的毫秒数，前端原样上报、服务端不加工 }
             switchCount: { type: integer, minimum: 0, description: 选项间横跳次数 }
@@ -523,6 +570,22 @@ components:
               tag: { type: string, enum: [avoid_conflict, transfer_pressure, please_others, relieve_guilt] }
               line: { type: string, example: 你怕的不是麻烦，是关系破裂 }
               evidence: { $ref: '#/components/schemas/EvidenceRef' }
+        encounterEchoes:
+          type: object
+          description: >
+            在场一幕回声（encounter_choice 聚合）：同一活动同一处境，不同人的应答不同 →
+            报告的性格侧写。只报标签与次数描述，不报任何数值；没有上报过应答时
+            n=0、line 为空串（与 psychDriveHighlights 同规则：无据不推断）。
+          properties:
+            n: { type: integer, description: 有记录的在场一幕次数 }
+            tags:
+              type: array
+              items:
+                type: object
+                properties:
+                  tag: { type: string, example: 会先开口的人 }
+                  n: { type: integer, description: 该标签被记下的次数 }
+            line: { type: string, example: 5 次撞见人的时刻，你最容易留下「会先开口的人」的样子 }
     MarketLayer:
       type: object
       required: [dataSource]

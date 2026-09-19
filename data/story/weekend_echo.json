@@ -1,0 +1,43 @@
+{
+ "_readme": "周末回声语料（设计说明《自由周末参与感设计说明 V1》§6.1，二期 D 件）。活动之后下次再走进那片区域，同行者会冒一句提起上次的话——世界记得你过怎样的周末。硬口径：**只放文案不放数值**，任何行不得出现数字流水；npc 为 \"any\" 表示该活动的任意同行者都能说（同行者是运行时随机指派的），也可以写具体 npcId（ MonthlyLife.SOCIAL_POOL 的 wang_ge/xiao_lin/xiao_zhao/lao_zhou）做专属台词。触发与消费逻辑在 MonthlyLife.pick_weekend_echo / consume_weekend_echo：每次区域进入最多冒一句、整条手账只提一次（echoConsumed 写回 jsonl），不做复读机。",
+ "system_id": "weekend_echo",
+ "version": "1.0",
+ "echoes": {
+  "D1_coffee_chat": [
+   {"npc": "any", "line": "上次那家店换豆子了，比之前酸。"},
+   {"npc": "any", "line": "那天你走之后，老板还问起你来着。"}
+  ],
+  "D2_lakeside_deep_talk": [
+   {"npc": "any", "line": "湖边风大，那天聊的还没聊完。"},
+   {"npc": "any", "line": "你上次说的话，我后来又想了一遍。"}
+  ],
+  "D3_lawn_sports": [
+   {"npc": "any", "line": "上回那局还没分出胜负呢，记着呢。"},
+   {"npc": "any", "line": "胳膊到现在还酸——都怪那天的球。"}
+  ],
+  "D4_camp_bbq": [
+   {"npc": "any", "line": "炭火还是那个味，就等下次开炉了。"},
+   {"npc": "any", "line": "上次烤糊的那串，我后来练回来了。"}
+  ],
+  "D5_study_together": [
+   {"npc": "any", "line": "上次占的那个位子，今天又给你留着。"},
+   {"npc": "any", "line": "那道题后来解出来了，想听吗？"}
+  ],
+  "G1_trust_escape_room": [
+   {"npc": "any", "line": "新一批谜题到货了，比上回那套狠。"},
+   {"npc": "any", "line": "上次就差一步出去，这回一定。"}
+  ],
+  "G2_campfire": [
+   {"npc": "any", "line": "火堆旁边你的位置还空着。"},
+   {"npc": "any", "line": "上次那首歌，后来一直有人点。"}
+  ],
+  "G3_board_game": [
+   {"npc": "any", "line": "新扩展开了，规则比上回难缠。"},
+   {"npc": "any", "line": "赢你那招，现在别人也会了。"}
+  ],
+  "G4_annual_show_rehearsal": [
+   {"npc": "any", "line": "排练厅还留着你上次站的位置。"},
+   {"npc": "any", "line": "导演又提了上次那段，说想再来一遍。"}
+  ]
+ }
+}

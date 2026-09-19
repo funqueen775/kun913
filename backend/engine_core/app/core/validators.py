@@ -226,10 +226,22 @@ def check_sample(reg: ConfigRegistry) -> Report:
 # ------------------------------------------------------------------ 5. 守界者计数器
 def check_counters(reg: ConfigRegistry) -> Report:
     r = Report("5. 守界者双计数器")
+    arch = set((reg.cards.get("_archived") or {}).get("ids") or [])
     for label, ids in (("甩锅场合", C.COUNTER_BLAME_SCENES), ("无人监督场合", C.COUNTER_NOSUPERVISION)):
         miss = [e for e in ids if e not in reg.events]
-        if miss:
-            r.bad(f"{label}引用了不存在的事件 {miss}")
+        gone = [e for e in miss if e in arch]
+        other = [e for e in miss if e not in arch]
+        if other:
+            r.bad(f"{label}引用了不存在的事件（且不在归档清单里）：{other}")
+        elif gone:
+            # 2026-09-16：24 件基准裁件导致。**降级为「注意」而不是「失败」**，
+            # 因为场合集合是产品语义（终局文案里的「N 次里守住 M 次」），
+            # 不能由构建期校验或数据层单方面改小 —— 必须策划重定集合后再硬校验。
+            keep = [e for e in ids if e in reg.events]
+            r.warn(f"{label} 原为 {list(ids)}，其中 {gone} 已随裁件归档，"
+                   f"在册只剩 {keep}。→ 终局计数器的分母实际变小，"
+                   f"**需策划重定场合集合**（建议按同族在册件补位，见 constants.py 注释），"
+                   f"定稿前请勿把本项当通过。")
         else:
             r.ok(f"{label} {list(ids)} 全部存在，可产出「N 次里守住 M 次」")
     return r
@@ -249,19 +261,27 @@ def check_time_axis(reg: ConfigRegistry) -> Report:
 def check_structure(reg: ConfigRegistry) -> Report:
     r = Report("A. 结构性计数")
     s = reg.summary()
-    r.info(f"版本：{s['版本']}")
-    expect = {"主线事件": 39, "成就节点": 5, "选项总数": 123, "flag 数": 10,
-              "自由活动": 19, "带决策节点": 41}
+    arch = set((reg.cards.get("_archived") or {}).get("ids") or [])
+    r.info(f"版本：{s['版本']}　｜　在册 {len(reg.events)} 张 / 归档 {len(arch)} 张"
+           f"（2026-09-16 起以 24 件基准为准，见 scoring_cards v3.0）")
+    # 2026-09-16（v3.0）：期望值由 44 节点旧口径改为 23 节点在册口径。
+    #   成就节点 = 0：C1–C4 已归档、C5 并入主线 M6-E24（去掉 type=achievement）。
+    expect = {"主线事件": 23, "成就节点": 0, "选项总数": 69, "flag 数": 9,
+              "自由活动": 19, "带决策节点": 23}
     for k, v in expect.items():
         got = s[k]
         (r.ok if got == v else r.bad)(f"{k} = {got}（期望 {v}）")
     r.info(f"自由周末槽位 {s['自由周末槽位']} / 月度模板 {s['月度模板']}")
 
-    # 全部必遇：39 个主线事件都必须排得进 48 个月
+    # 全部必遇：23 个主线事件都必须排得进 48 个月
     acts = collections.Counter(e.act for e in reg.mainline_events())
-    r.info(f"按幕分布：{dict(sorted(acts.items()))}")
-    if sum(acts.values()) != 39:
-        r.bad("主线事件数与按幕统计不一致")
+    r.info(f"按幕分布（卡表 act 字段）：{dict(sorted(acts.items()))}")
+    if sum(acts.values()) != len(reg.mainline_events()):
+        r.bad(f"主线事件数与按幕统计不一致：{sum(acts.values())} vs {len(reg.mainline_events())}")
+    else:
+        r.ok(f"按幕统计与主线事件数一致（{sum(acts.values())}）")
+    r.info("注意：卡表 act 是「排期序号」的口径，与 Godot 六幕不完全同构"
+           "（例：E08 卡的 act=1，但剧情里属第二幕）——跨库比对请走 story_key_map.json。")
 
     # 弱情境护栏（剧情册 §四：新增事件必须保证弱情境不少于 6 个）
     weak = [e.event_id for e in reg.mainline_events() if e.situation == "weak"]
@@ -296,9 +316,12 @@ def check_radar(reg: ConfigRegistry) -> Report:
         else:
             r.warn(line)
 
-    r.warn("算法册 §9 的 40/33/33/31/23/14 未能由 scoring_cards v2.9 复现，"
-           "抗压韧性尤甚（resilience 满分仅 8，文档记 14，疑为 v2.4 期旧值）。"
-           "需策划二选一：改文档，或补标定。")
+    r.warn("算法册 §9 的 40/33/33/31/23/14 是按 39 件实算的旧值，"
+           "在 24 件基准下已作废（抗压韧性尤甚：在册 resilience 正分上限只有 4）。"
+           "**归一化不受影响** —— `app/measure/radar.py` 的满分是按当前在册卡动态实算的，"
+           "`RADAR_CAP_IN_DOC` 只用于这段文档对账。待办：① 把算法册 §9 的表值同步改成实算值；"
+           "② 抗压韧性在 23 件下只剩 4 分上限，报告「抗压」柱的解释力显著下降，"
+           "需策划决定是补标定（给在册卡补 resilience）还是把该柱降级为「由 H 行为记录补强」。")
     return r
 
 
@@ -308,32 +331,47 @@ DOC_RF_EVENTS = ("E04", "E06", "E09", "E16", "E23", "E24", "E26", "E27", "E30")
 
 
 def check_topic_coverage(reg: ConfigRegistry) -> Report:
-    """比对各专题模型的「打分点数 vs 文档声称」，并把标注不齐的题挑出来。"""
+    """比对各专题模型的「打分点数 vs 文档声称」，并把标注不齐的题挑出来。
+
+    2026-09-16（v3.0）：本段所有的「文档记 N」都出自 44 节点口径的旧稿。
+    裁到 23 件后，凡是与文档不一致的都降级为「注意」并附在册实算 ——
+    **本段不再单独判失败**，避免把「裁件的必然结果」误报成数据缺陷。
+    """
     r = Report("C. 专题模型覆盖面")
+    arch = set((reg.cards.get("_archived") or {}).get("ids") or [])
+    r.info(f"在册 {len(reg.events)} 张 / 归档 {len(arch)} 张；"
+           f"以下「文档记 N」均为 44 节点旧口径，在册实算见括注。")
 
     def scan(field: str, events: tuple[str, ...]) -> dict[str, int]:
         return {e: sum(1 for v in reg.events[e].options.values() if v.get(field))
                 for e in events if e in reg.events}
 
-    # SDT：算法册 §3.4 模型一 → 9 事件 22 选项
+    # SDT：算法册 §3.4 模型一 → 文档 9 事件 22 选项（44 节点口径）
     sdt = scan("sdt", DOC_SDT_EVENTS)
     total = sum(sdt.values())
-    (r.ok if total == 22 else r.bad)(f"SDT 选项数 = {total}（文档记 22）；逐题 {sdt}")
+    sdt_gone = [e for e in DOC_SDT_EVENTS if e in arch]
+    (r.ok if total == 22 else r.warn)(f"SDT 选项数 = {total}"
+                                     f"（文档记 22，44 节点口径；在册已归档 {sdt_gone}）"
+                                     f"；逐题 {sdt}")
     thin = [e for e, n in sdt.items() if n < len(reg.events[e].options)]
     if thin:
         r.warn(f"SDT 未三选项全覆盖的事件：{thin}——选到未标选项的玩家在该题无动机观测")
 
-    # 调节焦点：算法册 §3.4 模型二 → 9 题 21 选项，促进 8 / 预防 13
+    # 调节焦点：算法册 §3.4 模型二 → 文档 9 题 21 选项，促进 8 / 预防 13（44 节点口径）
     rf_events = scan("regulatory_focus", DOC_RF_EVENTS)
     rf_total = sum(rf_events.values())
     counts = collections.Counter()
     for e in DOC_RF_EVENTS:
+        if e not in reg.events:
+            continue          # 2026-09-16：24 件基准下 E06/E16/E26/E27/E30 已归档，别 KeyError
         for v in reg.events[e].options.values():
             if v.get("regulatory_focus"):
                 counts[v["regulatory_focus"]] += 1
     got = f"促进 {counts['promotion']} / 预防 {counts['prevention']}"
+    rf_gone = [e for e in DOC_RF_EVENTS if e in arch]
     (r.ok if (rf_total, counts["promotion"], counts["prevention"]) == (21, 8, 13)
-     else r.bad)(f"调节焦点 {rf_total} 个选项，{got}（文档记 21 个，促进 8 / 预防 13）")
+     else r.warn)(f"调节焦点 {rf_total} 个选项，{got}"
+                  f"（文档记 21 个，促进 8 / 预防 13，44 节点口径；在册已归档 {rf_gone}）")
     thin_rf = {e: n for e, n in rf_events.items() if n < len(reg.events[e].options)}
     if thin_rf:
         r.warn(f"调节焦点标注不齐的事件：{thin_rf}"

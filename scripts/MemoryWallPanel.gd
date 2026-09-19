@@ -60,6 +60,19 @@ const TONE := {
 ## 手贴的痕迹：固定角度轮换（不随机，免得每次开墙都在抖）。
 const TILT := [-2.1, 1.5, -0.9, 2.3, -1.4, 0.8]
 
+## 关系档色点（V5.27 §11.3：该 NPC 的便签颜色「蓝→黄→金」渐进）。
+## 五档压成三色，分界点选在 Lv3 —— 那是「熊友卡解锁」这一档，是玩家能感知的门槛。
+## ⚠ 这枚点**只管关系**；便签底色仍归 memoryNote.tone（金=站得住 / 灰=疙瘩）。
+## 两套语义各走各的，谁都不覆盖谁。查不到角色（独处事件 / 陈工不在关系系统）就不贴。
+const RELATION_DOT := {
+	1: Color("6f9ec4"),
+	2: Color("6f9ec4"),
+	3: Color("d9b441"),
+	4: Color("b08a37"),
+	5: Color("b08a37"),
+}
+const DOT_SIZE := 16.0
+
 var _root: Control
 var _scroll: ScrollContainer
 var _wall: Control
@@ -72,6 +85,14 @@ var _notes: Array = []
 var _cards: Array = []
 var _selected := -1
 var _catalog: Array = []
+## 关系档的唯一来源（MonthlyLife）。**刻意可空**：不做 autoload、验收脚本直接 new
+## 出来时它是 null —— 那种情况下墙上不贴色点，而不是报错或瞎猜一个档位。
+var _life = null
+
+
+## 注入生活系统。WorkplaceTown 建面板时调用；不调 = 没有关系档色点。
+func setup(life) -> void:
+	_life = life
 
 
 func _ready() -> void:
@@ -295,12 +316,60 @@ func _build_note(index: int, memo: Dictionary) -> void:
 	body.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	card.add_child(body)
 
+	# 关系档色点。落在**右下角**而不是右上角：右上被 meta（「第 12 月 28 日 · 事件名」）
+	# 一直占到 x≈348，NOTE_W 才 376，放上去必然压字；右下这块是空的。
+	var level := _dot_level_of(memo)
+	if level > 0:
+		card.add_child(_relation_dot(level))
+
 	# 回填来的便签标一下出处：玩家能看出这张是从老存档里救回来的。
 	if bool(memo.get("rescued", false)):
 		var rescued := _label("· 从旧记录里找回", 15, INK_SOFT, false, 220.0)
 		rescued.position = Vector2(28, NOTE_H - 40.0)
 		rescued.size = Vector2(220, 24)
 		card.add_child(rescued)
+
+
+## 这枚点：底色就是档位，卡面上不写任何数字和「Lv3」这类编号。
+func _relation_dot(level: int) -> Panel:
+	var dot := Panel.new()
+	dot.name = "RelationDot"
+	dot.position = Vector2(NOTE_W - DOT_SIZE - 18.0, NOTE_H - DOT_SIZE - 18.0)
+	dot.size = Vector2(DOT_SIZE, DOT_SIZE)
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = RELATION_DOT.get(level, RELATION_DOT[1])
+	style.border_color = Color(1, 1, 1, 0.5)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(int(DOT_SIZE * 0.5))
+	dot.add_theme_stylebox_override("panel", style)
+	return dot
+
+
+## 便签挂在谁身上、那个人现在是什么档。返回 0 = 不贴点。
+## memo["npc"] 存的是**显示名**（StoryEventPanel._lead_actor_name / FreeTimePanel），
+## 名字是两套 id 空间之间唯一都成立的 join key。
+func _dot_level_of(memo: Dictionary) -> int:
+	if _life == null:
+		return 0
+	var who := String(memo.get("npc", "")).strip_edges()
+	if who.is_empty():
+		return 0
+	var npc_id := String(_life.relation_key_of_name(who))
+	if npc_id.is_empty():
+		return 0
+	return int(_life.affinity_level(_life.affinity_of(npc_id)))
+
+
+## 详情条上那句关系话：「和王哥 · 老熟人了」。**只有人话，没有分数。**
+func _relation_label_of(memo: Dictionary) -> String:
+	if _life == null or _dot_level_of(memo) <= 0:
+		return ""
+	var who := String(memo.get("npc", "")).strip_edges()
+	var stage := String(_life.relation_stage_of_name(who))
+	if stage.is_empty():
+		return ""
+	return "和%s · %s" % [who, stage]
 
 
 func _refresh_card(index: int) -> void:
@@ -338,6 +407,10 @@ func _select(index: int) -> void:
 	var memo := Dictionary(_notes[index])
 	var tone_name := "灰便签" if String(memo.get("tone", "gold")) == "gray" else "金便签"
 	_detail_title.text = "%s · %s · %s" % [_date_text(memo), String(memo.get("eventTitle", "")), tone_name]
+	# 顺带说清那枚色点是给谁的、现在什么档 —— 否则它看着像个装饰。
+	var relation_note := _relation_label_of(memo)
+	if not relation_note.is_empty():
+		_detail_title.text += "　·　%s" % relation_note
 	var choice := String(memo.get("choiceText", ""))
 	# 事件数据里的结果文案常用 "\n\n" 分段（剧情面板上是两段话），
 	# 搬进这一条窄条里要把空行收掉，不然三行额度全被吃掉。

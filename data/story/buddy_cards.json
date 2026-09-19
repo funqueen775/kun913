@@ -1,0 +1,86 @@
+{
+  "_readme": [
+    "熊友卡（Batch 5 · 机制文档 §6）：与核心 NPC 好感达到 Lv3「伙伴」后解锁。",
+    "两个用途：① 月度养成的搭档协助（只放大公开资源，不碰好感/测评）② 训练谷可选角色。",
+    "红线（机制文档 §6.2 原文）：协助不替玩家做选择、不开放原本不可选的主线答案、不放大隐藏测评得分。",
+    "数值为 MVP 临时标定（文档只给方向：提高生命恢复 / 提升专业成长 / 增加产出 / 降低精力消耗），试玩后可调。",
+    "训练谷规则：进入某位 NPC 对应的关卡时，不能选该 NPC 本人当搭档（§6.3）。"
+  ],
+  "unlock_level": 3,
+  "unlock_note": "Lv3 = 好感 ≥ 40（free_time_system.affinity_spec.level_thresholds）。数值对玩家隐藏，只讲人话。",
+  "cards": [
+    {
+      "id": "buddy_wang_ge",
+      "npc_id": "wang_ge",
+      "name": "王哥",
+      "role": "技术导师",
+      "card_line": "技术这碗饭，他吃得踏实。",
+      "assist": {
+        "action": "grow",
+        "effect": "skill_bonus",
+        "value": 1,
+        "text": "王哥翻了两页你啃的论文，把最关键的那段圈出来：这里才是题眼。专业能力 +1。"
+      },
+      "duel": {
+        "ability": "hand_bonus",
+        "value": 1,
+        "desc": "经验老到：起手多摸 1 张牌"
+      }
+    },
+    {
+      "id": "buddy_xiao_lin",
+      "npc_id": "xiao_lin",
+      "name": "小林",
+      "role": "产品",
+      "card_line": "他记得你那次肯坐下来听。",
+      "assist": {
+        "action": "produce",
+        "effect": "output_bonus",
+        "value": 1,
+        "text": "小林帮你把需求里含糊的地方问清了，你少返工一轮。本月产出 +1。"
+      },
+      "duel": {
+        "ability": "damage_bonus",
+        "value": 1,
+        "desc": "进攻性格：每次攻击伤害 +1"
+      }
+    },
+    {
+      "id": "buddy_xiao_zhao",
+      "npc_id": "xiao_zhao",
+      "name": "小赵",
+      "role": "实习生",
+      "card_line": "他记得你非让他站起来那次。",
+      "assist": {
+        "action": "rest",
+        "effect": "health_bonus",
+        "value": 1,
+        "text": "小赵替你盯了半天消息，你那个午觉睡得完整。生命 +1。"
+      },
+      "duel": {
+        "ability": "hand_cap_bonus",
+        "value": 1,
+        "desc": "细心兜底：手牌上限 +1"
+      }
+    },
+    {
+      "id": "buddy_lao_zhou",
+      "npc_id": "lao_zhou",
+      "name": "老周",
+      "role": "资深",
+      "card_line": "他记了十年，没让自己变成那样的人。",
+      "assist": {
+        "action": "*",
+        "effect": "free_action",
+        "value": 1,
+        "per_month_limit": 1,
+        "text": "老周替你挡掉了流程里的弯弯绕，这件事没花你的精力。"
+      },
+      "duel": {
+        "ability": "guard_bonus",
+        "value": 1,
+        "desc": "留一手：防御减伤 +1"
+      }
+    }
+  ]
+}

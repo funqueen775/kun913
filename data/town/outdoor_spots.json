@@ -1,0 +1,21 @@
+{
+  "_readme": "户外周末落点（2026-09-18 深夜新增）：不属于 A–H 八个建筑区的活动目的地。玩家走到 position 半径 radius 内即触发到达演出（不像区域要按 E 进门）——湖边漫步/步道这种活动本来就没有门。activity_spots 把一个活动映射到落点；没登记的仍按 free_time_system 的 zone 走区域落点。坐标为世界坐标（1920×1080），两个点都由 build/probe_lakeside_reach.gd 在通行掩膜上验证过：可走、且从出生点（宿舍门口）可达。换点必须重跑那条探针。",
+  "spots": [
+    {
+      "id": "lakeside_north",
+      "name": "心湖 · 北岸",
+      "position": { "x": 1037, "y": 413 },
+      "radius": 96
+    },
+    {
+      "id": "lakeside_boardwalk",
+      "name": "心湖 · 木栈道",
+      "position": { "x": 660, "y": 430 },
+      "radius": 96
+    }
+  ],
+  "activity_spots": {
+    "S2_lakeside_walk": "lakeside_north",
+    "D2_lakeside_deep_talk": "lakeside_boardwalk"
+  }
+}
