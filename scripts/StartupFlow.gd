@@ -56,7 +56,7 @@ const CONTENT_RECT := Rect2(94, 252, 1512, 540)
 const PAGES := [
 	{"tab":"小镇介绍", "kicker":"欢迎来到这里", "title":"从第一天入职开始",
 	 "body":"小熊镇以一湖、两环、八组团铺开：湖心办庆典、冲突与结局，东岸智研线走技术与决策，西岸成长生活线走关系、恢复与夜间支线。\n\n八个组团各有各的作息——熊起东方总部管入职与重大决策，云栖科技丘做技术协作，创意水巷对接客户，树影书院负责培训复盘，松风训练谷做团建与信任测试，观澜会展码头办路演，暖邻康护院管员工关怀，慢生活园留给休息和桌游。你会在这些地方经历路演、协作、培训与关怀，也会慢慢认识每天和你一起上班的人。",
-	 "facts":[["8", "个组团"], ["3", "条空间线"], ["4", "位常驻同事"]], "art":TOWN_ART},
+	 "facts":[["8", "个组团"], ["3", "条空间线"], ["5", "位常驻同事"]], "art":TOWN_ART},
 	{"tab":"人物名单", "kicker":"你会遇到的人", "title":"同事各有各的工作",
 	 "body":"他们不是围着玩家转的角色——每人有自己的区域与节奏；靠近、交流、一起解决问题，才会慢慢建立联系。陈工是事务型上级，不进关系系统。",
 	 "cast":true},
@@ -72,6 +72,7 @@ const CAST := [
 	["陈工", "邻组 Leader", "A 区 · 熊起东方总部", "5f6b7a", "话少，只问结论和成本。"],
 	["小林", "产品", "C 区 · 创意水巷", "bc825e", "被客户催着走，先塞需求再一起想办法。"],
 	["老周", "资深", "D 区 · 树影书院", "8a786b", "在听，等着看谁认领。"],
+	["小赵", "实习生", "H 区 · 慢生活园", "d8885b", "常在被帮助的位置，深夜会停一拍。"],
 ]
 
 ## 标题页菜单：三个主按钮的文案（从上到下）。各自接什么行为见 _title_screen() 内的 match。
@@ -95,12 +96,8 @@ func _ready() -> void:
 func _rebuild() -> void:
 	for child in get_children(): child.queue_free()
 	_background()
-	if _mode == "title":
-		_title_screen()
-	elif _mode == "avatar":
-		_avatar_screen()
-	else:
-		_intro_screen()
+	if _mode == "title": _title_screen()
+	else: _intro_screen()
 
 func _background() -> void:
 	var bg := TextureRect.new()
@@ -177,7 +174,7 @@ func _title_screen() -> void:
 		if i > 0:
 			column.add_child(_spacer(16))
 		column.add_child(main_btn)
-	column.add_child(_spacer(20))
+	column.add_child(_spacer(14))
 
 	# 两个次级按钮：并排一行。第一个 = 我的报告（Batch 3 接通）。
 	var row := HBoxContainer.new()
@@ -216,6 +213,7 @@ func _open_report() -> void:
 		_report_panel = REPORT_PANEL.new()
 		add_child(_report_panel)
 	_report_panel.open()
+
 
 # ------------------------------------------------------------------ 导览三页
 # 【2026-09-15 排版重排】三个坑一起修掉，动这块之前先读完：
@@ -459,13 +457,13 @@ func _footer(frame: Panel) -> void:
 	var skip := _button("跳过", "secondary")
 	skip.position = Vector2(1315, 828)
 	skip.size = Vector2(120, 60)
-	skip.pressed.connect(_start_avatar_selection)
+	skip.pressed.connect(_enter_town)
 	frame.add_child(skip)
 
-	var next := _button("选择形象" if _page == PAGES.size() - 1 else "继续")
+	var next := _button("进入小镇" if _page == PAGES.size() - 1 else "继续")
 	next.position = Vector2(1445, 828)
 	next.size = Vector2(200, 60)
-	next.pressed.connect(_start_avatar_selection if _page == PAGES.size() - 1 else func(): _go_page(_page + 1))
+	next.pressed.connect(_enter_town if _page == PAGES.size() - 1 else func(): _go_page(_page + 1))
 	frame.add_child(next)
 
 func _start_intro() -> void: _mode = "intro"; _page = 0; _rebuild()
@@ -486,93 +484,8 @@ func _quit_game() -> void:
 
 func _enter_town() -> void:
 	var file := FileAccess.open(PROFILE_PATH, FileAccess.WRITE)
-	if file != null: file.store_string(JSON.stringify({"sessionId":"local-" + str(Time.get_unix_time_from_system()), "avatarId":PlayerProfile.get_selected_avatar_id(), "contentVersion":"v1", "currentNodeId":"M1-E01", "unlockedRegionIds":["A", "H"]}))
+	if file != null: file.store_string(JSON.stringify({"sessionId":"local-" + str(Time.get_unix_time_from_system()), "avatarId":"bear_green_cardigan", "contentVersion":"v1", "currentNodeId":"M1-E01", "unlockedRegionIds":["A", "H"]}))
 	get_tree().change_scene_to_file("res://Main.tscn")
-
-
-func _start_avatar_selection() -> void:
-	_mode = "avatar"
-	_rebuild()
-
-
-func _avatar_screen() -> void:
-	var frame := Panel.new()
-	frame.position = Vector2(110, 56)
-	frame.size = Vector2(1700, 968)
-	frame.add_theme_stylebox_override("panel", _style(PAPER, WOOD, 8, 8))
-	add_child(frame)
-
-	var back := _button("返回", "secondary")
-	back.position = Vector2(36, 34)
-	back.size = Vector2(132, 60)
-	back.pressed.connect(func() -> void: _mode = "intro"; _page = PAGES.size() - 1; _rebuild())
-	frame.add_child(back)
-
-	var kicker := _label("准备入职", 22, BRICK)
-	kicker.position = Vector2(250, 54)
-	kicker.size = Vector2(1200, 32)
-	frame.add_child(kicker)
-	var heading := _label("选择你的形象", 44, INK, 0.0, 0.30)
-	heading.position = Vector2(250, 88)
-	heading.size = Vector2(1200, 66)
-	frame.add_child(heading)
-	var description := _label("进入小镇后，地图、室内和宿舍都会使用这套形象。", 19, Color("7a5533"))
-	description.position = Vector2(250, 154)
-	description.size = Vector2(1200, 32)
-	frame.add_child(description)
-
-	var cards := HBoxContainer.new()
-	cards.position = Vector2(115, 238)
-	cards.size = Vector2(1470, 410)
-	cards.add_theme_constant_override("separation", 18)
-	frame.add_child(cards)
-	for avatar_value in PlayerProfile.AVATARS:
-		var avatar := avatar_value as Dictionary
-		var avatar_id := String(avatar.get("id", ""))
-		var card := Button.new()
-		card.custom_minimum_size = Vector2(279, 410)
-		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		card.focus_mode = Control.FOCUS_NONE
-		card.add_theme_stylebox_override("normal", _style(Color("fff4d8"), BRICK if avatar_id == PlayerProfile.get_selected_avatar_id() else Color("865139"), 4 if avatar_id == PlayerProfile.get_selected_avatar_id() else 2, 6, 4))
-		card.add_theme_stylebox_override("hover", _style(Color("fff9e9"), BRICK, 4, 6, 5))
-		card.add_theme_stylebox_override("pressed", _style(Color("ead39f"), BRICK, 4, 6, 0))
-		card.pressed.connect(_select_avatar.bind(avatar_id))
-		cards.add_child(card)
-
-		var portrait := TextureRect.new()
-		var atlas := AtlasTexture.new()
-		atlas.atlas = load("res://assets/characters/paper_doll_64/compiled/%s_walk_64.png" % avatar_id) as Texture2D
-		atlas.region = Rect2(0, 0, 64, 80)
-		portrait.texture = atlas
-		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		portrait.position = Vector2(55, 46)
-		portrait.size = Vector2(170, 215)
-		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.add_child(portrait)
-
-		var name := _label(String(avatar.get("name", "")), 28, INK, 0.0, 0.22)
-		name.position = Vector2(0, 284)
-		name.size = Vector2(279, 42)
-		name.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.add_child(name)
-		var selected := _label("当前选择" if avatar_id == PlayerProfile.get_selected_avatar_id() else "点击选择", 17, BRICK if avatar_id == PlayerProfile.get_selected_avatar_id() else Color("7a5533"))
-		selected.position = Vector2(0, 332)
-		selected.size = Vector2(279, 28)
-		selected.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.add_child(selected)
-
-	var confirm := _button("带着这个形象进入小镇", "primary")
-	confirm.position = Vector2(625, 770)
-	confirm.size = Vector2(450, 68)
-	confirm.pressed.connect(_enter_town)
-	frame.add_child(confirm)
-
-
-func _select_avatar(avatar_id: String) -> void:
-	if PlayerProfile.set_selected_avatar_id(avatar_id):
-		_rebuild()
 
 # ------------------------------------------------------------------ 零件
 

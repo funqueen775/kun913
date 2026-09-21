@@ -483,7 +483,31 @@ def main() -> int:
     check("月末尾巴按稳态记录了已结算月份", len(st3.settled_months) == st3.month,
           f"settled={len(st3.settled_months)} month={st3.month}")
 
-    # ---- ⑯ 未知会话 404
+    # ---- ⑯ 快速模式（一键出报告，跳过 48 个月玩法）
+    # 复用 gen_report 的选法（demo 贪心补齐五维），一条请求出整份报告。
+    code, ft = c.req("POST", "/api/v1/fast-track/report", {"slot": "demo"})
+    ft_p = (ft.get("layers") or {}).get("persona") or {}
+    ft_career = ft_p.get("career") or {}
+    check("快速模式 200 且三层结构齐",
+          code == 200 and {"persona", "market", "crossHints"} <= set(ft.get("layers", {})),
+          str(code))
+    check("快速模式跑满 26 个测评事件", ft.get("decisionCount") == 26,
+          str(ft.get("decisionCount")))
+    check("快速模式职业推荐出满 3 个岗位",
+          len(ft_career.get("top3") or []) == 3,
+          str([j.get("title") for j in (ft_career.get("top3") or [])]))
+    check("快速模式五维是行为列（证据被拉起）",
+          all(r.get("behaviorAvailable") for r in ft_p.get("bigfive", [])),
+          str([(r.get("traitCn"), r.get("evidenceCount")) for r in ft_p.get("bigfive", [])]))
+    check("快速模式报告已推进到第 48 月",
+          (ft_p.get("promotionTrack") or {}).get("finalGrade", {}).get("level") is not None,
+          str(ft_p.get("promotionTrack")))
+    # 非法 slot 回落 demo（不 4xx、不 500）
+    code2, ft2 = c.req("POST", "/api/v1/fast-track/report", {"slot": "garbage"})
+    check("非法 slot 回落 demo 仍 200", code2 == 200 and ft2.get("decisionCount") == 26,
+          str(code2))
+
+    # ---- ⑰ 未知会话 404
     code, _ = c.req("GET", f"/api/v1/sessions/{uuid.uuid4()}")
     check("未知会话 404", code == 404)
 
@@ -497,7 +521,7 @@ def main() -> int:
         for _, name, detail in fails:
             print(f"FAIL] {name}  {detail}")
         return 1
-    print("全部通过 [OK]  契约有可执行体了。")
+    print("全部通过 ✓  契约有可执行体了。")
     return 0
 
 

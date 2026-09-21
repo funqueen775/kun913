@@ -75,6 +75,13 @@ from app.report import build as build_report  # noqa: E402
 
 import id_map  # noqa: E402
 
+# 快速模式复用 gen_report.py 的选法（demo 贪心补齐五维等）。
+# ⚠ 必须从 fast_track_shared.py 导入，不能从 gen_report.py 导入：
+#   gen_report 顶部 `import server as srv`，而 server.py 作为入口运行时模块名是
+#   __main__ —— 反向 import gen_report 会让它把 server.py 当新模块重载一遍，构成
+#   真循环 import（实测 SLOT_NO 未定义即被再次 import）。
+from fast_track_shared import SLOT_NO, demo_slot_plan, extend_mapping, make_click  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DB_PATH = Path(sys.argv[sys.argv.index("--db") + 1]) if "--db" in sys.argv \
     else Path(__import__("os").environ.get("WORKPLACE_TOWN_DB_PATH",
@@ -787,6 +794,55 @@ class Service:
             return 404, {"error": "report not generated yet"}
         return 200, json.loads(row["payload_json"])
 
+    # ---- 快速模式（一键出报告，跳过 48 个月玩法）
+    def fast_track_report(self, slot: str = "demo",
+                          self_ratings: dict | None = None) -> tuple[int, dict]:
+        """POST /fast-track/report：不玩 48 个月，直接结算一局并出完整报告。
+
+        与 gen_report.py 同一条计算链路（同一引擎、同一映射表、同一报告层），
+        只是走 HTTP 端点暴露：建临时会话 → 按 playableOrder 逐件选法结算 →
+        生成报告 → 返回整份报告 JSON。临时会话独立，不碰玩家自己的存档。
+        """
+        if slot not in ("first", "last", "demo"):
+            slot = "demo"
+        mapping_raw = json.loads(STORY_KEY_MAP_PATH.read_text(encoding="utf-8"))
+        mapping_raw = extend_mapping(mapping_raw)
+        order = mapping_raw["playableOrder"]["list"]
+
+        code, sess = self.create_session({"contentVersion": "v1"})
+        if code != 201:
+            return 500, {"error": "快速模式建会话失败"}
+        sid = sess["sessionId"]
+
+        if self_ratings:
+            self.post_event(sid, {
+                "eventId": str(uuid.uuid4()), "eventType": "profile_answer",
+                "contentVersion": "v1", "clientTime": now_iso(),
+                "payload": {"regionId": "A", "ratings": self_ratings}})
+
+        ev_all = mapping_raw["events"]
+        demo_plan = demo_slot_plan(order, ev_all)[0] if slot == "demo" else None
+        for i, gid in enumerate(order):
+            entry = ev_all[gid]
+            opts = entry.get("options") or {}
+            if slot == "demo":
+                slot_id = demo_plan[gid]
+            elif entry.get("align") == "non_scoring":
+                slot_id = "option_a"
+            else:
+                slots = [s for s, v in opts.items() if v] or ["option_a"]
+                slot_id = slots[-1] if slot == "last" else slots[0]
+            cid = f"{gid}-C{SLOT_NO.get(slot_id, 1):02d}"
+            code, resp = self.post_event(sid, make_click(gid, cid, "B", i))
+            if code != 200 or not resp.get("accepted"):
+                return 500, {"error": f"快速模式事件 {gid} 结算失败",
+                             "detail": str(resp)[:200]}
+
+        code, resp = self.generate_report(sid)
+        if code != 202 or resp.get("status") != "ready":
+            return 500, {"error": "快速模式报告生成失败", "detail": str(resp)[:200]}
+        return self.get_report(sid)
+
 
 def _as_int(v) -> int | None:
     if v is None or isinstance(v, bool):
@@ -808,6 +864,7 @@ class Handler(BaseHTTPRequestHandler):
         re.compile(r"^/api/v1/sessions/([\w-]+)/npcs/([\w-]+)/memories$"),
         re.compile(r"^/api/v1/sessions/([\w-]+)/report$"),
         re.compile(r"^/api/v1/sessions/([\w-]+)/report/status$"),
+        re.compile(r"^/api/v1/fast-track/report$"),
     ]
 
     def log_message(self, fmt, *args):  # 安静模式由 -v 控制，默认打印一行
@@ -835,7 +892,7 @@ class Handler(BaseHTTPRequestHandler):
         svc = self.service
         path = self.path.split("?")[0]
         query = self.path.split("?")[1] if "?" in self.path else ""
-        m0, m1, m2, m3, m4, m5, m6, m7 = self.routes
+        m0, m1, m2, m3, m4, m5, m6, m7, m8 = self.routes
 
         if method == "GET" and m0.match(path):
             return self._reply(200, {"status": "ok", "time": now_iso()})
@@ -877,6 +934,15 @@ class Handler(BaseHTTPRequestHandler):
         m = m7.match(path)
         if method == "GET" and m:
             return self._reply(*svc.report_status(m.group(1)))
+        m = m8.match(path)
+        if method == "POST" and m:
+            body = self._body()
+            if body is None:
+                return self._reply(400, {"error": "invalid JSON"})
+            body = body or {}
+            code, resp = svc.fast_track_report(
+                str(body.get("slot", "demo")), body.get("selfRatings"))
+            return self._reply(code, resp)
         return self._reply(404, {"error": "no route"})
 
     def do_GET(self):

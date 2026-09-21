@@ -62,7 +62,7 @@ func present(location: Dictionary, texture_path: String) -> void:
 	room.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(room)
 	_shade = ColorRect.new()
-	_shade.color = Color(1, 1, 1, 0)
+	_shade.color = Color(0.04, 0.07, 0.13, 0.08)
 	_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_shade)
@@ -138,7 +138,13 @@ func set_touch_vector(value: Vector2) -> void:
 func set_phase(phase_id: String) -> void:
 	if _shade == null:
 		return
-	_shade.color = Color(0.03, 0.07, 0.22, 0.42) if phase_id == "night" else Color(1, 1, 1, 0)
+	var tint_by_phase := {
+		"morning": Color(0.30, 0.18, 0.06, 0.16),
+		"work": Color(0.04, 0.07, 0.13, 0.08),
+		"offwork": Color(0.30, 0.09, 0.04, 0.25),
+		"night": Color(0.03, 0.07, 0.22, 0.42),
+	}
+	_shade.color = tint_by_phase.get(phase_id, tint_by_phase["work"])
 
 func _process(delta: float) -> void:
 	if not _exploration_enabled or not is_open() or _player == null:
@@ -185,7 +191,7 @@ func _build_interior_characters(location: Dictionary) -> void:
 	_player_sprite.position = Vector2(-32, -72)
 	_player_sprite.configure_motion_speed(PLAYER_SPEED)
 	_player.add_child(_player_sprite)
-	_player_sprite.set_loadout(PlayerProfile.get_selected_avatar_id())
+	_player_sprite.set_loadout("bear_green_cardigan")
 
 	# 所有临时室内图统一预留中央活动区；后续替换美术时只需微调这组点。
 	var route := PackedVector2Array([Vector2(720, 610), Vector2(900, 610), Vector2(900, 700), Vector2(720, 700)])
@@ -279,10 +285,11 @@ func _build_interior_characters(location: Dictionary) -> void:
 func _npc_for_location(location: Dictionary) -> Dictionary:
 	var code := String(location.get("code", "")).to_lower()
 	var catalog := {
-		"a": {"npcId":"chengong", "name":"陈工", "role":"邻组 Leader", "loadout":"bear_orange_blazer"},
+		"a": {"npcId":"chengong", "name":"陈工", "role":"邻组 Leader", "loadout":"bear_beige_blazer"},
 		"b": {"npcId":"wange", "name":"王哥", "role":"技术 · 你的导师", "loadout":"bear_plaid_glasses"},
-		"c": {"npcId":"xiaolin", "name":"小林", "role":"产品", "loadout":"bear_beige_blazer"},
-		"d": {"npcId":"laozhou", "name":"老周", "role":"资深", "loadout":"bear_green_cardigan"},
+		"c": {"npcId":"xiaolin", "name":"小林", "role":"产品", "loadout":"bear_green_cardigan"},
+		"d": {"npcId":"laozhou", "name":"老周", "role":"资深", "loadout":"bear_orange_blazer"},
+		"h": {"npcId":"xiaozhao", "name":"小赵", "role":"实习生", "loadout":"bear_green_cardigan"},
 	}
 	return catalog.get(code, {})
 
