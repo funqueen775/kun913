@@ -57,6 +57,41 @@
   ],
   "loadouts": [
     {
+      "loadoutId": "avatar_player",
+      "displayName": "玩家",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/avatar_player_walk_64.png",
+      "preset": false
+    },
+    {
+      "loadoutId": "avatar_xiaoye",
+      "displayName": "小叶",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/avatar_xiaoye_walk_64.png",
+      "preset": false
+    },
+    {
+      "loadoutId": "avatar_yueya",
+      "displayName": "月牙",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/avatar_yueya_walk_64.png",
+      "preset": false
+    },
+    {
+      "loadoutId": "avatar_mili",
+      "displayName": "米粒",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/avatar_mili_walk_64.png",
+      "preset": false
+    },
+    {
+      "loadoutId": "avatar_amai",
+      "displayName": "阿麦",
+      "previewOnly": false,
+      "atlas": "assets/characters/paper_doll_64/compiled/avatar_amai_walk_64.png",
+      "preset": false
+    },
+    {
       "loadoutId": "bear_plaid_glasses",
       "displayName": "熊 · 格纹衬衫",
       "previewOnly": false,

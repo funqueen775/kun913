@@ -71,10 +71,9 @@ const INTERIOR_BY_ZONE := {
 const BEAR_LOADOUT_BY_ACTOR := {
 	"小熊": "bear_green_cardigan",
 	"王哥": "bear_plaid_glasses",
-	"陈工": "bear_beige_blazer",
-	"小林": "bear_green_cardigan",
-	"老周": "bear_orange_blazer",
-	"小赵": "bear_green_cardigan",
+	"陈工": "bear_orange_blazer",
+	"小林": "bear_beige_blazer",
+	"老周": "bear_green_cardigan",
 }
 
 ## 情境强度只做光影，不显示任何标签或数字（V5.27 红线：测量口径不下发前端）
@@ -334,6 +333,8 @@ func _cast_list() -> Array:
 	var result: Array = []
 	var speakers: Dictionary = _event.get("speakers", {})
 	for entry in _event.get("cast", []) as Array:
+		if result.size() >= 2:
+			break
 		if entry is Dictionary:
 			var actor := Dictionary(entry)
 			if not actor.has("id"):
@@ -348,6 +349,9 @@ func _cast_list() -> Array:
 			profile["id"] = id
 			profile["loadout"] = _bear_loadout(profile)
 			result.append(profile)
+	if result.size() == 2:
+		(result[0] as Dictionary)["pos"] = "left"
+		(result[1] as Dictionary)["pos"] = "right"
 	return result
 
 

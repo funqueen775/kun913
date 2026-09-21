@@ -4,7 +4,7 @@
   "_portNote": "kun913 是 Godot 2D 项目，React 的 JSX/CSS 无法复用；这里只搬【数据与设计参数】，视图由 scripts/ui/IntroSequence.gd 用 Godot Control 节点重建。 人物资料不再存在本文件，统一读 res://data/town/npcs.json（单一来源）。",
   "_conflict": [
     "【已定 2026-09-13】① 角色形象：保留【熊】设定，美术出熊的纸娃娃图集；出图前沿用人类 loadout 占位，见 data/town/npcs.json 的 _artNote。",
-    "【已定 2026-09-13】② 人物数量与名字：只用 5 只熊（王哥/陈工/小林/老周/小赵），原 8 个区域 NPC 作废；演员表单一来源 = data/town/npcs.json。",
+    "【已定】② 主世界人物：四位常驻熊 NPC（王哥/陈工/小林/老周）加玩家；演员表单一来源 = data/town/npcs.json。",
     "【已澄清】③ 区域名：以 data/town/regions.json 为准。WorkplaceTown.gd 里硬编码的 ZONES 只是读不到 JSON 时的兜底，运行时会被覆盖，无需处理。"
   ],
   "_portraitNote": "人物头像不再等美术：直接裁 kun913 的纸娃娃图集（256x320，单帧 64x80，第 1 行=朝下，第 1 列=站立帧）。loadout 可从 elder_man / skirt_woman / suit_man / neutral_hoodie / energetic_ponytail / street_creator 里挑。",
@@ -120,7 +120,7 @@
         "id": "people",
         "tab": "人物名单",
         "kicker": "你会遇到的熊",
-        "title": "五位同事，五种立场",
+        "title": "四位同事，四种立场",
         "body": [],
         "cast": true
       },
